@@ -1,368 +1,343 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controlador Finanzas 2026</title>
+<title>Finanzas 2026 — Inversiones Marines</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
-  .topbar { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  .topbar h1 { font-size: 18px; font-weight: 600; }
-  .topbar .meta { font-size: 12px; opacity: 0.6; margin-top: 3px; }
-  .refresh-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  .refresh-btn:hover { background: rgba(255,255,255,0.2); }
-  .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
-  .kpi { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-top: 3px solid #e0e0e0; }
-  .kpi.pos { border-top-color: #1D9E75; }
-  .kpi.neg { border-top-color: #D85A30; }
-  .kpi.bal-pos { border-top-color: #185FA5; }
-  .kpi.bal-neg { border-top-color: #a32d2d; }
-  .kpi-label { font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .kpi-value { font-size: 20px; font-weight: 700; color: #1a1a2e; word-break: break-all; }
-  .kpi.pos .kpi-value { color: #1D9E75; }
-  .kpi.neg .kpi-value { color: #D85A30; }
-  .kpi.bal-pos .kpi-value { color: #185FA5; }
-  .kpi.bal-neg .kpi-value { color: #a32d2d; }
-  .kpi-sub { font-size: 11px; color: #aaa; margin-top: 6px; }
-  .filter-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  .filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
-  .filter-group { display: flex; flex-direction: column; gap: 4px; }
-  .filter-group label { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
-  .filter-group select { border: 1px solid #e0e0e0; border-radius: 6px; padding: 5px 10px; font-size: 13px; background: #f9f9f9; color: #1a1a2e; cursor: pointer; min-width: 120px; }
-  .filter-group select[multiple] { height: 80px; }
-  .filter-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
-  .clear-btn { background: #f4f6f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; color: #555; align-self: flex-end; }
-  .clear-btn:hover { background: #e8eaed; }
-  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
-  .chart-card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  .chart-card.full { grid-column: 1 / -1; }
-  .chart-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .table-card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow-x: auto; margin-bottom: 1.5rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 8px 10px; color: #888; font-weight: 600; border-bottom: 2px solid #f0f0f0; font-size: 11px; text-transform: uppercase; white-space: nowrap; }
-  td { padding: 8px 10px; color: #1a1a2e; border-bottom: 1px solid #f5f5f5; white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafafa; }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-  .ing { background: #e1f5ee; color: #0F6E56; }
-  .eg  { background: #faece7; color: #993C1D; }
-  .rank-bar { height: 6px; border-radius: 3px; background: #1D9E75; display: inline-block; vertical-align: middle; margin-left: 8px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #e0e0e0; background: #fff; color: #555; font-weight: 500; }
-  .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
-  .section { display: none; }
-  .section.active { display: block; }
-  .loading { text-align: center; padding: 4rem; color: #aaa; font-size: 15px; }
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e0e0e0; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .err { background: #fff0ed; border-left: 4px solid #D85A30; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 13px; color: #7a2e10; word-break: break-all; }
-  @media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } .chart-card.full { grid-column: 1; } }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3348;
+  --text:#e8eaf0;--muted:#7b82a0;--accent:#4f8ef7;
+  --green:#34c87a;--red:#f05454;--amber:#f5a623;
+  --green-bg:rgba(52,200,122,0.1);--red-bg:rgba(240,84,84,0.1);--accent-bg:rgba(79,142,247,0.1);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.meta{font-size:12px;color:var(--muted)}
+.btn{background:var(--accent);color:#fff;border:none;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.nav-section{padding:0 1rem;margin-bottom:1.5rem}
+.nav-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 0.5rem;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.main{flex:1;padding:1.5rem 2rem;overflow-x:hidden}
+.filterbar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem}
+.filterbar-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+.filter-chips-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.filter-group{display:flex;flex-direction:column;gap:6px}
+.filter-group-label{font-size:11px;color:var(--muted);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:5px;max-width:320px}
+.chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.sel-green.selected{background:var(--green);border-color:var(--green);color:#fff}
+.chip.sel-red.selected{background:var(--red);border-color:var(--red);color:#fff}
+.active-filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);align-items:center}
+.active-tag{background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:6px}
+.active-tag span{cursor:pointer;opacity:.7;font-size:14px}
+.active-tag span:hover{opacity:1}
+.clear-all{font-size:11px;color:var(--muted);cursor:pointer;margin-left:auto}
+.clear-all:hover{color:var(--red)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--border)}
+.kpi.pos::before{background:var(--green)}
+.kpi.neg::before{background:var(--red)}
+.kpi.bal::before{background:var(--accent)}
+.kpi.neu::before{background:var(--amber)}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text)}
+.kpi.pos .kpi-value{color:var(--green)}
+.kpi.neg .kpi-value{color:var(--red)}
+.kpi.bal .kpi-value{color:var(--accent)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.page{display:none}
+.page.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.card-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:1rem}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-ing{background:var(--green-bg);color:var(--green)}
+.b-eg{background:var(--red-bg);color:var(--red)}
+.amt-ing{color:var(--green);font-weight:600}
+.amt-eg{color:var(--red);font-weight:600}
+.rank-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.rank-row:last-child{border-bottom:none}
+.rank-num{width:24px;font-size:12px;color:var(--muted);font-weight:600;flex-shrink:0;text-align:center}
+.rank-name{flex:1;font-size:13px;font-weight:500}
+.rank-bar-wrap{width:120px;height:4px;background:var(--surface2);border-radius:2px;flex-shrink:0}
+.rank-bar-fill{height:4px;border-radius:2px;background:var(--green)}
+.rank-amt{width:100px;text-align:right;font-size:13px;font-weight:600;color:var(--green);flex-shrink:0}
+.rank-count{font-size:11px;color:var(--muted);width:60px;flex-shrink:0}
+.loading{display:flex;align-items:center;justify-content:center;height:300px;color:var(--muted);gap:12px;font-size:14px}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:900px){.sidebar{display:none}.kpi-grid{grid-template-columns:1fr 1fr}.charts-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div>
-    <h1>📊 Controlador Finanzas 2026</h1>
-    <div class="meta" id="meta-txt">Conectando...</div>
+  <div class="logo"><div class="logo-dot"></div>Inversiones Marines — Finanzas 2026</div>
+  <div class="topbar-right">
+    <span class="meta" id="meta-txt">Cargando...</span>
+    <button class="btn" onclick="loadData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Actualizar
+    </button>
   </div>
-  <button class="refresh-btn" onclick="loadData()">↻ Actualizar</button>
 </div>
-<div class="container">
-  <div id="err-box" style="display:none"></div>
-  <div id="app"><div class="loading"><span class="spinner"></span>Cargando datos...</div></div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <div class="nav-item active" onclick="showPage('resumen',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Resumen
+      </div>
+      <div class="nav-item" onclick="showPage('movimientos',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Movimientos
+      </div>
+      <div class="nav-item" onclick="showPage('ranking',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Beneficiarios
+      </div>
+      <div class="nav-item" onclick="showPage('categorias',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Categorías
+      </div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="filterbar" id="filterbar"></div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div id="page-resumen" class="page active"></div>
+    <div id="page-movimientos" class="page"></div>
+    <div id="page-ranking" class="page"></div>
+    <div id="page-categorias" class="page"></div>
+  </div>
 </div>
 <script>
-const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1817920401&single=true&output=csv';
-let allRows = [], C = {}, chartObjs = {};
-const $ = id => document.getElementById(id);
+const CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1817920401&single=true&output=csv';
+let allRows=[],C={},charts={};
+let selAnos=[],selMeses=[],selBancos=[],selCats=[],selTipoMov='';
+let currentPage='resumen';
+const $=id=>document.getElementById(id);
 
-function fmt(n) {
-  return '$' + new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(Math.abs(n||0));
+function fmt(n){return'$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(n||0));}
+
+function parseNum(v){
+  if(!v&&v!==0)return 0;
+  let s=String(v).trim().replace(/[^0-9.,\-]/g,'');
+  if(!s||s==='-')return 0;
+  if(/,\d{1,2}$/.test(s)&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}
+  else if(/,\d{1,2}$/.test(s)&&!s.includes('.')){s=s.replace(',','.');}
+  else{s=s.replace(/,/g,'');}
+  const n=parseFloat(s);return isNaN(n)?0:n;
 }
 
-function parseNum(v) {
-  if (!v && v !== 0) return 0;
-  let s = String(v).trim().replace(/[^0-9.,\-]/g, '');
-  if (!s || s === '-') return 0;
-  const hasCommaDecimal = /,\d{1,2}$/.test(s) && s.includes('.');
-  const hasCommaOnly = /,\d{1,2}$/.test(s) && !s.includes('.');
-  if (hasCommaDecimal) { s = s.replace(/\./g, '').replace(',', '.'); }
-  else if (hasCommaOnly) { s = s.replace(',', '.'); }
-  else { s = s.replace(/,/g, ''); }
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
-}
-
-function parseDate(v) {
-  if (!v) return null;
-  const s = String(v).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0,7);
-  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (dmy) {
-    const d = parseInt(dmy[1]), mo = parseInt(dmy[2]), y = parseInt(dmy[3]);
-    if (d > 12) return `${y}-${String(mo).padStart(2,'0')}`;
-    return `${y}-${String(mo).padStart(2,'0')}`;
-  }
-  const dmonth = s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{2,4})/);
-  if (dmonth) {
-    const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-    const mo = months[dmonth[2].toLowerCase()] || '01';
-    const y = dmonth[3].length === 2 ? '20'+dmonth[3] : dmonth[3];
-    return `${y}-${mo}`;
-  }
+function parseYearMonth(v){
+  if(!v)return null;
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,7);
+  const dmy=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(dmy){const mo=parseInt(dmy[2]),y=parseInt(dmy[3]);return`${y}-${String(mo).padStart(2,'0')}`;}
+  const dm=s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{2,4})/);
+  if(dm){const mo={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[dm[2].toLowerCase()]||'01';const y=dm[3].length===2?'20'+dm[3]:dm[3];return`${y}-${mo}`;}
   return null;
 }
 
-function getYear(v) { const m = parseDate(v); return m ? m.substring(0,4) : null; }
-
-function mapCols(fields) {
-  const find = (...terms) => fields.find(f => terms.some(t => f.toLowerCase().replace(/[\s\/\-_]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_]/g,'')))) || null;
-  return {
-    fecha:    find('FECHA'),
-    ano:      find('ANO','AÑO','YEAR'),
-    mes:      find('MES','MONTH'),
-    ingEg:    find('INGRESOEGRESO','INGRESO'),
-    banco:    find('BANCO'),
-    tipo:     find('TIPO'),
-    cat:      find('CATEGORIA','CATEGORÍA'),
-    coment:   find('COMENTARIOS'),
-    benef:    find('BENEFICIARIO'),
-    dueno:    find('DUEÑO','DUENO'),
-    credito:  find('CREDITO','CRÉDITO'),
-    debito:   find('DEBITO','DÉBITO'),
-    montoUSD: find('MONTOUSD'),
-    mLimpio:  find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio'),
-  };
+function monthLabel(ym){
+  if(!ym)return'';
+  const[y,m]=ym.split('-');
+  return['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y;
 }
 
-function isIngreso(row) {
-  const v = String(row[C.ingEg]||'').toLowerCase().trim();
-  return v.includes('ingr') || v.includes('entr') || v.includes('abono') || v === 'i';
+function mapCols(fields){
+  const find=(...terms)=>fields.find(f=>terms.some(t=>f.toLowerCase().replace(/[\s\/\-_áéíóú]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_áéíóú]/g,''))))||null;
+  return{fecha:find('FECHA'),ano:find('ANO','AÑO'),mes:find('MES'),ingEg:find('INGRESOEGRESO','INGRESO'),banco:find('BANCO'),tipo:find('TIPO'),cat:find('CATEGORIA','CATEGORÍA'),coment:find('COMENTARIOS'),benef:find('BENEFICIARIO'),dueno:find('DUEÑO','DUENO'),credito:find('CREDITO','CRÉDITO'),debito:find('DEBITO','DÉBITO'),montoUSD:find('MONTOUSD'),mLimpio:find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio')};
 }
 
-function getMonto(row) {
-  if (C.montoUSD) { const v = parseNum(row[C.montoUSD]); if (v !== 0) return Math.abs(v); }
-  if (C.mLimpio)  { const v = parseNum(row[C.mLimpio]);  if (v !== 0) return Math.abs(v); }
-  if (isIngreso(row) && C.credito) { const v = parseNum(row[C.credito]); if (v !== 0) return Math.abs(v); }
-  if (!isIngreso(row) && C.debito) { const v = parseNum(row[C.debito]);  if (v !== 0) return Math.abs(v); }
+function isIng(row){const v=String(row[C.ingEg]||'').toLowerCase().trim();return v.includes('ingr')||v.includes('entr')||v.includes('abono')||v==='i';}
+
+function getMonto(row){
+  if(C.montoUSD){const v=parseNum(row[C.montoUSD]);if(v!==0)return Math.abs(v);}
+  if(C.mLimpio){const v=parseNum(row[C.mLimpio]);if(v!==0)return Math.abs(v);}
+  if(isIng(row)&&C.credito){const v=parseNum(row[C.credito]);if(v!==0)return Math.abs(v);}
+  if(!isIng(row)&&C.debito){const v=parseNum(row[C.debito]);if(v!==0)return Math.abs(v);}
   return 0;
 }
 
-function killCharts() {
-  Object.values(chartObjs).forEach(c => { try { c.destroy(); } catch(e){} });
-  chartObjs = {};
-}
+function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
 
-function getSelected(id) {
-  const el = $(id); if (!el) return [];
-  return Array.from(el.selectedOptions).map(o => o.value).filter(v => v !== '');
-}
+function toggleChip(arr,val){const i=arr.indexOf(val);if(i>=0)arr.splice(i,1);else arr.push(val);}
 
-function applyFilters() {
-  const tipoSel  = getSelected('f-tipo');
-  const bancoSel = getSelected('f-banco');
-  const catSel   = getSelected('f-cat');
-  const tipoTSel = getSelected('f-subtipo');
-  const anoSel   = getSelected('f-ano');
-  const mesSel   = getSelected('f-mes');
-  return allRows.filter(r => {
-    if (tipoSel.length  && !tipoSel.includes(isIngreso(r)?'Ingreso':'Egreso')) return false;
-    if (bancoSel.length && !bancoSel.includes((r[C.banco]||'').trim())) return false;
-    if (catSel.length   && !catSel.includes((r[C.cat]||'').trim())) return false;
-    if (tipoTSel.length && !tipoTSel.includes((r[C.tipo]||'').trim())) return false;
-    if (anoSel.length) {
-      const y = String(r[C.ano]||'').trim() || getYear(r[C.fecha]) || '';
-      if (!anoSel.includes(y)) return false;
-    }
-    if (mesSel.length) {
-      const m = String(r[C.mes]||'').trim().toLowerCase();
-      const mNum = parseDate(r[C.fecha]); const mShort = mNum ? mNum.substring(5,7) : '';
-      if (!mesSel.includes(m) && !mesSel.includes(mShort)) return false;
-    }
+function applyFilters(){
+  return allRows.filter(r=>{
+    const ym=parseYearMonth(r[C.fecha]);
+    const ano=ym?ym.substring(0,4):'';
+    const mes=ym?ym.substring(5,7):'';
+    if(selAnos.length&&!selAnos.includes(ano))return false;
+    if(selMeses.length&&!selMeses.includes(mes))return false;
+    if(selBancos.length&&!selBancos.includes((r[C.banco]||'').trim()))return false;
+    if(selCats.length&&!selCats.includes((r[C.cat]||'').trim()))return false;
+    if(selTipoMov==='Ingreso'&&!isIng(r))return false;
+    if(selTipoMov==='Egreso'&&isIng(r))return false;
     return true;
   });
 }
 
-function render(rows) {
+function buildFilters(){
+  const anos=[...new Set(allRows.map(r=>{const ym=parseYearMonth(r[C.fecha]);return ym?ym.substring(0,4):''}).filter(Boolean))].sort();
+  const allMeses=[...new Set(allRows.map(r=>{const ym=parseYearMonth(r[C.fecha]);return ym?ym.substring(5,7):''}).filter(Boolean))].sort();
+  const bancos=[...new Set(allRows.map(r=>(r[C.banco]||'').trim()).filter(Boolean))].sort();
+  const cats=[...new Set(allRows.map(r=>(r[C.cat]||'').trim()).filter(Boolean))].sort();
+  const mesNames=['01:Ene','02:Feb','03:Mar','04:Abr','05:May','06:Jun','07:Jul','08:Ago','09:Sep','10:Oct','11:Nov','12:Dic'];
+  const availMeses=mesNames.filter(m=>allMeses.includes(m.split(':')[0]));
+  const activeTags=[];
+  selAnos.forEach(a=>activeTags.push({label:'Año: '+a,remove:()=>{selAnos=selAnos.filter(x=>x!==a);rerender();}}));
+  selMeses.forEach(m=>{const name=mesNames.find(x=>x.startsWith(m+':'));activeTags.push({label:'Mes: '+(name?name.split(':')[1]:m),remove:()=>{selMeses=selMeses.filter(x=>x!==m);rerender();}});});
+  selBancos.forEach(b=>activeTags.push({label:'Banco: '+b,remove:()=>{selBancos=selBancos.filter(x=>x!==b);rerender();}}));
+  selCats.forEach(c=>activeTags.push({label:'Cat: '+c,remove:()=>{selCats=selCats.filter(x=>x!==c);rerender();}}));
+  if(selTipoMov)activeTags.push({label:selTipoMov,remove:()=>{selTipoMov='';rerender();}});
+  $('filterbar').innerHTML=`
+    <div class="filterbar-title">Filtros</div>
+    <div class="filter-chips-row">
+      <div class="filter-group"><div class="filter-group-label">Tipo</div><div class="chips">
+        <button class="chip${selTipoMov===''?' selected':''}" onclick="selTipoMov='';rerender()">Todos</button>
+        <button class="chip sel-green${selTipoMov==='Ingreso'?' selected':''}" onclick="selTipoMov='Ingreso';rerender()">Ingresos</button>
+        <button class="chip sel-red${selTipoMov==='Egreso'?' selected':''}" onclick="selTipoMov='Egreso';rerender()">Egresos</button>
+      </div></div>
+      <div class="filter-group"><div class="filter-group-label">Año</div><div class="chips">${anos.map(a=>`<button class="chip${selAnos.includes(a)?' selected':''}" onclick="toggleChip(selAnos,'${a}');rerender()">${a}</button>`).join('')}</div></div>
+      <div class="filter-group"><div class="filter-group-label">Mes</div><div class="chips">${availMeses.map(m=>{const[num,nom]=m.split(':');return`<button class="chip${selMeses.includes(num)?' selected':''}" onclick="toggleChip(selMeses,'${num}');rerender()">${nom}</button>`}).join('')}</div></div>
+      <div class="filter-group"><div class="filter-group-label">Banco</div><div class="chips">${bancos.map(b=>`<button class="chip${selBancos.includes(b)?' selected':''}" onclick="toggleChip(selBancos,'${b}');rerender()">${b}</button>`).join('')}</div></div>
+      <div class="filter-group"><div class="filter-group-label">Categoría</div><div class="chips">${cats.map(c=>`<button class="chip${selCats.includes(c)?' selected':''}" onclick="toggleChip(selCats,'${c}');rerender()">${c}</button>`).join('')}</div></div>
+    </div>
+    ${activeTags.length?`<div class="active-filters"><span style="font-size:11px;color:var(--muted);font-weight:500">Activos:</span>${activeTags.map((_,i)=>`<div class="active-tag">${_.label} <span onclick="removeTags[${i}]()">×</span></div>`).join('')}<span class="clear-all" onclick="clearAll()">Limpiar todo</span></div>`:''}`;
+  window.removeTags=activeTags.map(t=>t.remove);
+}
+
+function clearAll(){selAnos=[];selMeses=[];selBancos=[];selCats=[];selTipoMov='';rerender();}
+
+function buildKPI(rows){
+  const ing=rows.filter(r=>isIng(r));const eg=rows.filter(r=>!isIng(r));
+  const tI=ing.reduce((s,r)=>s+getMonto(r),0);const tE=eg.reduce((s,r)=>s+getMonto(r),0);const bal=tI-tE;
+  $('kpi-grid').innerHTML=`
+    <div class="kpi pos"><div class="kpi-label">Ingresos</div><div class="kpi-value">${fmt(tI)}</div><div class="kpi-sub">${ing.length} movimientos</div></div>
+    <div class="kpi neg"><div class="kpi-label">Egresos</div><div class="kpi-value">${fmt(tE)}</div><div class="kpi-sub">${eg.length} movimientos</div></div>
+    <div class="kpi bal"><div class="kpi-label">Balance</div><div class="kpi-value">${fmt(bal)}</div><div class="kpi-sub">${bal>=0?'Superávit':'Déficit'}</div></div>
+    <div class="kpi neu"><div class="kpi-label">Registros</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">de ${allRows.length} totales</div></div>`;
+  return{tI,tE,bal,ing,eg};
+}
+
+function buildResumen(rows,kpi){
   killCharts();
-  const ing = rows.filter(r => isIngreso(r));
-  const eg  = rows.filter(r => !isIngreso(r));
-  const totalIng = ing.reduce((s,r) => s + getMonto(r), 0);
-  const totalEg  = eg.reduce((s,r)  => s + getMonto(r), 0);
-  const bal = totalIng - totalEg;
-
-  const anos   = [...new Set(allRows.map(r => String(r[C.ano]||getYear(r[C.fecha])||'').trim()).filter(Boolean))].sort();
-  const meses  = [...new Set(allRows.map(r => String(r[C.mes]||'').trim()).filter(Boolean))].sort();
-  const bancos = [...new Set(allRows.map(r => (r[C.banco]||'').trim()).filter(Boolean))].sort();
-  const cats   = [...new Set(allRows.map(r => (r[C.cat]||'').trim()).filter(Boolean))].sort();
-  const tipos  = [...new Set(allRows.map(r => (r[C.tipo]||'').trim()).filter(Boolean))].sort();
-
-  const rankBenef = {};
-  ing.forEach(r => {
-    const b = (r[C.benef]||r[C.dueno]||'Sin beneficiario').trim();
-    if (!rankBenef[b]) rankBenef[b] = {total:0, count:0, meses:{}};
-    rankBenef[b].total += getMonto(r);
-    rankBenef[b].count++;
-    const mes = parseDate(r[C.fecha]) || 'N/A';
-    rankBenef[b].meses[mes] = (rankBenef[b].meses[mes]||0) + getMonto(r);
-  });
-  const rankList = Object.entries(rankBenef).sort((a,b)=>b[1].total-a[1].total);
-  const maxRank = rankList[0]?.[1]?.total || 1;
-
-  const recent = [...rows].reverse().slice(0,30);
-  const tbody = recent.map(r => {
-    const esIng = isIngreso(r); const monto = getMonto(r);
-    return `<tr>
-      <td>${r[C.fecha]||''}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r[C.coment]||''}</td>
-      <td>${r[C.banco]||''}</td>
-      <td>${r[C.cat]||''}</td>
-      <td>${r[C.tipo]||''}</td>
-      <td><span class="badge ${esIng?'ing':'eg'}">${esIng?'Ingreso':'Egreso'}</span></td>
-      <td style="text-align:right;font-weight:600;color:${esIng?'#1D9E75':'#D85A30'}">${esIng?'+':'-'}${fmt(monto)}</td>
-    </tr>`;
-  }).join('');
-
-  const rankRows = rankList.slice(0,20).map(([b,d],i) => {
-    const pct = Math.round((d.total/maxRank)*100);
-    const mesesList = Object.entries(d.meses).sort((a,b2)=>b2[1]-a[1]).slice(0,3).map(([m,v])=>`${m}: ${fmt(v)}`).join(' | ');
-    return `<tr>
-      <td style="font-weight:600">${i+1}</td>
-      <td>${b}</td>
-      <td>${d.count}</td>
-      <td style="text-align:right;color:#1D9E75;font-weight:600">${fmt(d.total)}</td>
-      <td><span class="rank-bar" style="width:${pct}px;max-width:120px"></span></td>
-      <td style="font-size:11px;color:#888">${mesesList}</td>
-    </tr>`;
-  }).join('');
-
-  const hint = '<div class="filter-hint">Ctrl+clic para varios</div>';
-
-  $('app').innerHTML = `
-    <div class="kpi-grid">
-      <div class="kpi pos"><div class="kpi-label">↑ Ingresos USD</div><div class="kpi-value">${fmt(totalIng)}</div><div class="kpi-sub">${ing.length} movimientos</div></div>
-      <div class="kpi neg"><div class="kpi-label">↓ Egresos USD</div><div class="kpi-value">${fmt(totalEg)}</div><div class="kpi-sub">${eg.length} movimientos</div></div>
-      <div class="kpi ${bal>=0?'bal-pos':'bal-neg'}"><div class="kpi-label">⚖ Balance USD</div><div class="kpi-value">${fmt(bal)}</div><div class="kpi-sub">${bal>=0?'Superávit':'Déficit'}</div></div>
-      <div class="kpi"><div class="kpi-label">≡ Registros</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">de ${allRows.length} totales</div></div>
+  const{tI,tE,ing,eg}=kpi;
+  const byM={};
+  rows.forEach(r=>{const k=parseYearMonth(r[C.fecha]);if(!k)return;if(!byM[k])byM[k]={i:0,e:0};if(isIng(r))byM[k].i+=getMonto(r);else byM[k].e+=getMonto(r);});
+  const ms=Object.keys(byM).sort();const msLabels=ms.map(monthLabel);
+  $('page-resumen').innerHTML=`
+    <div class="charts-grid">
+      <div class="card"><div class="card-title">Ingresos vs Egresos</div><canvas id="ch-pie" height="200"></canvas></div>
+      <div class="card"><div class="card-title">Evolución mensual</div><canvas id="ch-bar" height="200"></canvas></div>
     </div>
-    <div class="filter-card">
-      <div class="filter-row">
-        <div class="filter-group"><label>Año</label><select id="f-ano" multiple onchange="rerender()">${anos.map(a=>`<option value="${a}">${a}</option>`).join('')}</select>${hint}</div>
-        <div class="filter-group"><label>Mes</label><select id="f-mes" multiple onchange="rerender()">${meses.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>${hint}</div>
-        <div class="filter-group"><label>Tipo mov.</label><select id="f-tipo" onchange="rerender()"><option value="">Todos</option><option>Ingreso</option><option>Egreso</option></select></div>
-        <div class="filter-group"><label>Banco</label><select id="f-banco" multiple onchange="rerender()">${bancos.map(b=>`<option value="${b}">${b}</option>`).join('')}</select>${hint}</div>
-        <div class="filter-group"><label>Categoría</label><select id="f-cat" multiple onchange="rerender()">${cats.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>${hint}</div>
-        <div class="filter-group"><label>Tipo</label><select id="f-subtipo" multiple onchange="rerender()">${tipos.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>${hint}</div>
-        <button class="clear-btn" onclick="clearFilters()">✕ Limpiar</button>
-      </div>
-    </div>
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('resumen',this)">📊 Resumen</div>
-      <div class="tab" onclick="showTab('movimientos',this)">📋 Movimientos</div>
-      <div class="tab" onclick="showTab('ranking',this)">🏆 Ranking Beneficiarios</div>
-    </div>
-    <div id="tab-resumen" class="section active">
-      <div class="charts-grid">
-        <div class="chart-card"><div class="chart-title">Ingresos vs Egresos</div><canvas id="ch-pie" height="220"></canvas></div>
-        <div class="chart-card"><div class="chart-title">Por mes (USD)</div><canvas id="ch-bar" height="220"></canvas></div>
-        ${cats.length?`<div class="chart-card full"><div class="chart-title">Egresos por categoría</div><canvas id="ch-cat" height="120"></canvas></div>`:''}
-      </div>
-    </div>
-    <div id="tab-movimientos" class="section">
-      <div class="table-card">
-        <div class="chart-title" style="margin-bottom:14px">Últimos 30 movimientos</div>
-        <table><thead><tr><th>Fecha</th><th>Comentario</th><th>Banco</th><th>Categoría</th><th>Tipo</th><th>Mov.</th><th style="text-align:right">Monto USD</th></tr></thead>
-        <tbody>${tbody}</tbody></table>
-      </div>
-    </div>
-    <div id="tab-ranking" class="section">
-      <div class="table-card">
-        <div class="chart-title" style="margin-bottom:14px">Ranking ingresos por beneficiario</div>
-        <table><thead><tr><th>#</th><th>Beneficiario</th><th>Transacciones</th><th style="text-align:right">Total USD</th><th>Proporción</th><th>Top meses</th></tr></thead>
-        <tbody>${rankRows}</tbody></table>
-      </div>
-    </div>`;
-
-  chartObjs.pie = new Chart($('ch-pie').getContext('2d'), {
-    type:'doughnut',
-    data:{ labels:['Ingresos','Egresos'], datasets:[{ data:[totalIng,totalEg], backgroundColor:['#1D9E75','#D85A30'], borderWidth:0 }] },
-    options:{ plugins:{ legend:{ position:'bottom', labels:{ font:{size:12} } } }, cutout:'65%' }
-  });
-
-  const byM = {};
-  rows.forEach(r => {
-    const k = parseDate(r[C.fecha]); if (!k) return;
-    if (!byM[k]) byM[k] = {i:0,e:0};
-    if (isIngreso(r)) byM[k].i += getMonto(r); else byM[k].e += getMonto(r);
-  });
-  const ms = Object.keys(byM).sort();
-  if (ms.length && $('ch-bar')) {
-    chartObjs.bar = new Chart($('ch-bar').getContext('2d'), {
-      type:'bar',
-      data:{ labels:ms, datasets:[
-        { label:'Ingresos', data:ms.map(m=>Math.round(byM[m].i)), backgroundColor:'#1D9E75' },
-        { label:'Egresos',  data:ms.map(m=>Math.round(byM[m].e)), backgroundColor:'#D85A30' }
-      ]},
-      options:{ plugins:{ legend:{ labels:{ font:{size:11} } } }, scales:{ x:{ ticks:{ font:{size:9}, maxRotation:45 } }, y:{ ticks:{ font:{size:10}, callback:v=>'$'+Math.abs(v).toLocaleString() } } } }
-    });
-  }
-
-  if (cats.length && $('ch-cat')) {
-    const byCat = {};
-    eg.forEach(r => { const cat=(r[C.cat]||'Sin categoría').trim(); byCat[cat]=(byCat[cat]||0)+getMonto(r); });
-    const sorted = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,10);
-    chartObjs.cat = new Chart($('ch-cat').getContext('2d'), {
-      type:'bar',
-      data:{ labels:sorted, datasets:[{ label:'Egresos USD', data:sorted.map(k=>Math.round(byCat[k])), backgroundColor:'#D85A30' }] },
-      options:{ indexAxis:'y', plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{ font:{size:10}, callback:v=>'$'+v.toLocaleString() } }, y:{ ticks:{ font:{size:10} } } } }
-    });
-  }
+    <div class="card"><div class="card-title">Egresos por categoría</div><canvas id="ch-cat" height="100"></canvas></div>`;
+  charts.pie=new Chart($('ch-pie').getContext('2d'),{type:'doughnut',data:{labels:['Ingresos','Egresos'],datasets:[{data:[tI,tE],backgroundColor:['#34c87a','#f05454'],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#7b82a0',font:{size:12},padding:16}}},cutout:'70%'}});
+  if(ms.length){charts.bar=new Chart($('ch-bar').getContext('2d'),{type:'bar',data:{labels:msLabels,datasets:[{label:'Ingresos',data:ms.map(m=>Math.round(byM[m].i)),backgroundColor:'rgba(52,200,122,0.7)',borderRadius:4},{label:'Egresos',data:ms.map(m=>Math.round(byM[m].e)),backgroundColor:'rgba(240,84,84,0.7)',borderRadius:4}]},options:{plugins:{legend:{labels:{color:'#7b82a0',font:{size:11}}}},scales:{x:{ticks:{color:'#7b82a0',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7b82a0',font:{size:10},callback:v=>'$'+Math.abs(v).toLocaleString()},grid:{color:'rgba(255,255,255,0.04)'}}}}});}
+  const byCat={};eg.forEach(r=>{const c=(r[C.cat]||'Sin categoría').trim();byCat[c]=(byCat[c]||0)+getMonto(r);});
+  const sorted=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,12);
+  charts.cat=new Chart($('ch-cat').getContext('2d'),{type:'bar',data:{labels:sorted,datasets:[{label:'Egresos',data:sorted.map(k=>Math.round(byCat[k])),backgroundColor:'rgba(240,84,84,0.7)',borderRadius:4}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7b82a0',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7b82a0',font:{size:10}},grid:{display:false}}}}});
 }
 
-function showTab(id, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  $('tab-'+id).classList.add('active');
-  el.classList.add('active');
+function buildMovimientos(rows){
+  const recent=[...rows].reverse().slice(0,50);
+  const tbody=recent.map(r=>{const ei=isIng(r);const m=getMonto(r);const benef=(r[C.benef]||r[C.dueno]||'—').trim();return`<tr><td>${r[C.fecha]||''}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r[C.coment]||'—'}</td><td>${benef}</td><td>${(r[C.banco]||'—').trim()}</td><td>${(r[C.cat]||'—').trim()}</td><td>${(r[C.tipo]||'—').trim()}</td><td><span class="badge ${ei?'b-ing':'b-eg'}">${ei?'Ingreso':'Egreso'}</span></td><td style="text-align:right" class="${ei?'amt-ing':'amt-eg'}">${ei?'+':'-'}${fmt(m)}</td></tr>`;}).join('');
+  $('page-movimientos').innerHTML=`<div class="card"><div class="card-title">Últimos 50 movimientos · ${rows.length} total</div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Comentario</th><th>Beneficiario</th><th>Banco</th><th>Categoría</th><th>Tipo</th><th>Mov.</th><th style="text-align:right">Monto USD</th></tr></thead><tbody>${tbody}</tbody></table></div></div>`;
 }
 
-function rerender() { render(applyFilters()); }
-
-function clearFilters() {
-  ['f-ano','f-mes','f-banco','f-cat','f-subtipo'].forEach(id => {
-    const el=$(id); if(el) Array.from(el.options).forEach(o=>o.selected=false);
-  });
-  const ft=$('f-tipo'); if(ft) ft.value='';
-  rerender();
+function buildRanking(rows){
+  const ing=rows.filter(r=>isIng(r));const rank={};
+  ing.forEach(r=>{const b=(r[C.benef]||r[C.dueno]||'Sin beneficiario').trim();if(!rank[b])rank[b]={total:0,count:0};rank[b].total+=getMonto(r);rank[b].count++;});
+  const list=Object.entries(rank).sort((a,b)=>b[1].total-a[1].total);const max=list[0]?.[1]?.total||1;
+  const eg=rows.filter(r=>!isIng(r));const rankE={};
+  eg.forEach(r=>{const b=(r[C.benef]||r[C.dueno]||r[C.cat]||'Sin beneficiario').trim();if(!rankE[b])rankE[b]={total:0,count:0};rankE[b].total+=getMonto(r);rankE[b].count++;});
+  const listE=Object.entries(rankE).sort((a,b)=>b[1].total-a[1].total);const maxE=listE[0]?.[1]?.total||1;
+  $('page-ranking').innerHTML=`<div class="charts-grid">
+    <div class="card"><div class="card-title">Top ingresos por beneficiario</div>${list.slice(0,20).map(([name,d],i)=>`<div class="rank-row"><div class="rank-num">${i+1}</div><div class="rank-name">${name}</div><div class="rank-count">${d.count} mov.</div><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(d.total/max*100)}%"></div></div><div class="rank-amt">${fmt(d.total)}</div></div>`).join('')}</div>
+    <div class="card"><div class="card-title">Top egresos por beneficiario</div>${listE.slice(0,15).map(([name,d],i)=>`<div class="rank-row"><div class="rank-num">${i+1}</div><div class="rank-name">${name}</div><div class="rank-count">${d.count} mov.</div><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(d.total/maxE*100)}%;background:var(--red)"></div></div><div class="rank-amt" style="color:var(--red)">${fmt(d.total)}</div></div>`).join('')}</div>
+  </div>`;
 }
 
-function loadData() {
-  $('err-box').style.display = 'none';
-  $('meta-txt').textContent = 'Actualizando...';
-  $('app').innerHTML = '<div class="loading"><span class="spinner"></span>Cargando datos...</div>';
-  Papa.parse(CSV + '&nocache=' + Date.now(), {
-    download:true, header:true, skipEmptyLines:true,
-    complete(res) {
-      if (!res.data || res.data.length === 0) {
-        $('err-box').innerHTML = `<div class="err">Sin datos. Columnas: ${(res.meta.fields||[]).join(' | ')}</div>`;
-        $('err-box').style.display = 'block'; $('app').innerHTML = ''; return;
-      }
-      allRows = res.data;
-      C = mapCols(res.meta.fields || []);
-      $('meta-txt').textContent = `Actualizado: ${new Date().toLocaleString('es-VE')} · ${allRows.length} registros`;
-      render(allRows);
+function buildCategorias(rows){
+  const eg=rows.filter(r=>!isIng(r));
+  const cats=[...new Set(eg.map(r=>(r[C.cat]||'Sin categoría').trim()))].sort();
+  const months=[...new Set(eg.map(r=>parseYearMonth(r[C.fecha])).filter(Boolean))].sort();
+  const msLabels=months.map(monthLabel);
+  const data={};cats.forEach(c=>{data[c]={};months.forEach(m=>data[c][m]=0);});
+  eg.forEach(r=>{const c=(r[C.cat]||'Sin categoría').trim();const m=parseYearMonth(r[C.fecha]);if(!m)return;data[c][m]=(data[c][m]||0)+getMonto(r);});
+  const palette=['#4f8ef7','#34c87a','#f05454','#f5a623','#a78bfa','#34d1bf','#fb7185','#fbbf24','#60a5fa','#4ade80','#f87171','#c084fc'];
+  const catTotals=cats.map(c=>({c,t:months.reduce((s,m)=>s+data[c][m],0)})).sort((a,b)=>b.t-a.t);
+  const topCats=catTotals.slice(0,8).map(x=>x.c);
+  $('page-categorias').innerHTML=`
+    <div class="card"><div class="card-title">Egresos por categoría — mes a mes</div><canvas id="ch-catline" height="120"></canvas></div>
+    <div class="card"><div class="card-title">Detalle por categoría y mes</div><div class="tbl-wrap"><table><thead><tr><th>Categoría</th>${msLabels.map(m=>`<th style="text-align:right">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>${catTotals.map(({c,t})=>`<tr><td style="font-weight:500">${c}</td>${months.map(m=>`<td style="text-align:right;color:${data[c][m]>0?'var(--red)':'var(--muted)'}">${data[c][m]>0?fmt(data[c][m]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:600;color:var(--red)">${fmt(t)}</td></tr>`).join('')}</tbody></table></div></div>`;
+  if(months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msLabels,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:'#7b82a0',font:{size:11},padding:12}}},scales:{x:{ticks:{color:'#7b82a0',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7b82a0',font:{size:10},callback:v=>'$'+Math.abs(v).toLocaleString()},grid:{color:'rgba(255,255,255,0.04)'}}}}});}
+}
+
+function showPage(id,el){
+  currentPage=id;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  renderCurrentPage(applyFilters());
+}
+
+function renderCurrentPage(rows){
+  const kpi=buildKPI(rows);
+  if(currentPage==='resumen')buildResumen(rows,kpi);
+  else if(currentPage==='movimientos')buildMovimientos(rows);
+  else if(currentPage==='ranking')buildRanking(rows);
+  else if(currentPage==='categorias')buildCategorias(rows);
+}
+
+function rerender(){buildFilters();renderCurrentPage(applyFilters());}
+
+function loadData(){
+  $('meta-txt').textContent='Actualizando...';killCharts();
+  ['resumen','movimientos','ranking','categorias'].forEach(p=>{$('page-'+p).innerHTML='<div class="loading"><div class="spin"></div>Cargando...</div>';});
+  $('kpi-grid').innerHTML='';$('filterbar').innerHTML='';
+  Papa.parse(CSV+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
+    complete(res){
+      if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}
+      allRows=res.data;C=mapCols(res.meta.fields||[]);
+      $('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} registros`;
+      selAnos=[];selMeses=[];selBancos=[];selCats=[];selTipoMov='';
+      buildFilters();renderCurrentPage(allRows);
     },
-    error(e) {
-      $('err-box').innerHTML = `<div class="err">Error: ${e.message}</div>`;
-      $('err-box').style.display = 'block'; $('app').innerHTML = '';
-    }
+    error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${e.message}</div>`;}
   });
 }
-
 loadData();
 </script>
 </body>
