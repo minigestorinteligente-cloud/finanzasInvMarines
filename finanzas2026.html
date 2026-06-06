@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controlador Finanzas 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
+
+  .topbar { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
+  .topbar .meta { font-size: 12px; opacity: 0.6; margin-top: 3px; }
+  .refresh-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+  .refresh-btn:hover { background: rgba(255,255,255,0.2); }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+  .error-box { background: #fff0ed; border-left: 4px solid #D85A30; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 13px; color: #7a2e10; }
+  .cols-box { background: #f4f6f9; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem; font-family: monospace; font-size: 12px; color: #555; word-break: break-all; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
+  .kpi { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-top: 3px solid #e0e0e0; }
+  .kpi.pos { border-top-color: #1D9E75; }
+  .kpi.neg { border-top-color: #D85A30; }
+  .kpi.bal-pos { border-top-color: #185FA5; }
+  .kpi.bal-neg { border-top-color: #a32d2d; }
+  .kpi-label { font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #1a1a2e; word-break: break-all; }
+  .kpi.pos .kpi-value { color: #1D9E75; }
+  .kpi.neg .kpi-value { color: #D85A30; }
+  .kpi.bal-pos .kpi-value { color: #185FA5; }
+  .kpi.bal-neg .kpi-value { color: #a32d2d; }
+  .kpi-sub { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+  .filters { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .filters label { font-size: 12px; color: #888; font-weight: 500; }
+  .filters select { border: 1px solid #e0e0e0; border-radius: 6px; padding: 5px 10px; font-size: 13px; background: #f9f9f9; color: #1a1a2e; cursor: pointer; }
+  .filters select:focus { outline: none; border-color: #185FA5; }
+
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+  .chart-card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .table-card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; color: #888; font-weight: 600; border-bottom: 2px solid #f0f0f0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  td { padding: 8px 10px; color: #1a1a2e; border-bottom: 1px solid #f5f5f5; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .ing { background: #e1f5ee; color: #0F6E56; }
+  .eg  { background: #faece7; color: #993C1D; }
+
+  .loading { text-align: center; padding: 4rem; color: #aaa; font-size: 15px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e0e0e0; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-card.full { grid-column: 1; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>📊 Controlador Finanzas 2026</h1>
+    <div class="meta" id="meta-txt">Conectando con Google Sheets...</div>
+  </div>
+  <button class="refresh-btn" onclick="loadData()">↻ Actualizar</button>
+</div>
+
+<div class="container">
+  <div id="err-box" style="display:none"></div>
+  <div id="app"><div class="loading"><span class="spinner"></span>Cargando datos...</div></div>
+</div>
+
+<script>
+const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1817920401&single=true&output=csv';
+
+let allRows = [], colMap = {}, chartObjs = {};
+const $ = id => document.getElementById(id);
+
+function fmt(n) {
+  return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+}
+
+function findCol(fields, ...terms) {
+  const f = fields.map(x => x.toLowerCase().trim());
+  for (const t of terms) {
+    const i = f.findIndex(x => x.includes(t));
+    if (i >= 0) return fields[i];
+  }
+  return null;
+}
+
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  return parseFloat(String(v).replace(/[^0-9.,\-]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function isIngreso(row) {
+  const c = colMap;
+  if (c.tipo) {
+    const t = String(row[c.tipo] || '').toLowerCase();
+    if (/ingr|créd|cred|dep|entr|abono|haber/.test(t)) return true;
+    if (/egr|déb|deb|sal|gast|cargo|debe/.test(t)) return false;
+  }
+  if (c.ingreso && c.egreso) {
+    const i = parseNum(row[c.ingreso]);
+    const e = parseNum(row[c.egreso]);
+    if (i > 0) return true;
+    if (e > 0) return false;
+  }
+  return parseNum(row[c.monto]) >= 0;
+}
+
+function killCharts() {
+  Object.values(chartObjs).forEach(c => { try { c.destroy(); } catch(e){} });
+  chartObjs = {};
+}
+
+function render(rows) {
+  killCharts();
+  const c = colMap;
+  const ing = rows.filter(r => isIngreso(r));
+  const eg  = rows.filter(r => !isIngreso(r));
+  const totalIng = ing.reduce((s, r) => s + Math.abs(parseNum(r[c.ingreso || c.monto])), 0);
+  const totalEg  = eg.reduce((s,  r) => s + Math.abs(parseNum(r[c.egreso  || c.monto])), 0);
+  const bal = totalIng - totalEg;
+
+  const bancos = c.banco ? [...new Set(rows.map(r => r[c.banco]).filter(Boolean))] : [];
+  const cats   = c.cat   ? [...new Set(rows.map(r => r[c.cat]).filter(Boolean))]   : [];
+
+  let flt = `<label>Tipo:</label><select id="f-tipo" onchange="applyF()"><option value="">Todos</option><option>Ingreso</option><option>Egreso</option></select>`;
+  if (bancos.length) flt += `<label>Banco:</label><select id="f-banco" onchange="applyF()"><option value="">Todos</option>${bancos.map(b=>`<option>${b}</option>`).join('')}</select>`;
+  if (cats.length)   flt += `<label>Categoría:</label><select id="f-cat" onchange="applyF()"><option value="">Todas</option>${cats.map(b=>`<option>${b}</option>`).join('')}</select>`;
+
+  const recent = [...rows].slice(-20).reverse();
+  const tbody = recent.map(r => {
+    const esIng = isIngreso(r);
+    const monto = esIng
+      ? Math.abs(parseNum(r[c.ingreso || c.monto]))
+      : Math.abs(parseNum(r[c.egreso  || c.monto]));
+    return `<tr>
+      <td>${r[c.fecha] || ''}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[c.desc] || ''}</td>
+      ${c.banco ? `<td>${r[c.banco]||''}</td>` : ''}
+      <td><span class="badge ${esIng?'ing':'eg'}">${esIng?'Ingreso':'Egreso'}</span></td>
+      <td style="text-align:right;font-weight:600;color:${esIng?'#1D9E75':'#D85A30'}">${esIng?'+':'-'}${fmt(monto)}</td>
+    </tr>`;
+  }).join('');
+
+  $('app').innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi pos"><div class="kpi-label">↑ Ingresos</div><div class="kpi-value">${fmt(totalIng)}</div><div class="kpi-sub">${ing.length} movimientos</div></div>
+      <div class="kpi neg"><div class="kpi-label">↓ Egresos</div><div class="kpi-value">${fmt(totalEg)}</div><div class="kpi-sub">${eg.length} movimientos</div></div>
+      <div class="kpi ${bal>=0?'bal-pos':'bal-neg'}"><div class="kpi-label">⚖ Balance neto</div><div class="kpi-value">${fmt(bal)}</div><div class="kpi-sub">${bal>=0?'Superávit':'Déficit'}</div></div>
+      <div class="kpi"><div class="kpi-label">≡ Registros</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">total movimientos</div></div>
+    </div>
+
+    <div class="filters">${flt}</div>
+
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Ingresos vs Egresos</div><canvas id="ch-pie"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Movimientos por mes</div><canvas id="ch-bar"></canvas></div>
+      ${cats.length ? `<div class="chart-card full"><div class="chart-title">Egresos por categoría</div><canvas id="ch-cat"></canvas></div>` : ''}
+    </div>
+
+    <div class="table-card">
+      <div class="chart-title" style="margin-bottom:14px">Últimos movimientos</div>
+      <table>
+        <thead><tr><th>Fecha</th><th>Descripción</th>${c.banco?'<th>Banco</th>':''}<th>Tipo</th><th style="text-align:right">Monto</th></tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+
+  chartObjs.pie = new Chart($('ch-pie').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: ['Ingresos', 'Egresos'], datasets: [{ data: [totalIng, totalEg], backgroundColor: ['#1D9E75', '#D85A30'], borderWidth: 0 }] },
+    options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } }, cutout: '65%' }
+  });
+
+  if (c.fecha) {
+    const byM = {};
+    rows.forEach(r => {
+      let k = String(r[c.fecha]||'').substring(0,7);
+      if (!k || k.length < 4) k = 'Otro';
+      if (!byM[k]) byM[k] = {i:0, e:0};
+      if (isIngreso(r)) byM[k].i += Math.abs(parseNum(r[c.ingreso||c.monto]));
+      else              byM[k].e += Math.abs(parseNum(r[c.egreso||c.monto]));
+    });
+    const ms = Object.keys(byM).sort();
+    chartObjs.bar = new Chart($('ch-bar').getContext('2d'), {
+      type: 'bar',
+      data: { labels: ms, datasets: [
+        { label: 'Ingresos', data: ms.map(m => Math.round(byM[m].i)), backgroundColor: '#1D9E75' },
+        { label: 'Egresos',  data: ms.map(m => Math.round(byM[m].e)), backgroundColor: '#D85A30' }
+      ]},
+      options: { plugins: { legend: { labels: { font: { size: 11 } } } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } } }
+    });
+  }
+
+  if (cats.length) {
+    const byCat = {};
+    eg.forEach(r => {
+      const cat = r[c.cat] || 'Sin categoría';
+      byCat[cat] = (byCat[cat]||0) + Math.abs(parseNum(r[c.egreso||c.monto]));
+    });
+    const sorted = Object.keys(byCat).sort((a,b) => byCat[b]-byCat[a]).slice(0,8);
+    chartObjs.cat = new Chart($('ch-cat').getContext('2d'), {
+      type: 'bar',
+      data: { labels: sorted, datasets: [{ label: 'Egresos', data: sorted.map(k => Math.round(byCat[k])), backgroundColor: '#D85A30' }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } } }
+    });
+  }
+}
+
+function applyF() {
+  const tipo  = $('f-tipo')?.value  || '';
+  const banco = $('f-banco')?.value || '';
+  const cat   = $('f-cat')?.value   || '';
+  const c = colMap;
+  const filtered = allRows.filter(r => {
+    if (tipo  === 'Ingreso' && !isIngreso(r)) return false;
+    if (tipo  === 'Egreso'  &&  isIngreso(r)) return false;
+    if (banco && c.banco && r[c.banco] !== banco) return false;
+    if (cat   && c.cat   && r[c.cat]   !== cat)   return false;
+    return true;
+  });
+  render(filtered);
+  if (tipo)  $('f-tipo').value  = tipo;
+  if (banco && $('f-banco')) $('f-banco').value = banco;
+  if (cat   && $('f-cat'))   $('f-cat').value   = cat;
+}
+
+function loadData() {
+  $('err-box').style.display = 'none';
+  $('meta-txt').textContent = 'Actualizando...';
+  $('app').innerHTML = '<div class="loading"><span class="spinner"></span>Cargando datos...</div>';
+
+  Papa.parse(CSV + '&nocache=' + Date.now(), {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete(res) {
+      if (!res.data || res.data.length === 0) {
+        showErr('No se encontraron datos.', res.meta.fields);
+        return;
+      }
+      allRows = res.data;
+      const fields = res.meta.fields || [];
+      colMap = {
+        fecha:   findCol(fields, 'fecha', 'date', 'día', 'dia'),
+        desc:    findCol(fields, 'descrip', 'concepto', 'detalle', 'referencia', 'motivo', 'glosa', 'observ'),
+        monto:   findCol(fields, 'monto', 'amount', 'valor', 'importe', 'total'),
+        ingreso: findCol(fields, 'ingreso', 'abono', 'haber', 'crédito', 'credito', 'entrada'),
+        egreso:  findCol(fields, 'egreso', 'cargo', 'debe', 'débito', 'debito', 'salida', 'gasto'),
+        tipo:    findCol(fields, 'tipo', 'type', 'naturaleza', 'clase', 'movim'),
+        banco:   findCol(fields, 'banco', 'bank', 'cuenta', 'entidad'),
+        cat:     findCol(fields, 'categ', 'rubro', 'clasif'),
+      };
+      if (!colMap.monto && !colMap.ingreso && !colMap.egreso) {
+        showErr('No se encontró columna de monto. Columnas detectadas:', fields);
+        return;
+      }
+      $('meta-txt').textContent = `Actualizado: ${new Date().toLocaleString('es-VE')} · ${allRows.length} registros`;
+      render(allRows);
+    },
+    error(e) { showErr('Error de conexión: ' + e.message); }
+  });
+}
+
+function showErr(msg, fields) {
+  const colsInfo = fields ? `<div class="cols-box">Columnas detectadas: ${fields.join(' | ')}</div>` : '';
+  $('err-box').innerHTML = `<div class="error-box">${msg}${colsInfo}<br><br>Comparte las columnas detectadas para ajustar el dashboard.</div>`;
+  $('err-box').style.display = 'block';
+  $('app').innerHTML = '';
+  $('meta-txt').textContent = 'Error al cargar';
+}
+
+loadData();
+</script>
+</body>
+</html>
