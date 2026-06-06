@@ -80,22 +80,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.875rem}
 .resumen-top{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
 @media(min-width:700px){.resumen-top{grid-template-columns:300px 1fr}}
-.chart-wrap{position:relative;width:100%;max-height:260px}
-.breakdown-item{margin-bottom:10px}
-.breakdown-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.breakdown-name{font-size:12px;font-weight:500;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
-.breakdown-amt{font-size:12px;font-weight:600;white-space:nowrap}
-.breakdown-pct{font-size:10px;color:var(--muted);margin-left:6px;white-space:nowrap}
-.bar-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.bar-fill{height:5px;border-radius:3px;transition:width .4s ease}
-.breakdown-sub{margin-top:5px;padding-left:12px;border-left:2px solid var(--border)}
-.breakdown-sub-item{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px;color:var(--muted)}
-.breakdown-sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
-.breakdown-sub-amt{white-space:nowrap;font-weight:500}
-.expand-btn{font-size:10px;color:var(--accent);cursor:pointer;margin-top:4px;background:none;border:none;font-family:inherit;padding:0}
-.expand-btn:hover{opacity:.7}
+.chart-wrap{position:relative;width:100%}
 .charts-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
 @media(min-width:700px){.charts-grid{grid-template-columns:1fr 1fr}}
+.cat-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cat-section-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.cat-section-total{font-size:15px;font-weight:700}
+.cat-item{margin-bottom:2px;border-radius:8px;overflow:hidden;border:1px solid transparent;transition:border-color .15s}
+.cat-item.open{border-color:var(--border)}
+.cat-row{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-radius:8px;transition:background .15s;user-select:none}
+.cat-row:hover{background:var(--surface2)}
+.cat-item.open .cat-row{background:var(--surface2);border-radius:8px 8px 0 0}
+.cat-chevron{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;width:14px}
+.cat-item.open .cat-chevron{transform:rotate(90deg)}
+.cat-name{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;max-width:200px}
+@media(min-width:700px){.cat-bar-wrap{max-width:300px}}
+.cat-bar-fill{height:6px;border-radius:3px;transition:width .4s ease}
+.cat-pct{font-size:10px;color:var(--muted);white-space:nowrap;min-width:32px;text-align:right}
+.cat-total{font-size:13px;font-weight:700;white-space:nowrap;min-width:90px;text-align:right}
+.cat-detail{display:none;padding:8px 12px 12px 36px;background:var(--surface2);border-radius:0 0 8px 8px}
+.cat-item.open .cat-detail{display:block}
+.tipo-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.tipo-row:last-child{border-bottom:none}
+.tipo-name{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tipo-bar-wrap{width:100px;height:3px;background:var(--border);border-radius:2px;flex-shrink:0}
+@media(min-width:600px){.tipo-bar-wrap{width:140px}}
+.tipo-bar-fill{height:3px;border-radius:2px;opacity:.7}
+.tipo-pct{font-size:10px;color:var(--muted);min-width:28px;text-align:right;flex-shrink:0}
+.tipo-amt{font-size:12px;font-weight:600;min-width:80px;text-align:right;flex-shrink:0}
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:12px}
 @media(min-width:600px){table{font-size:13px}}
@@ -174,36 +187,36 @@ function fmt(n){return'$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:2
 function parseNum(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/[^0-9.,\-]/g,'');if(!s||s==='-')return 0;if(/,\d{1,2}$/.test(s)&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}else if(/,\d{1,2}$/.test(s)){s=s.replace(',','.');}else{s=s.replace(/,/g,'');}const n=parseFloat(s);return isNaN(n)?0:n;}
 function parseYM(v){if(!v)return null;const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,7);const dmy=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(dmy)return`${dmy[3]}-${String(parseInt(dmy[2])).padStart(2,'0')}`;const dm=s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{2,4})/i);if(dm){const mo={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[dm[2].toLowerCase()]||'01';const y=dm[3].length===2?'20'+dm[3]:dm[3];return`${y}-${mo}`;}return null;}
 function mlabel(ym){if(!ym)return'';const[y,m]=ym.split('-');return['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y;}
-function mapCols(fields){const find=(...terms)=>fields.find(f=>terms.some(t=>f.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,''))))||null;return{fecha:find('FECHA'),ano:find('ANO','AÑO'),ingEg:find('INGRESOEGRESO','INGRESO'),banco:find('BANCO'),tipo:find('TIPO'),cat:find('CATEGORIA','CATEGORÍA'),coment:find('COMENTARIOS'),benef:find('BENEFICIARIO'),dueno:find('DUEÑO','DUENO'),credito:find('CREDITO','CRÉDITO'),debito:find('DEBITO','DÉBITO'),montoUSD:find('MONTOUSD'),mLimpio:find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio')};}
+function mapCols(fields){const find=(...terms)=>fields.find(f=>terms.some(t=>f.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,''))))||null;return{fecha:find('FECHA'),ingEg:find('INGRESOEGRESO','INGRESO'),banco:find('BANCO'),tipo:find('TIPO'),cat:find('CATEGORIA','CATEGORÍA'),coment:find('COMENTARIOS'),benef:find('BENEFICIARIO'),dueno:find('DUEÑO','DUENO'),credito:find('CREDITO','CRÉDITO'),debito:find('DEBITO','DÉBITO'),montoUSD:find('MONTOUSD'),mLimpio:find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio')};}
 function isIng(row){const v=String(row[C.ingEg]||'').toLowerCase().trim();return v.includes('ingr')||v.includes('entr')||v.includes('abono')||v==='i';}
 function getMonto(row){if(C.montoUSD){const v=parseNum(row[C.montoUSD]);if(v!==0)return Math.abs(v);}if(C.mLimpio){const v=parseNum(row[C.mLimpio]);if(v!==0)return Math.abs(v);}if(isIng(row)&&C.credito){const v=parseNum(row[C.credito]);if(v!==0)return Math.abs(v);}if(!isIng(row)&&C.debito){const v=parseNum(row[C.debito]);if(v!==0)return Math.abs(v);}return 0;}
 function getBenef(row){return(row[C.benef]||row[C.dueno]||'').trim();}
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
 function applyFilters(){return allRows.filter(r=>{const ym=parseYM(r[C.fecha]);if(F.anos.length&&!F.anos.includes(ym?ym.substring(0,4):''))return false;if(F.meses.length&&!F.meses.includes(ym?ym.substring(5,7):''))return false;if(F.tipoMov==='Ingreso'&&!isIng(r))return false;if(F.tipoMov==='Egreso'&&isIng(r))return false;if(F.bancos.length&&!F.bancos.includes((r[C.banco]||'').trim()))return false;if(F.cats.length&&!F.cats.includes((r[C.cat]||'').trim()))return false;if(F.tipos.length&&!F.tipos.includes((r[C.tipo]||'').trim()))return false;if(F.benefSel.length&&!F.benefSel.includes(getBenef(r)))return false;return true;});}
 
-function buildBreakdown(rows,isIngMode){
-  const filtered=isIngMode?rows.filter(r=>isIng(r)):rows.filter(r=>!isIng(r));
+function buildCatBreakdown(rows,ingMode){
+  const filtered=ingMode?rows.filter(r=>isIng(r)):rows.filter(r=>!isIng(r));
   const total=filtered.reduce((s,r)=>s+getMonto(r),0);
   if(!filtered.length)return'<div style="color:var(--muted);font-size:13px;padding:.5rem 0">Sin datos para el filtro seleccionado.</div>';
   const catMap={};
-  filtered.forEach(r=>{const cat=(r[C.cat]||'Sin categoría').trim();const tipo=(r[C.tipo]||'Sin tipo').trim();const m=getMonto(r);if(!catMap[cat])catMap[cat]={total:0,tipos:{}};catMap[cat].total+=m;if(!catMap[cat].tipos[tipo])catMap[cat].tipos[tipo]=0;catMap[cat].tipos[tipo]+=m;});
+  filtered.forEach(r=>{const cat=(r[C.cat]||'Sin categoría').trim();const tipo=(r[C.tipo]||'Sin tipo').trim();const m=getMonto(r);if(!catMap[cat])catMap[cat]={total:0,tipos:{}};catMap[cat].total+=m;catMap[cat].tipos[tipo]=(catMap[cat].tipos[tipo]||0)+m;});
   const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
   const maxCat=sortedCats[0]?.[1]?.total||1;
-  const color=isIngMode?'var(--green)':'var(--red)';
-  const colorHex=isIngMode?'#34c87a':'#f05454';
-  const html=sortedCats.map(([cat,d],idx)=>{
+  const color=ingMode?'var(--green)':'var(--red)';
+  const colorHex=ingMode?'#34c87a':'#f05454';
+  const prefix=ingMode?'ing':'eg';
+  const header=`<div class="cat-section-header"><div class="cat-section-title">${ingMode?'Ingresos':'Egresos'} por categoría</div><div class="cat-section-total" style="color:${color}">${fmt(total)}</div></div>`;
+  const items=sortedCats.map(([cat,d],idx)=>{
     const pct=Math.round(d.total/total*100);const barW=Math.round(d.total/maxCat*100);
-    const sortedTipos=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1]);
-    const topTipos=sortedTipos.slice(0,3);const moreTipos=sortedTipos.slice(3);
-    const tiposHTML=topTipos.map(([tipo,amt])=>`<div class="breakdown-sub-item"><div class="breakdown-sub-name">${esc(tipo)}</div><div class="breakdown-sub-amt" style="color:${color}">${fmt(amt)}</div></div>`).join('');
-    const moreID=`more-${isIngMode?'i':'e'}-${idx}`;
-    const moreHTML=moreTipos.length?`<div id="${moreID}" style="display:none">${moreTipos.map(([tipo,amt])=>`<div class="breakdown-sub-item"><div class="breakdown-sub-name">${esc(tipo)}</div><div class="breakdown-sub-amt" style="color:${color}">${fmt(amt)}</div></div>`).join('')}</div><button class="expand-btn" onclick="toggleMore('${moreID}',this)">+ ${moreTipos.length} más tipos ▾</button>`:'';
-    return`<div class="breakdown-item"><div class="breakdown-header"><div class="breakdown-name">${esc(cat)}</div><div style="display:flex;align-items:center;gap:4px"><div class="breakdown-amt" style="color:${color}">${fmt(d.total)}</div><div class="breakdown-pct">${pct}%</div></div></div><div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${colorHex}"></div></div><div class="breakdown-sub">${tiposHTML}${moreHTML}</div></div>`;
+    const sortedTipos=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1]);const maxTipo=sortedTipos[0]?.[1]||1;
+    const id=`cat-${prefix}-${idx}`;
+    const tipoRows=sortedTipos.map(([tipo,amt])=>{const tpct=Math.round(amt/d.total*100);const tbarW=Math.round(amt/maxTipo*100);return`<div class="tipo-row"><div class="tipo-name">${esc(tipo)}</div><div class="tipo-bar-wrap"><div class="tipo-bar-fill" style="width:${tbarW}%;background:${colorHex}"></div></div><div class="tipo-pct">${tpct}%</div><div class="tipo-amt" style="color:${color}">${fmt(amt)}</div></div>`;}).join('');
+    return`<div class="cat-item" id="${id}"><div class="cat-row" onclick="toggleCat('${id}')"><span class="cat-chevron">▶</span><div class="cat-name">${esc(cat)}</div><div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${barW}%;background:${colorHex}"></div></div><div class="cat-pct">${pct}%</div><div class="cat-total" style="color:${color}">${fmt(d.total)}</div></div><div class="cat-detail">${tipoRows}</div></div>`;
   }).join('');
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${isIngMode?'Ingresos':'Egresos'} por categoría → tipo</div><div style="font-size:14px;font-weight:700;color:${color}">${fmt(total)}</div></div>${html}`;
+  return header+items;
 }
 
-function toggleMore(id,btn){const el=$(id);if(!el)return;const open=el.style.display!=='none';el.style.display=open?'none':'block';btn.textContent=open?`+ ${el.children.length} más tipos ▾`:'▴ Mostrar menos';}
+function toggleCat(id){const el=$(id);if(el)el.classList.toggle('open');}
 
 function buildFilters(){
   const anos=[...new Set(allRows.map(r=>{const ym=parseYM(r[C.fecha]);return ym?ym.substring(0,4):''}).filter(Boolean))].sort();
@@ -267,20 +280,17 @@ const aOpts={x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},
 
 function buildResumen(rows,kpi){
   killCharts();
-  const{tI,tE,ing,eg}=kpi;
+  const{tI,tE}=kpi;
   const byM={};rows.forEach(r=>{const k=parseYM(r[C.fecha]);if(!k)return;if(!byM[k])byM[k]={i:0,e:0};if(isIng(r))byM[k].i+=getMonto(r);else byM[k].e+=getMonto(r);});
   const ms=Object.keys(byM).sort();const msL=ms.map(mlabel);
   const showIng=F.tipoMov!=='Egreso';const showEg=F.tipoMov!=='Ingreso';
   $('page-resumen').innerHTML=`
     <div class="resumen-top">
-      <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
-        <div class="card-title" style="text-align:center">Ingresos vs Egresos</div>
-        <div class="chart-wrap"><canvas id="ch-pie" style="max-height:220px"></canvas></div>
-      </div>
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="card-title" style="text-align:center">Ingresos vs Egresos</div><div class="chart-wrap"><canvas id="ch-pie" style="max-height:220px"></canvas></div></div>
       <div class="card"><div class="card-title">Evolución mensual</div><div class="chart-wrap"><canvas id="ch-bar" style="max-height:220px"></canvas></div></div>
     </div>
-    ${showEg?`<div class="card">${buildBreakdown(rows,false)}</div>`:''}
-    ${showIng?`<div class="card">${buildBreakdown(rows,true)}</div>`:''}`;
+    ${showEg?`<div class="card">${buildCatBreakdown(rows,false)}</div>`:''}
+    ${showIng?`<div class="card">${buildCatBreakdown(rows,true)}</div>`:''}`;
   charts.pie=new Chart($('ch-pie').getContext('2d'),{type:'doughnut',data:{labels:['Ingresos','Egresos'],datasets:[{data:[tI,tE],backgroundColor:['#34c87a','#f05454'],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},padding:14}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},cutout:'68%'}});
   if(ms.length){charts.bar=new Chart($('ch-bar').getContext('2d'),{type:'bar',data:{labels:msL,datasets:[{label:'Ingresos',data:ms.map(m=>Math.round(byM[m].i)),backgroundColor:'rgba(52,200,122,0.75)',borderRadius:3},{label:'Egresos',data:ms.map(m=>Math.round(byM[m].e)),backgroundColor:'rgba(240,84,84,0.75)',borderRadius:3}]},options:{plugins:{legend:{labels:{color:tc,font:{size:11}}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},scales:aOpts}});}
 }
