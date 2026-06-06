@@ -9,12 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3348;
-  --text:#e8eaf0;--muted:#7b82a0;--accent:#4f8ef7;
-  --green:#34c87a;--red:#f05454;--amber:#f5a623;
-  --green-bg:rgba(52,200,122,0.1);--red-bg:rgba(240,84,84,0.1);--accent-bg:rgba(79,142,247,0.1);
-}
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3348;--text:#e8eaf0;--muted:#7b82a0;--accent:#4f8ef7;--green:#34c87a;--red:#f05454;--amber:#f5a623;--green-bg:rgba(52,200,122,0.1);--red-bg:rgba(240,84,84,0.1);--accent-bg:rgba(79,142,247,0.1);}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
 .logo{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
@@ -29,11 +24,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 @media(min-width:900px){.burger{display:none}}
 .layout{display:flex;min-height:calc(100vh - 52px);position:relative}
 .sidebar{width:190px;background:var(--surface);border-right:1px solid var(--border);padding:1rem 0;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;transition:transform .25s;z-index:150}
-@media(max-width:899px){
-  .sidebar{position:fixed;top:52px;left:0;height:calc(100vh - 52px);transform:translateX(-100%)}
-  .sidebar.open{transform:translateX(0)}
-  .overlay{display:block !important}
-}
+@media(max-width:899px){.sidebar{position:fixed;top:52px;left:0;height:calc(100vh - 52px);transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}}
 .overlay{display:none;position:fixed;inset:0;top:52px;background:rgba(0,0,0,.5);z-index:140}
 .nav-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 1.25rem;margin-bottom:6px}
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 1rem;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .15s;margin:1px 0.5rem}
@@ -42,7 +33,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-item svg{width:15px;height:15px;flex-shrink:0}
 .main{flex:1;padding:1rem;min-width:0;overflow-x:hidden}
 @media(min-width:600px){.main{padding:1.25rem 1.5rem}}
-.filterbar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.875rem 1rem;margin-bottom:1rem}
+.filterbar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;margin-bottom:1rem}
 .fb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .fb-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
 .clear-all{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:inherit}
@@ -60,7 +51,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none}
 .search-input:focus{border-color:var(--accent)}
 .search-input::placeholder{color:var(--muted)}
-.search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:50;display:none}
+.search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .search-dropdown.open{display:block}
 .search-option{padding:7px 12px;font-size:12px;cursor:pointer;color:var(--text)}
 .search-option:hover{background:var(--surface)}
@@ -87,6 +78,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .page{display:none}.page.active{display:block}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem}
 .card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.875rem}
+.resumen-top{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
+@media(min-width:700px){.resumen-top{grid-template-columns:300px 1fr}}
+.chart-wrap{position:relative;width:100%;max-height:260px}
+.breakdown-item{margin-bottom:10px}
+.breakdown-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.breakdown-name{font-size:12px;font-weight:500;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.breakdown-amt{font-size:12px;font-weight:600;white-space:nowrap}
+.breakdown-pct{font-size:10px;color:var(--muted);margin-left:6px;white-space:nowrap}
+.bar-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:5px;border-radius:3px;transition:width .4s ease}
+.breakdown-sub{margin-top:5px;padding-left:12px;border-left:2px solid var(--border)}
+.breakdown-sub-item{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px;color:var(--muted)}
+.breakdown-sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.breakdown-sub-amt{white-space:nowrap;font-weight:500}
+.expand-btn{font-size:10px;color:var(--accent);cursor:pointer;margin-top:4px;background:none;border:none;font-family:inherit;padding:0}
+.expand-btn:hover{opacity:.7}
 .charts-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
 @media(min-width:700px){.charts-grid{grid-template-columns:1fr 1fr}}
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -160,19 +167,43 @@ tr:hover td{background:var(--surface2)}
 const CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1817920401&single=true&output=csv';
 let allRows=[],C={},charts={};
 let currentPage='resumen';
-let F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSearch:'',benefSel:[]};
+let F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSel:[]};
 const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function fmt(n){return'$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(n||0));}
 function parseNum(v){if(!v&&v!==0)return 0;let s=String(v).trim().replace(/[^0-9.,\-]/g,'');if(!s||s==='-')return 0;if(/,\d{1,2}$/.test(s)&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}else if(/,\d{1,2}$/.test(s)){s=s.replace(',','.');}else{s=s.replace(/,/g,'');}const n=parseFloat(s);return isNaN(n)?0:n;}
 function parseYM(v){if(!v)return null;const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,7);const dmy=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(dmy)return`${dmy[3]}-${String(parseInt(dmy[2])).padStart(2,'0')}`;const dm=s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{2,4})/i);if(dm){const mo={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[dm[2].toLowerCase()]||'01';const y=dm[3].length===2?'20'+dm[3]:dm[3];return`${y}-${mo}`;}return null;}
 function mlabel(ym){if(!ym)return'';const[y,m]=ym.split('-');return['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y;}
-function mapCols(fields){const find=(...terms)=>fields.find(f=>terms.some(t=>f.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,''))))||null;return{fecha:find('FECHA'),ano:find('ANO','AÑO'),mes:find('MES'),ingEg:find('INGRESOEGRESO','INGRESO'),banco:find('BANCO'),tipo:find('TIPO'),cat:find('CATEGORIA','CATEGORÍA'),coment:find('COMENTARIOS'),benef:find('BENEFICIARIO'),dueno:find('DUEÑO','DUENO'),credito:find('CREDITO','CRÉDITO'),debito:find('DEBITO','DÉBITO'),montoUSD:find('MONTOUSD'),mLimpio:find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio')};}
+function mapCols(fields){const find=(...terms)=>fields.find(f=>terms.some(t=>f.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,'').includes(t.toLowerCase().replace(/[\s\/\-_áéíóúü]/g,''))))||null;return{fecha:find('FECHA'),ano:find('ANO','AÑO'),ingEg:find('INGRESOEGRESO','INGRESO'),banco:find('BANCO'),tipo:find('TIPO'),cat:find('CATEGORIA','CATEGORÍA'),coment:find('COMENTARIOS'),benef:find('BENEFICIARIO'),dueno:find('DUEÑO','DUENO'),credito:find('CREDITO','CRÉDITO'),debito:find('DEBITO','DÉBITO'),montoUSD:find('MONTOUSD'),mLimpio:find('MOntoLimpio','MONTOLIMPIO','Monto_Limpio')};}
 function isIng(row){const v=String(row[C.ingEg]||'').toLowerCase().trim();return v.includes('ingr')||v.includes('entr')||v.includes('abono')||v==='i';}
 function getMonto(row){if(C.montoUSD){const v=parseNum(row[C.montoUSD]);if(v!==0)return Math.abs(v);}if(C.mLimpio){const v=parseNum(row[C.mLimpio]);if(v!==0)return Math.abs(v);}if(isIng(row)&&C.credito){const v=parseNum(row[C.credito]);if(v!==0)return Math.abs(v);}if(!isIng(row)&&C.debito){const v=parseNum(row[C.debito]);if(v!==0)return Math.abs(v);}return 0;}
 function getBenef(row){return(row[C.benef]||row[C.dueno]||'').trim();}
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
 function applyFilters(){return allRows.filter(r=>{const ym=parseYM(r[C.fecha]);if(F.anos.length&&!F.anos.includes(ym?ym.substring(0,4):''))return false;if(F.meses.length&&!F.meses.includes(ym?ym.substring(5,7):''))return false;if(F.tipoMov==='Ingreso'&&!isIng(r))return false;if(F.tipoMov==='Egreso'&&isIng(r))return false;if(F.bancos.length&&!F.bancos.includes((r[C.banco]||'').trim()))return false;if(F.cats.length&&!F.cats.includes((r[C.cat]||'').trim()))return false;if(F.tipos.length&&!F.tipos.includes((r[C.tipo]||'').trim()))return false;if(F.benefSel.length&&!F.benefSel.includes(getBenef(r)))return false;return true;});}
+
+function buildBreakdown(rows,isIngMode){
+  const filtered=isIngMode?rows.filter(r=>isIng(r)):rows.filter(r=>!isIng(r));
+  const total=filtered.reduce((s,r)=>s+getMonto(r),0);
+  if(!filtered.length)return'<div style="color:var(--muted);font-size:13px;padding:.5rem 0">Sin datos para el filtro seleccionado.</div>';
+  const catMap={};
+  filtered.forEach(r=>{const cat=(r[C.cat]||'Sin categoría').trim();const tipo=(r[C.tipo]||'Sin tipo').trim();const m=getMonto(r);if(!catMap[cat])catMap[cat]={total:0,tipos:{}};catMap[cat].total+=m;if(!catMap[cat].tipos[tipo])catMap[cat].tipos[tipo]=0;catMap[cat].tipos[tipo]+=m;});
+  const sortedCats=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
+  const maxCat=sortedCats[0]?.[1]?.total||1;
+  const color=isIngMode?'var(--green)':'var(--red)';
+  const colorHex=isIngMode?'#34c87a':'#f05454';
+  const html=sortedCats.map(([cat,d],idx)=>{
+    const pct=Math.round(d.total/total*100);const barW=Math.round(d.total/maxCat*100);
+    const sortedTipos=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1]);
+    const topTipos=sortedTipos.slice(0,3);const moreTipos=sortedTipos.slice(3);
+    const tiposHTML=topTipos.map(([tipo,amt])=>`<div class="breakdown-sub-item"><div class="breakdown-sub-name">${esc(tipo)}</div><div class="breakdown-sub-amt" style="color:${color}">${fmt(amt)}</div></div>`).join('');
+    const moreID=`more-${isIngMode?'i':'e'}-${idx}`;
+    const moreHTML=moreTipos.length?`<div id="${moreID}" style="display:none">${moreTipos.map(([tipo,amt])=>`<div class="breakdown-sub-item"><div class="breakdown-sub-name">${esc(tipo)}</div><div class="breakdown-sub-amt" style="color:${color}">${fmt(amt)}</div></div>`).join('')}</div><button class="expand-btn" onclick="toggleMore('${moreID}',this)">+ ${moreTipos.length} más tipos ▾</button>`:'';
+    return`<div class="breakdown-item"><div class="breakdown-header"><div class="breakdown-name">${esc(cat)}</div><div style="display:flex;align-items:center;gap:4px"><div class="breakdown-amt" style="color:${color}">${fmt(d.total)}</div><div class="breakdown-pct">${pct}%</div></div></div><div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${colorHex}"></div></div><div class="breakdown-sub">${tiposHTML}${moreHTML}</div></div>`;
+  }).join('');
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${isIngMode?'Ingresos':'Egresos'} por categoría → tipo</div><div style="font-size:14px;font-weight:700;color:${color}">${fmt(total)}</div></div>${html}`;
+}
+
+function toggleMore(id,btn){const el=$(id);if(!el)return;const open=el.style.display!=='none';el.style.display=open?'none':'block';btn.textContent=open?`+ ${el.children.length} más tipos ▾`:'▴ Mostrar menos';}
 
 function buildFilters(){
   const anos=[...new Set(allRows.map(r=>{const ym=parseYM(r[C.fecha]);return ym?ym.substring(0,4):''}).filter(Boolean))].sort();
@@ -197,36 +228,24 @@ function buildFilters(){
   F.benefSel.forEach(b=>tags.push({l:'Benef: '+b,rm:()=>{F.benefSel=F.benefSel.filter(x=>x!==b);rerender();}}));
   window._rmFns=tags.map(t=>t.rm);
   const chipRow=(arr,selArr,field)=>arr.map(v=>`<button class="chip${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</button>`).join('');
-  const moreDD=(items,selArr,field,id)=>items.length===0?'':
-    `<div style="position:relative;display:inline-block"><button class="chip more" onclick="toggleDD('${id}')" id="btn-${id}">+${items.length} más ▾</button>
-    <div id="${id}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:150px;max-height:180px;overflow-y:auto;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-    ${items.map(v=>`<div class="search-option${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</div>`).join('')}</div></div>`;
+  const moreDD=(items,selArr,field,id)=>!items.length?'':
+    `<div style="position:relative;display:inline-block"><button class="chip more" onclick="toggleDD('${id}')" id="btn-${id}">+${items.length} más ▾</button><div id="${id}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:150px;max-height:180px;overflow-y:auto;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4)">${items.map(v=>`<div class="search-option${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</div>`).join('')}</div></div>`;
   $('filterbar').innerHTML=`
     <div class="fb-top"><div class="fb-title">Filtros</div>${tags.length?`<button class="clear-all" onclick="clearAll()">Limpiar todo</button>`:''}</div>
     <div class="filter-sections">
-      <div class="filter-section"><div class="fs-label">Tipo movimiento</div><div class="chips">
-        <button class="chip${F.tipoMov===''?' sel':''}" onclick="F.tipoMov='';rerender()">Todos</button>
-        <button class="chip${F.tipoMov==='Ingreso'?' sel-g sel':''}" onclick="F.tipoMov='Ingreso';rerender()">Ingresos</button>
-        <button class="chip${F.tipoMov==='Egreso'?' sel-r sel':''}" onclick="F.tipoMov='Egreso';rerender()">Egresos</button>
-      </div></div>
-      <div class="filter-section"><div class="fs-label">Año</div><div class="chips">${chipRow(anos,F.anos,'anos')}</div></div>
-      <div class="filter-section"><div class="fs-label">Mes</div><div class="chips">${availM.map(x=>{const[num,nom]=x.split(':');return`<button class="chip${F.meses.includes(num)?' sel':''}" onclick="toggleF('meses','${num}')">${nom}</button>`;}).join('')}</div></div>
-      <div class="filter-section"><div class="fs-label">Banco <span style="font-weight:400;color:var(--muted)">(top frecuentes)</span></div><div class="chips">${chipRow(topBancos,F.bancos,'bancos')}${moreDD(moreBancos,F.bancos,'bancos','dd-bancos')}</div></div>
-      <div class="filter-section"><div class="fs-label">Categoría</div><div class="chips">${chipRow(cats,F.cats,'cats')}</div></div>
-      <div class="filter-section"><div class="fs-label">Tipo <span style="font-weight:400;color:var(--muted)">(top frecuentes)</span></div><div class="chips">${chipRow(topTipos,F.tipos,'tipos')}${moreDD(moreTipos,F.tipos,'tipos','dd-tipos')}</div></div>
-      <div class="filter-section"><div class="fs-label">Beneficiario</div>
-        <div class="search-filter">
-          <input class="search-input" id="benef-input" placeholder="Buscar beneficiario..." oninput="filterBenefList()" onfocus="openBenefDrop()" autocomplete="off">
-          <div class="search-dropdown" id="benef-drop">${allBenefs.map(b=>`<div class="search-option${F.benefSel.includes(b)?' sel':''}" onclick="toggleBenef('${esc(b)}')">${esc(b)}</div>`).join('')}</div>
-        </div>
-        <div class="selected-pills" id="benef-pills">${F.benefSel.map(b=>`<div class="pill">${esc(b)}<span class="pill-x" onclick="toggleBenef('${esc(b)}')">×</span></div>`).join('')}</div>
+      <div><div class="fs-label">Tipo movimiento</div><div class="chips"><button class="chip${F.tipoMov===''?' sel':''}" onclick="F.tipoMov='';rerender()">Todos</button><button class="chip${F.tipoMov==='Ingreso'?' sel-g sel':''}" onclick="F.tipoMov='Ingreso';rerender()">Ingresos</button><button class="chip${F.tipoMov==='Egreso'?' sel-r sel':''}" onclick="F.tipoMov='Egreso';rerender()">Egresos</button></div></div>
+      <div><div class="fs-label">Año</div><div class="chips">${chipRow(anos,F.anos,'anos')}</div></div>
+      <div><div class="fs-label">Mes</div><div class="chips">${availM.map(x=>{const[num,nom]=x.split(':');return`<button class="chip${F.meses.includes(num)?' sel':''}" onclick="toggleF('meses','${num}')">${nom}</button>`;}).join('')}</div></div>
+      <div><div class="fs-label">Banco <span style="font-weight:400;color:var(--muted)">(frecuentes)</span></div><div class="chips">${chipRow(topBancos,F.bancos,'bancos')}${moreDD(moreBancos,F.bancos,'bancos','dd-bancos')}</div></div>
+      <div><div class="fs-label">Categoría</div><div class="chips">${chipRow(cats,F.cats,'cats')}</div></div>
+      <div><div class="fs-label">Tipo <span style="font-weight:400;color:var(--muted)">(frecuentes)</span></div><div class="chips">${chipRow(topTipos,F.tipos,'tipos')}${moreDD(moreTipos,F.tipos,'tipos','dd-tipos')}</div></div>
+      <div><div class="fs-label">Beneficiario</div>
+        <div class="search-filter"><input class="search-input" id="benef-input" placeholder="Buscar beneficiario..." oninput="filterBenefList()" onfocus="openBenefDrop()" autocomplete="off"><div class="search-dropdown" id="benef-drop">${allBenefs.map(b=>`<div class="search-option${F.benefSel.includes(b)?' sel':''}" onclick="toggleBenef('${esc(b)}')">${esc(b)}</div>`).join('')}</div></div>
+        <div class="selected-pills">${F.benefSel.map(b=>`<div class="pill">${esc(b)}<span class="pill-x" onclick="toggleBenef('${esc(b)}')">×</span></div>`).join('')}</div>
       </div>
     </div>
     ${tags.length?`<div class="active-row"><span class="active-row-label">Activos:</span>${tags.map((t,i)=>`<div class="atag">${esc(t.l)}<span class="atag-x" onclick="_rmFns[${i}]()">×</span></div>`).join('')}</div>`:''}`;
-  document.onclick=e=>{
-    ['dd-bancos','dd-tipos'].forEach(id=>{const el=$(id);if(el&&el.style.display!=='none'&&!el.contains(e.target)&&!e.target.closest('#btn-'+id))el.style.display='none';});
-    const dd=$('benef-drop');if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)&&e.target.id!=='benef-input')dd.classList.remove('open');
-  };
+  document.onclick=e=>{['dd-bancos','dd-tipos'].forEach(id=>{const el=$(id);if(el&&el.style.display!=='none'&&!el.contains(e.target)&&!e.target.closest('#btn-'+id))el.style.display='none';});const dd=$('benef-drop');if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)&&e.target.id!=='benef-input')dd.classList.remove('open');};
 }
 
 function toggleDD(id){const el=$(id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
@@ -234,54 +253,42 @@ function toggleF(field,val){const arr=F[field];const i=arr.indexOf(val);if(i>=0)
 function filterBenefList(){const q=($('benef-input').value||'').toLowerCase();const dd=$('benef-drop');if(!dd)return;dd.querySelectorAll('.search-option').forEach(el=>{el.style.display=el.textContent.toLowerCase().includes(q)?'':'none';});dd.classList.add('open');}
 function openBenefDrop(){const dd=$('benef-drop');if(dd)dd.classList.add('open');}
 function toggleBenef(val){const i=F.benefSel.indexOf(val);if(i>=0)F.benefSel.splice(i,1);else F.benefSel.push(val);rerender();}
-function clearAll(){F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSearch:'',benefSel:[]};rerender();}
+function clearAll(){F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSel:[]};rerender();}
 
 function buildKPI(rows){
   const ing=rows.filter(r=>isIng(r));const eg=rows.filter(r=>!isIng(r));
   const tI=ing.reduce((s,r)=>s+getMonto(r),0);const tE=eg.reduce((s,r)=>s+getMonto(r),0);const bal=tI-tE;
-  $('kpi-grid').innerHTML=`
-    <div class="kpi pos"><div class="kpi-label">Ingresos</div><div class="kpi-value">${fmt(tI)}</div><div class="kpi-sub">${ing.length} mov.</div></div>
-    <div class="kpi neg"><div class="kpi-label">Egresos</div><div class="kpi-value">${fmt(tE)}</div><div class="kpi-sub">${eg.length} mov.</div></div>
-    <div class="kpi bal"><div class="kpi-label">Balance</div><div class="kpi-value">${fmt(bal)}</div><div class="kpi-sub">${bal>=0?'Superávit':'Déficit'}</div></div>
-    <div class="kpi neu"><div class="kpi-label">Registros</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">de ${allRows.length} total</div></div>`;
+  $('kpi-grid').innerHTML=`<div class="kpi pos"><div class="kpi-label">Ingresos</div><div class="kpi-value">${fmt(tI)}</div><div class="kpi-sub">${ing.length} mov.</div></div><div class="kpi neg"><div class="kpi-label">Egresos</div><div class="kpi-value">${fmt(tE)}</div><div class="kpi-sub">${eg.length} mov.</div></div><div class="kpi bal"><div class="kpi-label">Balance</div><div class="kpi-value">${fmt(bal)}</div><div class="kpi-sub">${bal>=0?'Superávit':'Déficit'}</div></div><div class="kpi neu"><div class="kpi-label">Registros</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">de ${allRows.length} total</div></div>`;
   return{tI,tE,bal,ing,eg};
 }
 
 const gc='rgba(255,255,255,0.04)',tc='#7b82a0';
 const aOpts={x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+Math.abs(v).toLocaleString()},grid:{color:gc}}};
 
-// Inline data labels plugin
-const DLP={id:'dlp',afterDatasetDraw(chart,args){
-  const{ctx}=chart;const ds=chart.data.datasets[args.index];const meta=chart.getDatasetMeta(args.index);
-  if(meta.hidden)return;
-  ctx.save();ctx.font='bold 9px Inter,sans-serif';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.textAlign='center';
-  meta.data.forEach((el,i)=>{const v=ds.data[i];if(!v||v<10)return;const pos=el.tooltipPosition();ctx.fillText('$'+Math.round(v).toLocaleString(),pos.x,pos.y-5);});
-  ctx.restore();
-}};
-Chart.register(DLP);
-
 function buildResumen(rows,kpi){
   killCharts();
   const{tI,tE,ing,eg}=kpi;
   const byM={};rows.forEach(r=>{const k=parseYM(r[C.fecha]);if(!k)return;if(!byM[k])byM[k]={i:0,e:0};if(isIng(r))byM[k].i+=getMonto(r);else byM[k].e+=getMonto(r);});
   const ms=Object.keys(byM).sort();const msL=ms.map(mlabel);
-  const byCat={};eg.forEach(r=>{const c=(r[C.cat]||'Sin cat.').trim();byCat[c]=(byCat[c]||0)+getMonto(r);});
-  const sortedCat=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,12);
+  const showIng=F.tipoMov!=='Egreso';const showEg=F.tipoMov!=='Ingreso';
   $('page-resumen').innerHTML=`
-    <div class="charts-grid">
-      <div class="card"><div class="card-title">Ingresos vs Egresos</div><canvas id="ch-pie" height="220"></canvas></div>
-      <div class="card"><div class="card-title">Evolución mensual</div><canvas id="ch-bar" height="220"></canvas></div>
+    <div class="resumen-top">
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="card-title" style="text-align:center">Ingresos vs Egresos</div>
+        <div class="chart-wrap"><canvas id="ch-pie" style="max-height:220px"></canvas></div>
+      </div>
+      <div class="card"><div class="card-title">Evolución mensual</div><div class="chart-wrap"><canvas id="ch-bar" style="max-height:220px"></canvas></div></div>
     </div>
-    ${sortedCat.length?`<div class="card"><div class="card-title">Egresos por categoría</div><canvas id="ch-cat" height="110"></canvas></div>`:''}`;
-  charts.pie=new Chart($('ch-pie').getContext('2d'),{type:'doughnut',data:{labels:['Ingresos','Egresos'],datasets:[{data:[tI,tE],backgroundColor:['#34c87a','#f05454'],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},padding:14}},tooltip:{enabled:false}},cutout:'68%'}});
-  if(ms.length){charts.bar=new Chart($('ch-bar').getContext('2d'),{type:'bar',data:{labels:msL,datasets:[{label:'Ingresos',data:ms.map(m=>Math.round(byM[m].i)),backgroundColor:'rgba(52,200,122,0.75)',borderRadius:3},{label:'Egresos',data:ms.map(m=>Math.round(byM[m].e)),backgroundColor:'rgba(240,84,84,0.75)',borderRadius:3}]},options:{plugins:{legend:{labels:{color:tc,font:{size:11}}},tooltip:{enabled:false},dlp:{}},scales:aOpts}});}
-  if(sortedCat.length){charts.cat=new Chart($('ch-cat').getContext('2d'),{type:'bar',data:{labels:sortedCat,datasets:[{label:'Egresos',data:sortedCat.map(k=>Math.round(byCat[k])),backgroundColor:'rgba(240,84,84,0.75)',borderRadius:3}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{enabled:false},dlp:{}},scales:{x:{...aOpts.x},y:{ticks:{color:tc,font:{size:10}},grid:{display:false}}}}});}
+    ${showEg?`<div class="card">${buildBreakdown(rows,false)}</div>`:''}
+    ${showIng?`<div class="card">${buildBreakdown(rows,true)}</div>`:''}`;
+  charts.pie=new Chart($('ch-pie').getContext('2d'),{type:'doughnut',data:{labels:['Ingresos','Egresos'],datasets:[{data:[tI,tE],backgroundColor:['#34c87a','#f05454'],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:11},padding:14}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},cutout:'68%'}});
+  if(ms.length){charts.bar=new Chart($('ch-bar').getContext('2d'),{type:'bar',data:{labels:msL,datasets:[{label:'Ingresos',data:ms.map(m=>Math.round(byM[m].i)),backgroundColor:'rgba(52,200,122,0.75)',borderRadius:3},{label:'Egresos',data:ms.map(m=>Math.round(byM[m].e)),backgroundColor:'rgba(240,84,84,0.75)',borderRadius:3}]},options:{plugins:{legend:{labels:{color:tc,font:{size:11}}},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},scales:aOpts}});}
 }
 
 function buildMovimientos(rows){
   const recent=[...rows].reverse().slice(0,60);
   const tbody=recent.map(r=>{const ei=isIng(r);const m=getMonto(r);const benef=getBenef(r)||'—';return`<tr><td style="white-space:nowrap">${esc(String(r[C.fecha]||''))}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(String(r[C.coment]||'—'))}</td><td style="white-space:nowrap">${esc(benef)}</td><td style="white-space:nowrap">${esc(String((r[C.banco]||'').trim()))}</td><td style="white-space:nowrap">${esc(String((r[C.cat]||'').trim()))}</td><td style="white-space:nowrap">${esc(String((r[C.tipo]||'').trim()))}</td><td><span class="badge ${ei?'b-ing':'b-eg'}">${ei?'Ingreso':'Egreso'}</span></td><td style="text-align:right;white-space:nowrap" class="${ei?'amt-ing':'amt-eg'}">${ei?'+':'-'}${fmt(m)}</td></tr>`;}).join('');
-  $('page-movimientos').innerHTML=`<div class="card"><div class="card-title">Últimos 60 · ${rows.length} total</div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Comentario</th><th>Beneficiario</th><th>Banco</th><th>Categoría</th><th>Tipo</th><th>Mov.</th><th style="text-align:right">Monto USD</th></tr></thead><tbody>${tbody}</tbody></table></div></div>`;
+  $('page-movimientos').innerHTML=`<div class="card"><div class="card-title">Últimos 60 · ${rows.length} total filtrado</div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Comentario</th><th>Beneficiario</th><th>Banco</th><th>Categoría</th><th>Tipo</th><th>Mov.</th><th style="text-align:right">Monto USD</th></tr></thead><tbody>${tbody}</tbody></table></div></div>`;
 }
 
 function buildRanking(rows){
@@ -305,44 +312,22 @@ function buildCategorias(rows){
   const catTotals=cats.map(c=>({c,t:months.reduce((s,m)=>s+data[c][m],0)})).sort((a,b)=>b.t-a.t);
   const topCats=catTotals.slice(0,8).map(x=>x.c);
   $('page-categorias').innerHTML=`
-    ${eg.length&&months.length?`<div class="card"><div class="card-title">Egresos por categoría — mes a mes</div><canvas id="ch-catline" height="130"></canvas></div>`:'<div class="card"><div class="card-title">Sin datos de egresos</div></div>'}
+    ${eg.length&&months.length?`<div class="card"><div class="card-title">Egresos por categoría — mes a mes</div><div class="chart-wrap"><canvas id="ch-catline" style="max-height:280px"></canvas></div></div>`:`<div class="card" style="color:var(--muted);font-size:13px">Sin datos de egresos.</div>`}
     <div class="card"><div class="card-title">Detalle por categoría y mes</div><div class="tbl-wrap"><table><thead><tr><th>Categoría</th>${msL.map(m=>`<th style="text-align:right">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>${catTotals.map(({c,t})=>`<tr><td style="font-weight:500;white-space:nowrap">${esc(c)}</td>${months.map(m=>`<td style="text-align:right;color:${data[c][m]>0?'var(--red)':'var(--muted)'};white-space:nowrap">${data[c][m]>0?fmt(data[c][m]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:600;color:var(--red);white-space:nowrap">${fmt(t)}</td></tr>`).join('')}</tbody></table></div></div>`;
-  if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointHoverRadius:5,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{enabled:false},dlp:{}},scales:aOpts}});}
+  if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:aOpts}});}
 }
 
-function showPage(id){
-  currentPage=id;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  $('page-'+id).classList.add('active');
-  const nav=$('nav-'+id);if(nav)nav.classList.add('active');
-  closeSidebar();
-  renderCurrentPage(applyFilters());
-}
-
-function renderCurrentPage(rows){
-  const kpi=buildKPI(rows);
-  if(currentPage==='resumen')buildResumen(rows,kpi);
-  else if(currentPage==='movimientos')buildMovimientos(rows);
-  else if(currentPage==='ranking')buildRanking(rows);
-  else if(currentPage==='categorias')buildCategorias(rows);
-}
-
+function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();renderCurrentPage(applyFilters());}
+function renderCurrentPage(rows){const kpi=buildKPI(rows);if(currentPage==='resumen')buildResumen(rows,kpi);else if(currentPage==='movimientos')buildMovimientos(rows);else if(currentPage==='ranking')buildRanking(rows);else if(currentPage==='categorias')buildCategorias(rows);}
 function rerender(){buildFilters();renderCurrentPage(applyFilters());}
 function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').style.display=$('sidebar').classList.contains('open')?'block':'none';}
 function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').style.display='none';}
-
 function loadData(){
   $('meta-txt').textContent='Actualizando...';killCharts();
   ['resumen','movimientos','ranking','categorias'].forEach(p=>{$('page-'+p).innerHTML='<div class="loading"><div class="spin"></div>Cargando...</div>';});
   $('kpi-grid').innerHTML='';
   Papa.parse(CSV+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
-    complete(res){
-      if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}
-      allRows=res.data;C=mapCols(res.meta.fields||[]);
-      $('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;
-      buildFilters();renderCurrentPage(applyFilters());
-    },
+    complete(res){if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}allRows=res.data;C=mapCols(res.meta.fields||[]);$('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;buildFilters();renderCurrentPage(applyFilters());},
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
 }
