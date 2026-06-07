@@ -400,7 +400,7 @@ function loadData(){
   $('meta-txt').textContent='Actualizando...';killCharts();
   ['resumen','movimientos','ranking','categorias'].forEach(p=>{$('page-'+p).innerHTML='<div class="loading"><div class="spin"></div>Cargando...</div>';});
   $('kpi-grid').innerHTML='';
-  Papa.parse(CSV+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
+  Papa.parse(CSV,{download:true,header:true,skipEmptyLines:true,
     complete(res){if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}allRows=res.data;C=mapCols(res.meta.fields||[]);$('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;buildFilters();renderCurrentPage(applyFilters());},
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
@@ -420,7 +420,7 @@ function killCobCharts(){[cobRepChart,cobMetaChart,cobDeudaChart].forEach(c=>{tr
 function loadCobData(cb){
   if(cobLoaded){cb();return;}
   $('page-cobranzas').innerHTML='<div class="loading"><div class="spin"></div>Cargando cobranzas...</div>';
-  Papa.parse(CSV_COB+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
+  Papa.parse(CSV_COB,{download:true,header:true,skipEmptyLines:true,
     complete(res){cobRows=res.data;cobLoaded=true;cb();},
     error(){$('page-cobranzas').innerHTML='<div class="loading" style="color:var(--red)">Error cargando datos. Verifica permisos del Sheet.</div>';}
   });
