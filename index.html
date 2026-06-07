@@ -133,43 +133,39 @@ tr:hover td{background:var(--surface2)}
 .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
 /* ── COBRANZAS ── */
 .cob-topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
 .cob-sel{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;cursor:pointer}
 .cob-sel:focus{border-color:var(--accent)}
 .cob-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;width:180px}
-.cob-search:focus{border-color:var(--accent)}
 .cob-search::placeholder{color:var(--muted)}
 .cob-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
 @media(min-width:700px){.cob-kpis{grid-template-columns:repeat(4,1fr)}}
-.cob-charts{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
-@media(min-width:700px){.cob-charts{grid-template-columns:1fr 1fr}}
+.tab-btns{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .cob-tbl th{background:var(--surface2)}
 .cob-tbl td.c-paid{color:var(--green);font-weight:600}
 .cob-tbl td.c-late{color:var(--amber);font-weight:600}
 .cob-tbl td.c-no{color:var(--muted)}
 .cob-tbl td.c-tot{font-weight:700;color:var(--text);background:rgba(255,255,255,0.03)}
 .cob-tbl tfoot td{background:var(--surface2);font-weight:700;font-size:11px;color:var(--text);padding:8px 10px}
-.cob-tbl tfoot td:first-child{color:var(--muted)}
 .pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:1rem}
 .pat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
 .pat-name{font-size:13px;font-weight:600;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pat-dots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
-.pd{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default;flex-shrink:0}
-.pd.paid{background:rgba(52,200,122,0.2);color:var(--green)}
-.pd.late{background:rgba(245,166,35,0.2);color:var(--amber)}
-.pd.no{background:rgba(240,84,84,0.15);color:var(--red)}
-.pd.fut{background:var(--surface2);color:var(--muted)}
-.pat-stats{display:flex;gap:12px;font-size:11px}
-.pat-stat{text-align:center}
-.pat-stat .ps-val{font-weight:700;font-size:13px}
-.pat-stat .ps-lbl{color:var(--muted);margin-top:1px}
+.pd{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default;flex-shrink:0}
+.pd.paid{background:rgba(52,200,122,0.2);color:var(--green)}.pd.late{background:rgba(245,166,35,0.2);color:var(--amber)}.pd.no{background:rgba(240,84,84,0.15);color:var(--red)}.pd.fut{background:var(--surface2);color:var(--muted)}
+.pat-stats{display:flex;gap:10px;font-size:11px;flex-wrap:wrap}
+.pat-stat{text-align:center}.pat-stat .ps-val{font-weight:700;font-size:13px}.pat-stat .ps-lbl{color:var(--muted);margin-top:1px}
 .prov-table td,.prov-table th{white-space:nowrap}
 .prov-table tfoot td{background:var(--surface2);font-weight:700;color:var(--text)}
-.tab-btns{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
-.tab-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
-.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.rep-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+@media(min-width:600px){.rep-kpis{grid-template-columns:repeat(4,1fr)}}
+.rep-header{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;text-align:center}
+.rep-header h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.rep-header .rep-period{font-size:12px;color:var(--muted)}
+@media print{.sidebar,.topbar,.tab-btns,.cob-topbar,.cob-kpis,.filterbar,.kpi-grid{display:none!important}.rep-print{display:block!important}.page{display:block!important}}
 
 </style>
 </head>
@@ -204,9 +200,8 @@ tr:hover td{background:var(--surface2)}
       <div class="nav-item" id="nav-categorias" onclick="showPage('categorias')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Categorías
       </div>
-      <div style="padding:0 0.5rem;margin-top:1rem;margin-bottom:0.5rem">
-        <div class="nav-label" style="margin-bottom:6px">Inquilinos</div>
-      </div>
+      <div style="margin:12px 1.25rem 4px;border-top:1px solid var(--border)"></div>
+      <div class="nav-label" style="margin-top:8px">Inquilinos</div>
       <div class="nav-item" id="nav-cobranzas" onclick="showPage('cobranzas')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Cobranzas
       </div>
@@ -410,44 +405,36 @@ function loadData(){
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
 }
-// ══════════════════════════════════════════════════════
-// MÓDULO COBRANZAS — datos desde Cobranzaspivot GID
-// ══════════════════════════════════════════════════════
-const CSV_COB = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
-const N_SOCIOS = 5;
-let cobRows = [], cobLoaded = false, cobTab = 'tabla', cobMesFilt = '', cobInqFilt = '';
-let cobCharts = {};
-
-const MESES_L = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-function mesLabel(ym){if(!ym)return'';const[,m]=ym.split('-');return MESES_L[parseInt(m)-1]||ym;}
+// ══════════════════════════════════════════════════════════════
+// MÓDULO COBRANZAS
+// ══════════════════════════════════════════════════════════════
+const CSV_COB='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
+const N_SOCIOS=5;
+let cobRows=[],cobLoaded=false,cobTab='tabla',cobMesFilt='',cobInqFilt='',cobRepInq='',cobRepChart=null,cobMetaChart=null,cobDeudaChart=null;
+const ML=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function mesLbl(ym){if(!ym)return'';const[,m]=ym.split('-');return ML[parseInt(m)-1]||ym;}
+function mesLblFull(ym){if(!ym)return'';const[y,m]=ym.split('-');return ML[parseInt(m)-1]+' '+y;}
 function cobN(v){const s=String(v||'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;}
+function killCobCharts(){[cobRepChart,cobMetaChart,cobDeudaChart].forEach(c=>{try{if(c)c.destroy();}catch(e){}});cobRepChart=cobMetaChart=cobDeudaChart=null;}
 
 function loadCobData(cb){
   if(cobLoaded){cb();return;}
   $('page-cobranzas').innerHTML='<div class="loading"><div class="spin"></div>Cargando cobranzas...</div>';
   Papa.parse(CSV_COB+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
-    complete(res){
-      cobRows=res.data.filter(r=>String(r['ANO']||'').trim()==='2026');
-      cobLoaded=true;cb();
-    },
-    error(){$('page-cobranzas').innerHTML='<div class="loading" style="color:var(--red)">Error cargando cobranzas. Verifica permisos del Sheet.</div>';}
+    complete(res){cobRows=res.data;cobLoaded=true;cb();},
+    error(){$('page-cobranzas').innerHTML='<div class="loading" style="color:var(--red)">Error cargando datos. Verifica permisos del Sheet.</div>';}
   });
 }
 
-function buildCobranzas(){
-  loadCobData(()=>{renderCobView();});
-}
-
-function renderCobView(){
-  // ── Parse rows ──
-  const tenants={};
-  const mesSet=new Set();
+function parseTenants(yearFilter){
+  const tenants={};const mesSet=new Set();
   cobRows.forEach(r=>{
+    const ano=String(r['ANO']||'').trim();
+    if(yearFilter&&ano!==String(yearFilter))return;
     const inq=(r['Inquilinos']||'').trim();
     if(!inq||inq.startsWith('Desocupado'))return;
     const mesRaw=r['MES']||'';
-    const d=new Date(mesRaw);
-    if(isNaN(d))return;
+    const d=new Date(mesRaw);if(isNaN(d))return;
     const mes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     mesSet.add(mes);
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
@@ -457,202 +444,315 @@ function renderCobView(){
     const bat=Math.abs(cobN(r['Baticueva 20%']));
     const ga=Math.abs(cobN(r['G&A 60% ($)']));
     const op=Math.abs(cobN(r['Op, & Mantenimiento 20% ($)']));
-    const comCob=Math.abs(cobN(r['Comision Cobranzas $']));
     const comSocios=Math.abs(cobN(r['Comision Socios C/U $']));
     const prov=Math.abs(cobN(r['Provision Reserva $']));
     if(!tenants[inq])tenants[inq]={};
-    tenants[inq][mes]={pago,monto,balance,canon,bat,ga,op,comCob,comSocios,prov};
+    tenants[inq][mes]={pago,monto,balance,canon,bat,ga,op,comSocios,prov};
   });
-  const meses=[...mesSet].sort();
-  const inqs=Object.keys(tenants).sort();
+  return{tenants,meses:[...mesSet].sort()};
+}
 
-  // ── Apply filters ──
-  const filtMes=cobMesFilt;
+function buildCobranzas(){loadCobData(()=>{killCobCharts();renderCobView();});}
+
+function renderCobView(){
+  const{tenants,meses}=parseTenants(2026);
+  const inqs=Object.keys(tenants).sort();
   const filtInq=cobInqFilt.toLowerCase();
   const shownInqs=inqs.filter(i=>!filtInq||i.toLowerCase().includes(filtInq));
-  const shownMeses=filtMes?[filtMes]:meses;
+  const shownMeses=cobMesFilt?[cobMesFilt]:meses;
+  const kpiMeses=cobMesFilt?[cobMesFilt]:meses;
 
-  // ── KPIs for selected month or all ──
-  const kpiMeses=filtMes?[filtMes]:meses;
-  let totCob=0,totBal=0,totBat=0,totGa=0,totOp=0,totDiv=0,pagaron=0,noPag=0,atrasados=0;
+  // KPIs
+  let totCob=0,totBal=0,totBat=0,totGa=0,totOp=0,pagaron=0,noPag=0,atrasados=0;
   shownInqs.forEach(inq=>{
     kpiMeses.forEach(m=>{
       const d=tenants[inq][m]||{};
-      totCob+=d.monto||0;
-      totBal+=d.balance||0;
-      totBat+=d.bat||0;
-      totGa+=d.ga||0;
-      totOp+=d.op||0;
-      totDiv+=d.ga||0; // G&A 60% = base dividendos
+      totCob+=d.monto||0;totBal+=d.balance||0;totBat+=d.bat||0;totGa+=d.ga||0;totOp+=d.op||0;
     });
-    if(filtMes){
-      const st=(tenants[inq][filtMes]||{}).pago||'';
-      if(st.includes('Si')) pagaron++;
-      else if(st==='No') noPag++;
-      if(st.includes('Atrasado')) atrasados++;
-    }
+    if(cobMesFilt){const st=(tenants[inq][cobMesFilt]||{}).pago||'';if(st.includes('Si'))pagaron++;else if(st==='No')noPag++;if(st.includes('Atrasado'))atrasados++;}
   });
   const provTotal=totBat+totGa+totOp;
-
-  // ── Build HTML ──
-  const mesOptions=meses.map(m=>`<option value="${m}"${cobMesFilt===m?'selected':''}>${mesLabel(m)} 2026</option>`).join('');
-  const tabHtml=(id,lbl)=>`<button class="tab-btn${cobTab===id?' active':''}" onclick="cobTab='${id}';renderCobView()">${lbl}</button>`;
+  const mesOptions=meses.map(m=>`<option value="${m}"${cobMesFilt===m?'selected':''}>${mesLblFull(m)}</option>`).join('');
+  const tb=(id,lbl)=>`<button class="tab-btn${cobTab===id?' active':''}" onclick="cobTab='${id}';killCobCharts();renderCobView()">${lbl}</button>`;
 
   let html=`
   <div class="cob-topbar">
-    <select class="cob-sel" onchange="cobMesFilt=this.value;renderCobView()">
-      <option value="">Todos los meses</option>${mesOptions}
+    <select class="cob-sel" onchange="cobMesFilt=this.value;killCobCharts();renderCobView()">
+      <option value="">Todos los meses 2026</option>${mesOptions}
     </select>
     <input class="cob-search" placeholder="Buscar inquilino..." value="${esc(cobInqFilt)}" oninput="cobInqFilt=this.value;renderCobView()">
-    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;buildCobranzas()">🔄 Actualizar</button>
+    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;killCobCharts();buildCobranzas()">🔄 Actualizar</button>
   </div>
   <div class="cob-kpis">
-    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${filtMes?`${pagaron} pagaron`:'Acumulado'}</div></div>
-    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value" style="color:var(--red)">${fmt(Math.abs(totBal))}</div><div class="kpi-sub">${filtMes&&noPag?`${noPag} sin pagar`:atrasados?`${atrasados} atrasados`:''}</div></div>
+    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${cobMesFilt?pagaron+' pagaron':'Acumulado 2026'}</div></div>
+    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value">${fmt(Math.abs(totBal<0?totBal:0))}</div><div class="kpi-sub">${atrasados?atrasados+' atrasados':noPag?noPag+' sin pagar':''}</div></div>
     <div class="kpi bal"><div class="kpi-label">Provisión Total</div><div class="kpi-value">${fmt(provTotal)}</div><div class="kpi-sub">Bat+G&A+Op</div></div>
     <div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">${fmt(totGa/N_SOCIOS)}</div><div class="kpi-sub">G&A ÷ ${N_SOCIOS} socios</div></div>
   </div>
   <div class="tab-btns">
-    ${tabHtml('tabla','📋 Tabla de pagos')}
-    ${tabHtml('patron','🔄 Patrón de pago')}
-    ${tabHtml('provisiones','📐 Provisiones')}
-    ${tabHtml('deuda','📊 Deuda por inquilino')}
+    ${tb('tabla','📋 Pagos por mes')}
+    ${tb('meta','🎯 Meta vs Cobrado')}
+    ${tb('deuda','📊 Ranking deuda')}
+    ${tb('patron','🔄 Patrón de pago')}
+    ${tb('provisiones','📐 Provisiones')}
+    ${tb('reporte','📄 Reporte inquilino')}
   </div>`;
 
   // ── TAB: TABLA ──
   if(cobTab==='tabla'){
-    const thMeses=shownMeses.map(m=>`<th style="text-align:right">${mesLabel(m)}</th>`).join('');
+    const thM=shownMeses.map(m=>`<th style="text-align:right">${mesLbl(m)}</th>`).join('');
     const rows=shownInqs.map(inq=>{
-      let rowTot=0;
+      let tot=0;
       const cells=shownMeses.map(m=>{
-        const d=tenants[inq][m]||{};
+        const d=tenants[inq][m]||{};tot+=d.monto||0;
         const st=d.pago||'';
-        rowTot+=d.monto||0;
         if(!st||st==='Desocupado')return`<td style="text-align:right;color:var(--muted)">—</td>`;
         if(st.includes('Atrasado'))return`<td class="c-late" style="text-align:right">⚠ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
         if(st==='Si'||st.includes('Adelantado'))return`<td class="c-paid" style="text-align:right">✓ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
         return`<td class="c-no" style="text-align:right">✗ —</td>`;
       }).join('');
-      return`<tr><td style="font-weight:500;white-space:nowrap">${esc(inq)}</td>${cells}<td class="c-tot" style="text-align:right">${rowTot>0?'$'+Math.round(rowTot).toLocaleString():'—'}</td></tr>`;
+      return`<tr><td style="font-weight:500;white-space:nowrap">${esc(inq)}</td>${cells}<td class="c-tot" style="text-align:right">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
     }).join('');
-    const totCells=shownMeses.map(m=>{
-      const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
-      return`<td style="text-align:right">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
-    }).join('');
+    const totCells=shownMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);return`<td style="text-align:right;font-weight:700">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
     const grand=shownInqs.reduce((s,i)=>s+shownMeses.reduce((ss,m)=>ss+((tenants[i][m]||{}).monto||0),0),0);
     html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="cob-tbl">
-      <thead><tr><th>Inquilino</th>${thMeses}<th style="text-align:right">Total</th></tr></thead>
-      <tbody>${rows}</tbody>
+      <thead><tr><th>Inquilino</th>${thM}<th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="20" style="text-align:center;color:var(--muted);padding:1.5rem">Sin resultados</td></tr>'}</tbody>
       <tfoot><tr><td>TOTAL</td>${totCells}<td style="text-align:right">$${Math.round(grand).toLocaleString()}</td></tr></tfoot>
     </table></div></div>`;
+  }
+
+  // ── TAB: META vs COBRADO ──
+  else if(cobTab==='meta'){
+    const metaMeses=meses.filter(m=>{
+      const canon=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).canon||0),0);
+      const cob=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
+      return canon>0||cob>0;
+    });
+    const metaVals=metaMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).canon||0),0));
+    const cobVals=metaMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0));
+    const pctVals=metaMeses.map((m,i)=>metaVals[i]>0?Math.round(cobVals[i]/metaVals[i]*100):0);
+    html+=`<div class="card"><div class="card-title">Meta de cobros vs monto cobrado — todos los inquilinos</div>
+      <div class="chart-wrap"><canvas id="ch-meta" style="max-height:300px"></canvas></div>
+    </div>
+    <div class="card"><div class="card-title">% de cumplimiento por mes</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Mes</th><th style="text-align:right">Meta (Canon)</th><th style="text-align:right">Cobrado</th><th style="text-align:right">Diferencia</th><th style="text-align:right">% Cumplimiento</th></tr></thead>
+      <tbody>${metaMeses.map((m,i)=>{
+        const diff=cobVals[i]-metaVals[i];
+        const pct=pctVals[i];
+        return`<tr>
+          <td>${mesLblFull(m)}</td>
+          <td style="text-align:right">${fmt(metaVals[i])}</td>
+          <td style="text-align:right;color:var(--green)">${fmt(cobVals[i])}</td>
+          <td style="text-align:right;color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${fmt(diff)}</td>
+          <td style="text-align:right"><span style="color:${pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)'}; font-weight:700">${pct}%</span></td>
+        </tr>`;
+      }).join('')}</tbody></table></div></div>`;
+    setTimeout(()=>{
+      const ctx=$('ch-meta');if(!ctx)return;
+      cobMetaChart=new Chart(ctx.getContext('2d'),{
+        type:'bar',
+        data:{labels:metaMeses.map(m=>mesLblFull(m)),datasets:[
+          {label:'Meta (Canon total)',data:metaVals,backgroundColor:'rgba(79,142,247,0.3)',borderColor:'rgba(79,142,247,0.8)',borderWidth:2,borderRadius:4},
+          {label:'Cobrado',data:cobVals,backgroundColor:'rgba(52,200,122,0.7)',borderRadius:4},
+          {label:'% cobrado',data:pctVals,type:'line',yAxisID:'y2',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#f5a623',tension:0.3}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},
+            tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.dataset.yAxisID==='y2'?ctx.raw+'%':fmt(ctx.raw))}}},
+          scales:{
+            x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},
+            y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+Math.abs(v).toLocaleString()},grid:{color:gc}},
+            y2:{position:'right',ticks:{color:'#f5a623',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0,max:Math.max(130,...pctVals)+10}
+          }
+        }
+      });
+    },100);
+  }
+
+  // ── TAB: RANKING DEUDA ──
+  else if(cobTab==='deuda'){
+    const lastMes=meses[meses.length-1];
+    const deudas=shownInqs.map(inq=>{
+      const d=tenants[inq][lastMes]||{};
+      const bal=d.balance||0;
+      const canon=d.canon||0;
+      const deudaAbs=bal<0?Math.abs(bal):0;
+      const mesesR=canon>0?Math.round(deudaAbs/canon*10)/10:0;
+      return{inq,deuda:deudaAbs,canon,mesesR,bal};
+    }).filter(d=>d.deuda>0).sort((a,b)=>b.deuda-a.deuda);
+    const maxD=deudas[0]?.deuda||1;
+    const totalDeuda=deudas.reduce((s,d)=>s+d.deuda,0);
+    html+=`<div class="card"><div class="card-title" style="display:flex;justify-content:space-between">
+        <span>Ranking de deuda — al ${mesLblFull(lastMes)}</span>
+        <span style="color:var(--red);font-size:14px;font-weight:700">Total: ${fmt(totalDeuda)}</span>
+      </div>
+      <div class="chart-wrap"><canvas id="ch-deuda" style="max-height:${Math.max(200,deudas.length*42)}px"></canvas></div>
+    </div>
+    <div class="card"><div class="card-title">Detalle</div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Inquilino</th><th style="text-align:right">Canon</th><th style="text-align:right">Deuda USD</th><th style="text-align:right">Meses retraso</th><th style="text-align:right">% del total</th></tr></thead>
+    <tbody>${deudas.map((d,i)=>`<tr>
+      <td style="color:var(--muted);font-size:11px">${i+1}</td>
+      <td style="font-weight:500">${esc(d.inq)}</td>
+      <td style="text-align:right">${fmt(d.canon)}</td>
+      <td style="text-align:right;color:var(--red);font-weight:700">${fmt(d.deuda)}</td>
+      <td style="text-align:right;color:${d.mesesR>3?'var(--red)':d.mesesR>1?'var(--amber)':'var(--muted)'}; font-weight:600">${d.mesesR} mes${d.mesesR!==1?'es':''}</td>
+      <td style="text-align:right">${Math.round(d.deuda/totalDeuda*100)}%</td>
+    </tr>`).join('')}</tbody></table></div></div>`;
+    setTimeout(()=>{
+      const ctx=$('ch-deuda');if(!ctx)return;
+      cobDeudaChart=new Chart(ctx.getContext('2d'),{
+        type:'bar',
+        data:{labels:deudas.map(d=>d.inq),datasets:[
+          {label:'Deuda USD',data:deudas.map(d=>d.deuda),backgroundColor:deudas.map(d=>d.mesesR>3?'rgba(240,84,84,0.8)':d.mesesR>1?'rgba(245,166,35,0.8)':'rgba(79,142,247,0.7)'),borderRadius:4}
+        ]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` Deuda: ${fmt(ctx.parsed.x)} · ${deudas[ctx.dataIndex]?.mesesR} meses retraso`}}},
+          scales:{x:{ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{display:false}}}
+        }
+      });
+    },100);
   }
 
   // ── TAB: PATRÓN ──
   else if(cobTab==='patron'){
     const cards=shownInqs.map(inq=>{
       const dots=meses.map(m=>{
-        const d=tenants[inq][m]||{};
-        const st=d.pago||'';
+        const d=tenants[inq][m]||{};const st=d.pago||'';
         const isFut=!d.canon&&!d.monto&&!st;
-        if(isFut)return`<div class="pd fut" title="${mesLabel(m)}">·</div>`;
-        if(st.includes('Atrasado'))return`<div class="pd late" title="${mesLabel(m)} — Atrasado">A</div>`;
-        if(st==='Si'||st.includes('Adelantado'))return`<div class="pd paid" title="${mesLabel(m)} — Pagó">✓</div>`;
-        return`<div class="pd no" title="${mesLabel(m)} — No pagó">✗</div>`;
+        if(isFut)return`<div class="pd fut" title="${mesLblFull(m)}">·</div>`;
+        if(st.includes('Atrasado'))return`<div class="pd late" title="${mesLblFull(m)} — Atrasado">A</div>`;
+        if(st==='Si'||st.includes('Adelantado'))return`<div class="pd paid" title="${mesLblFull(m)} — Pagó">✓</div>`;
+        return`<div class="pd no" title="${mesLblFull(m)} — No pagó">✗</div>`;
       }).join('');
-      const rowMeses=meses.filter(m=>tenants[inq][m]);
-      const pagados=rowMeses.filter(m=>{const st=(tenants[inq][m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
-      const atras=rowMeses.filter(m=>(tenants[inq][m]||{}).pago?.includes('Atrasado')).length;
-      const nopag=rowMeses.filter(m=>(tenants[inq][m]||{}).pago==='No').length;
-      const totPag=rowMeses.reduce((s,m)=>s+((tenants[inq][m]||{}).monto||0),0);
+      const rm=meses.filter(m=>tenants[inq][m]&&(tenants[inq][m].canon>0||tenants[inq][m].monto>0));
+      const pg=rm.filter(m=>{const st=(tenants[inq][m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
+      const at=rm.filter(m=>(tenants[inq][m]||{}).pago?.includes('Atrasado')).length;
+      const np=rm.filter(m=>(tenants[inq][m]||{}).pago==='No').length;
+      const totP=rm.reduce((s,m)=>s+((tenants[inq][m]||{}).monto||0),0);
       const lastBal=(tenants[inq][meses[meses.length-1]]||{}).balance||0;
       return`<div class="pat-card">
         <div class="pat-name" title="${esc(inq)}">${esc(inq)}</div>
         <div class="pat-dots">${dots}</div>
         <div class="pat-stats">
-          <div class="pat-stat"><div class="ps-val" style="color:var(--green)">${pagados}</div><div class="ps-lbl">Pagó</div></div>
-          <div class="pat-stat"><div class="ps-val" style="color:var(--amber)">${atras}</div><div class="ps-lbl">Atrasado</div></div>
-          <div class="pat-stat"><div class="ps-val" style="color:var(--red)">${nopag}</div><div class="ps-lbl">No pagó</div></div>
-          <div class="pat-stat"><div class="ps-val">${fmt(totPag)}</div><div class="ps-lbl">Total</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:var(--green)">${pg}</div><div class="ps-lbl">Pagó</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:var(--amber)">${at}</div><div class="ps-lbl">Atrasado</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:var(--red)">${np}</div><div class="ps-lbl">No pagó</div></div>
+          <div class="pat-stat"><div class="ps-val">${fmt(totP)}</div><div class="ps-lbl">Cobrado</div></div>
           <div class="pat-stat"><div class="ps-val" style="color:${lastBal<0?'var(--red)':'var(--green)'}">${fmt(lastBal)}</div><div class="ps-lbl">Balance</div></div>
         </div>
       </div>`;
     }).join('');
-    html+=`<div class="pat-grid">${cards}</div>`;
+    html+=`<div class="pat-grid">${cards||'<div style="color:var(--muted)">Sin datos</div>'}</div>`;
   }
 
   // ── TAB: PROVISIONES ──
   else if(cobTab==='provisiones'){
-    const thM=kpiMeses.map(m=>`<th style="text-align:right">${mesLabel(m)}</th>`).join('');
-    function provRow(label,key,color=''){
-      const cells=kpiMeses.map(m=>{
-        const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{})[key]||0),0);
-        return`<td style="text-align:right;color:${color||'var(--text)'}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
-      }).join('');
+    const thM=kpiMeses.map(m=>`<th style="text-align:right">${mesLblFull(m)}</th>`).join('');
+    function pRow(label,key,color){
+      const cells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{})[key]||0),0);return`<td style="text-align:right;color:${color}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
       const tot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{})[key]||0),0),0);
-      return`<tr><td style="font-weight:500">${label}</td>${cells}<td style="text-align:right;font-weight:700;color:${color||'var(--text)'}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
+      return`<tr><td style="font-weight:500">${label}</td>${cells}<td style="text-align:right;font-weight:700;color:${color}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
     }
-    // cobrado row
-    const cobCells=kpiMeses.map(m=>{
-      const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
-      return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
-    }).join('');
+    const cobCells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
     const cobTot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).monto||0),0),0);
-    // prov total row
-    const provCells=kpiMeses.map(m=>{
-      const bat=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).bat||0),0);
-      const ga=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);
-      const op=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).op||0),0);
-      return`<td style="text-align:right;font-weight:700;color:var(--accent)">${(bat+ga+op)>0?'$'+Math.round(bat+ga+op).toLocaleString():'—'}</td>`;
-    }).join('');
-    const provTot=kpiMeses.reduce((s,m)=>{
-      const t=shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0);
-      return s+t;
-    },0);
+    const provCells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0);return`<td style="text-align:right;font-weight:700;color:var(--accent)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
+    const provTot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0),0);
     html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="prov-table">
       <thead><tr><th>Concepto</th>${thM}<th style="text-align:right">Total</th></tr></thead>
       <tbody>
-        <tr><td style="font-weight:500;color:var(--green)">💵 Cobrado</td>${cobCells}<td style="text-align:right;font-weight:700;color:var(--green)">${fmt(cobTot)}</td></tr>
-        ${provRow('🏛 Baticueva 20%','bat','#a78bfa')}
-        ${provRow('🤝 G&A 60% (Socios)','ga','var(--accent)')}
-        ${provRow('🔧 Op & Mant. 20%','op','var(--amber)')}
+        <tr><td style="font-weight:600;color:var(--green)">💵 Cobrado del mes</td>${cobCells}<td style="text-align:right;font-weight:700;color:var(--green)">${fmt(cobTot)}</td></tr>
+        ${pRow('🏛 Baticueva 20%','bat','#a78bfa')}
+        ${pRow('🤝 G&A 60% (base socios)','ga','var(--accent)')}
+        ${pRow('🔧 Op & Mantenimiento 20%','op','var(--amber)')}
         <tr style="background:rgba(255,255,255,0.03)"><td style="font-weight:700">📦 PROVISIÓN TOTAL</td>${provCells}<td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(provTot)}</td></tr>
-        ${provRow('💰 Div. Socios (Registrado)','ga','var(--green)')}
+        ${pRow('💰 Div. Socios registrado','ga','var(--green)')}
       </tbody>
-      <tfoot>
-        <tr><td>Mesada c/u (${N_SOCIOS} socios)</td>${kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t/N_SOCIOS).toLocaleString():'—'}</td>`;}).join('')}<td style="text-align:right;color:var(--green)">$${Math.round(totGa/N_SOCIOS).toLocaleString()}</td></tr>
-      </tfoot>
+      <tfoot><tr><td>Mesada estimada c/u (${N_SOCIOS} socios)</td>${kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t/N_SOCIOS).toLocaleString():'—'}</td>`;}).join('')}<td style="text-align:right;color:var(--green);font-weight:700">$${Math.round(totGa/N_SOCIOS).toLocaleString()}</td></tr></tfoot>
     </table></div></div>`;
   }
 
-  // ── TAB: DEUDA ──
-  else if(cobTab==='deuda'){
-    const lastMes=meses[meses.length-1];
-    const deudas=shownInqs
-      .map(inq=>({inq,bal:Math.abs((tenants[inq][lastMes]||{}).balance||0),canon:(tenants[inq][lastMes]||{}).canon||0}))
-      .filter(d=>d.bal>5)
-      .sort((a,b)=>b.bal-a.bal);
-    const maxD=deudas[0]?.bal||1;
-    const barRows=deudas.map(d=>{
-      const w=Math.round(d.bal/maxD*100);
-      const meses_deuda=d.canon>0?Math.round(d.bal/d.canon):0;
-      return`<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="font-weight:500;color:var(--text)">${esc(d.inq)}</span>
-          <span style="color:var(--red);font-weight:700">${fmt(d.bal)}${meses_deuda>0?` <span style="color:var(--muted);font-weight:400;font-size:10px">(≈${meses_deuda} mes${meses_deuda>1?'es':''})</span>`:''}</span>
-        </div>
-        <div style="background:var(--border);border-radius:3px;height:6px"><div style="width:${w}%;background:var(--red);border-radius:3px;height:6px"></div></div>
-      </div>`;
-    }).join('');
-    html+=`<div class="card">
-      <div class="card-title">Balance pendiente por inquilino — al ${mesLabel(lastMes)} 2026</div>
-      ${barRows||'<div style="color:var(--muted);font-size:13px">Sin deudas registradas.</div>'}
+  // ── TAB: REPORTE INQUILINO ──
+  else if(cobTab==='reporte'){
+    // Build full history across all years for selected tenant
+    const{tenants:allT,meses:allM}=parseTenants(null);
+    const inqOpts=Object.keys(allT).sort().map(i=>`<option value="${esc(i)}"${cobRepInq===i?'selected':''}>${esc(i)}</option>`).join('');
+    html+=`<div class="cob-topbar" style="margin-bottom:1rem">
+      <select class="cob-sel" style="min-width:280px" onchange="cobRepInq=this.value;killCobCharts();renderCobView()">
+        <option value="">— Seleccionar inquilino —</option>${inqOpts}
+      </select>
+      ${cobRepInq?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="window.print()">🖨 Imprimir / PDF</button>`:''}
     </div>`;
+
+    if(!cobRepInq){html+=`<div class="card" style="text-align:center;color:var(--muted);padding:3rem">Selecciona un inquilino para ver su reporte</div>`;
+    } else {
+      const tData=allT[cobRepInq]||{};
+      const tMeses=Object.keys(tData).sort().filter(m=>tData[m]&&(tData[m].canon>0||tData[m].monto>0));
+      if(!tMeses.length){html+=`<div class="card" style="color:var(--muted)">Sin datos para este inquilino.</div>`;
+      } else {
+        const lastD=tData[tMeses[tMeses.length-1]]||{};
+        const totCobR=tMeses.reduce((s,m)=>s+(tData[m]?.monto||0),0);
+        const balActual=lastD.balance||0;
+        const canonActual=lastD.canon||0;
+        const mesesAtraso=canonActual>0&&balActual<0?Math.round(Math.abs(balActual)/canonActual*10)/10:0;
+        const periodoLabel=`${mesLblFull(tMeses[0])} hasta ${mesLblFull(tMeses[tMeses.length-1])}`;
+        const pagados=tMeses.filter(m=>{const st=(tData[m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
+        const atrasM=tMeses.filter(m=>(tData[m]||{}).pago?.includes('Atrasado')).length;
+        const noPagM=tMeses.filter(m=>(tData[m]||{}).pago==='No').length;
+        const montos=tMeses.map(m=>tData[m]?.monto||0);
+        const balances=tMeses.map(m=>tData[m]?.balance||0);
+        const canones=tMeses.map(m=>tData[m]?.canon||0);
+        html+=`
+        <div class="rep-header">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Fecha de Reporte: ${periodoLabel}</div>
+          <h2>Reporte de Cobranzas Vs Balance</h2>
+          <div style="font-size:15px;font-weight:600;color:var(--accent);margin-top:4px">${esc(cobRepInq)}</div>
+        </div>
+        <div class="rep-kpis">
+          <div class="kpi pos"><div class="kpi-label">Total período cobrado</div><div class="kpi-value">${fmt(totCobR)}</div><div class="kpi-sub">${pagados} meses pagados</div></div>
+          <div class="kpi neg"><div class="kpi-label">Balance actual</div><div class="kpi-value" style="color:${balActual<0?'var(--red)':balActual>0?'var(--green)':'var(--muted)'}">${fmt(balActual)}</div><div class="kpi-sub">${balActual<0?'Debe':'Al día'}</div></div>
+          <div class="kpi neu"><div class="kpi-label">Meses de retraso</div><div class="kpi-value" style="color:${mesesAtraso>3?'var(--red)':mesesAtraso>0?'var(--amber)':'var(--green)'}">${mesesAtraso}</div><div class="kpi-sub">${atrasM} meses atrasado</div></div>
+          <div class="kpi bal"><div class="kpi-label">Canon vigente</div><div class="kpi-value">${fmt(canonActual)}</div><div class="kpi-sub">${noPagM} meses sin pagar</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pagos vs Balance acumulado — ${esc(cobRepInq)}</div>
+          <div class="chart-wrap"><canvas id="ch-rep" style="max-height:280px"></canvas></div>
+        </div>
+        <div class="card"><div class="card-title">Detalle mes a mes</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Mes</th><th style="text-align:right">Canon</th><th style="text-align:right">Pagado</th><th style="text-align:right">Balance</th><th>Estado</th></tr></thead>
+        <tbody>${tMeses.map(m=>{
+          const d=tData[m]||{};const st=d.pago||'';
+          const stBadge=st.includes('Atrasado')?`<span style="color:var(--amber);font-weight:600">⚠ Atrasado</span>`:st==='Si'||st.includes('Adelantado')?`<span style="color:var(--green);font-weight:600">✓ ${st}</span>`:`<span style="color:var(--red)">✗ No pagó</span>`;
+          return`<tr><td>${mesLblFull(m)}</td><td style="text-align:right">${d.canon>0?fmt(d.canon):'—'}</td><td style="text-align:right;color:var(--green);font-weight:600">${d.monto>0?fmt(d.monto):'—'}</td><td style="text-align:right;color:${(d.balance||0)<0?'var(--red)':'var(--green)'}; font-weight:600">${fmt(d.balance||0)}</td><td>${stBadge}</td></tr>`;
+        }).join('')}</tbody></table></div></div>`;
+
+        setTimeout(()=>{
+          const ctx=$('ch-rep');if(!ctx)return;
+          cobRepChart=new Chart(ctx.getContext('2d'),{
+            type:'bar',
+            data:{labels:tMeses.map(m=>mesLblFull(m)),datasets:[
+              {label:'Cobrado',data:montos,backgroundColor:'rgba(79,142,247,0.75)',borderRadius:4},
+              {label:'Balance',data:balances,type:'line',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#f5a623',tension:0.3,yAxisID:'y'}
+            ]},
+            options:{responsive:true,maintainAspectRatio:false,
+              plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},
+                tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+              scales:{
+                x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},
+                y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}
+              }
+            }
+          });
+        },100);
+      }
+    }
   }
 
   $('page-cobranzas').innerHTML=html;
+  // Re-trigger chart renders after DOM update for non-setTimeout tabs
 }
 
-
+loadData();
 </script>
 </body>
 </html>
