@@ -133,6 +133,44 @@ tr:hover td{background:var(--surface2)}
 .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── COBRANZAS ── */
+.cob-topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
+.cob-sel{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;cursor:pointer}
+.cob-sel:focus{border-color:var(--accent)}
+.cob-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;width:180px}
+.cob-search:focus{border-color:var(--accent)}
+.cob-search::placeholder{color:var(--muted)}
+.cob-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+@media(min-width:700px){.cob-kpis{grid-template-columns:repeat(4,1fr)}}
+.cob-charts{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1rem}
+@media(min-width:700px){.cob-charts{grid-template-columns:1fr 1fr}}
+.cob-tbl th{background:var(--surface2)}
+.cob-tbl td.c-paid{color:var(--green);font-weight:600}
+.cob-tbl td.c-late{color:var(--amber);font-weight:600}
+.cob-tbl td.c-no{color:var(--muted)}
+.cob-tbl td.c-tot{font-weight:700;color:var(--text);background:rgba(255,255,255,0.03)}
+.cob-tbl tfoot td{background:var(--surface2);font-weight:700;font-size:11px;color:var(--text);padding:8px 10px}
+.cob-tbl tfoot td:first-child{color:var(--muted)}
+.pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:1rem}
+.pat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.pat-name{font-size:13px;font-weight:600;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pat-dots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.pd{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default;flex-shrink:0}
+.pd.paid{background:rgba(52,200,122,0.2);color:var(--green)}
+.pd.late{background:rgba(245,166,35,0.2);color:var(--amber)}
+.pd.no{background:rgba(240,84,84,0.15);color:var(--red)}
+.pd.fut{background:var(--surface2);color:var(--muted)}
+.pat-stats{display:flex;gap:12px;font-size:11px}
+.pat-stat{text-align:center}
+.pat-stat .ps-val{font-weight:700;font-size:13px}
+.pat-stat .ps-lbl{color:var(--muted);margin-top:1px}
+.prov-table td,.prov-table th{white-space:nowrap}
+.prov-table tfoot td{background:var(--surface2);font-weight:700;color:var(--text)}
+.tab-btns{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
 </style>
 </head>
 <body>
@@ -166,6 +204,12 @@ tr:hover td{background:var(--surface2)}
       <div class="nav-item" id="nav-categorias" onclick="showPage('categorias')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Categorías
       </div>
+      <div style="padding:0 0.5rem;margin-top:1rem;margin-bottom:0.5rem">
+        <div class="nav-label" style="margin-bottom:6px">Inquilinos</div>
+      </div>
+      <div class="nav-item" id="nav-cobranzas" onclick="showPage('cobranzas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Cobranzas
+      </div>
     </div>
   </nav>
   <div class="main">
@@ -175,6 +219,7 @@ tr:hover td{background:var(--surface2)}
     <div id="page-movimientos" class="page"></div>
     <div id="page-ranking" class="page"></div>
     <div id="page-categorias" class="page"></div>
+    <div id="page-cobranzas" class="page"></div>
   </div>
 </div>
 <script>
@@ -351,7 +396,7 @@ function buildCategorias(rows){
   if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:aOpts}});}
 }
 
-function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();renderCurrentPage(applyFilters());}
+function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();if(id==='cobranzas'){buildCobranzas();}else{renderCurrentPage(applyFilters());}}
 function renderCurrentPage(rows){const kpi=buildKPI(rows);if(currentPage==='resumen')buildResumen(rows,kpi);else if(currentPage==='movimientos')buildMovimientos(rows);else if(currentPage==='ranking')buildRanking(rows);else if(currentPage==='categorias')buildCategorias(rows);}
 function rerender(){buildFilters();renderCurrentPage(applyFilters());}
 function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').style.display=$('sidebar').classList.contains('open')?'block':'none';}
@@ -365,7 +410,249 @@ function loadData(){
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
 }
-loadData();
+// ══════════════════════════════════════════════════════
+// MÓDULO COBRANZAS — datos desde Cobranzaspivot GID
+// ══════════════════════════════════════════════════════
+const CSV_COB = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
+const N_SOCIOS = 5;
+let cobRows = [], cobLoaded = false, cobTab = 'tabla', cobMesFilt = '', cobInqFilt = '';
+let cobCharts = {};
+
+const MESES_L = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function mesLabel(ym){if(!ym)return'';const[,m]=ym.split('-');return MESES_L[parseInt(m)-1]||ym;}
+function cobN(v){const s=String(v||'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;}
+
+function loadCobData(cb){
+  if(cobLoaded){cb();return;}
+  $('page-cobranzas').innerHTML='<div class="loading"><div class="spin"></div>Cargando cobranzas...</div>';
+  Papa.parse(CSV_COB+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
+    complete(res){
+      cobRows=res.data.filter(r=>String(r['ANO']||'').trim()==='2026');
+      cobLoaded=true;cb();
+    },
+    error(){$('page-cobranzas').innerHTML='<div class="loading" style="color:var(--red)">Error cargando cobranzas. Verifica permisos del Sheet.</div>';}
+  });
+}
+
+function buildCobranzas(){
+  loadCobData(()=>{renderCobView();});
+}
+
+function renderCobView(){
+  // ── Parse rows ──
+  const tenants={};
+  const mesSet=new Set();
+  cobRows.forEach(r=>{
+    const inq=(r['Inquilinos']||'').trim();
+    if(!inq||inq.startsWith('Desocupado'))return;
+    const mesRaw=r['MES']||'';
+    const d=new Date(mesRaw);
+    if(isNaN(d))return;
+    const mes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    mesSet.add(mes);
+    const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
+    const monto=Math.abs(cobN(r['Monto $']));
+    const balance=cobN(r['Balance']);
+    const canon=Math.abs(cobN(r['Canon Vigente']));
+    const bat=Math.abs(cobN(r['Baticueva 20%']));
+    const ga=Math.abs(cobN(r['G&A 60% ($)']));
+    const op=Math.abs(cobN(r['Op, & Mantenimiento 20% ($)']));
+    const comCob=Math.abs(cobN(r['Comision Cobranzas $']));
+    const comSocios=Math.abs(cobN(r['Comision Socios C/U $']));
+    const prov=Math.abs(cobN(r['Provision Reserva $']));
+    if(!tenants[inq])tenants[inq]={};
+    tenants[inq][mes]={pago,monto,balance,canon,bat,ga,op,comCob,comSocios,prov};
+  });
+  const meses=[...mesSet].sort();
+  const inqs=Object.keys(tenants).sort();
+
+  // ── Apply filters ──
+  const filtMes=cobMesFilt;
+  const filtInq=cobInqFilt.toLowerCase();
+  const shownInqs=inqs.filter(i=>!filtInq||i.toLowerCase().includes(filtInq));
+  const shownMeses=filtMes?[filtMes]:meses;
+
+  // ── KPIs for selected month or all ──
+  const kpiMeses=filtMes?[filtMes]:meses;
+  let totCob=0,totBal=0,totBat=0,totGa=0,totOp=0,totDiv=0,pagaron=0,noPag=0,atrasados=0;
+  shownInqs.forEach(inq=>{
+    kpiMeses.forEach(m=>{
+      const d=tenants[inq][m]||{};
+      totCob+=d.monto||0;
+      totBal+=d.balance||0;
+      totBat+=d.bat||0;
+      totGa+=d.ga||0;
+      totOp+=d.op||0;
+      totDiv+=d.ga||0; // G&A 60% = base dividendos
+    });
+    if(filtMes){
+      const st=(tenants[inq][filtMes]||{}).pago||'';
+      if(st.includes('Si')) pagaron++;
+      else if(st==='No') noPag++;
+      if(st.includes('Atrasado')) atrasados++;
+    }
+  });
+  const provTotal=totBat+totGa+totOp;
+
+  // ── Build HTML ──
+  const mesOptions=meses.map(m=>`<option value="${m}"${cobMesFilt===m?'selected':''}>${mesLabel(m)} 2026</option>`).join('');
+  const tabHtml=(id,lbl)=>`<button class="tab-btn${cobTab===id?' active':''}" onclick="cobTab='${id}';renderCobView()">${lbl}</button>`;
+
+  let html=`
+  <div class="cob-topbar">
+    <select class="cob-sel" onchange="cobMesFilt=this.value;renderCobView()">
+      <option value="">Todos los meses</option>${mesOptions}
+    </select>
+    <input class="cob-search" placeholder="Buscar inquilino..." value="${esc(cobInqFilt)}" oninput="cobInqFilt=this.value;renderCobView()">
+    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;buildCobranzas()">🔄 Actualizar</button>
+  </div>
+  <div class="cob-kpis">
+    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${filtMes?`${pagaron} pagaron`:'Acumulado'}</div></div>
+    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value" style="color:var(--red)">${fmt(Math.abs(totBal))}</div><div class="kpi-sub">${filtMes&&noPag?`${noPag} sin pagar`:atrasados?`${atrasados} atrasados`:''}</div></div>
+    <div class="kpi bal"><div class="kpi-label">Provisión Total</div><div class="kpi-value">${fmt(provTotal)}</div><div class="kpi-sub">Bat+G&A+Op</div></div>
+    <div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">${fmt(totGa/N_SOCIOS)}</div><div class="kpi-sub">G&A ÷ ${N_SOCIOS} socios</div></div>
+  </div>
+  <div class="tab-btns">
+    ${tabHtml('tabla','📋 Tabla de pagos')}
+    ${tabHtml('patron','🔄 Patrón de pago')}
+    ${tabHtml('provisiones','📐 Provisiones')}
+    ${tabHtml('deuda','📊 Deuda por inquilino')}
+  </div>`;
+
+  // ── TAB: TABLA ──
+  if(cobTab==='tabla'){
+    const thMeses=shownMeses.map(m=>`<th style="text-align:right">${mesLabel(m)}</th>`).join('');
+    const rows=shownInqs.map(inq=>{
+      let rowTot=0;
+      const cells=shownMeses.map(m=>{
+        const d=tenants[inq][m]||{};
+        const st=d.pago||'';
+        rowTot+=d.monto||0;
+        if(!st||st==='Desocupado')return`<td style="text-align:right;color:var(--muted)">—</td>`;
+        if(st.includes('Atrasado'))return`<td class="c-late" style="text-align:right">⚠ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
+        if(st==='Si'||st.includes('Adelantado'))return`<td class="c-paid" style="text-align:right">✓ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
+        return`<td class="c-no" style="text-align:right">✗ —</td>`;
+      }).join('');
+      return`<tr><td style="font-weight:500;white-space:nowrap">${esc(inq)}</td>${cells}<td class="c-tot" style="text-align:right">${rowTot>0?'$'+Math.round(rowTot).toLocaleString():'—'}</td></tr>`;
+    }).join('');
+    const totCells=shownMeses.map(m=>{
+      const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
+      return`<td style="text-align:right">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
+    }).join('');
+    const grand=shownInqs.reduce((s,i)=>s+shownMeses.reduce((ss,m)=>ss+((tenants[i][m]||{}).monto||0),0),0);
+    html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="cob-tbl">
+      <thead><tr><th>Inquilino</th>${thMeses}<th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>TOTAL</td>${totCells}<td style="text-align:right">$${Math.round(grand).toLocaleString()}</td></tr></tfoot>
+    </table></div></div>`;
+  }
+
+  // ── TAB: PATRÓN ──
+  else if(cobTab==='patron'){
+    const cards=shownInqs.map(inq=>{
+      const dots=meses.map(m=>{
+        const d=tenants[inq][m]||{};
+        const st=d.pago||'';
+        const isFut=!d.canon&&!d.monto&&!st;
+        if(isFut)return`<div class="pd fut" title="${mesLabel(m)}">·</div>`;
+        if(st.includes('Atrasado'))return`<div class="pd late" title="${mesLabel(m)} — Atrasado">A</div>`;
+        if(st==='Si'||st.includes('Adelantado'))return`<div class="pd paid" title="${mesLabel(m)} — Pagó">✓</div>`;
+        return`<div class="pd no" title="${mesLabel(m)} — No pagó">✗</div>`;
+      }).join('');
+      const rowMeses=meses.filter(m=>tenants[inq][m]);
+      const pagados=rowMeses.filter(m=>{const st=(tenants[inq][m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
+      const atras=rowMeses.filter(m=>(tenants[inq][m]||{}).pago?.includes('Atrasado')).length;
+      const nopag=rowMeses.filter(m=>(tenants[inq][m]||{}).pago==='No').length;
+      const totPag=rowMeses.reduce((s,m)=>s+((tenants[inq][m]||{}).monto||0),0);
+      const lastBal=(tenants[inq][meses[meses.length-1]]||{}).balance||0;
+      return`<div class="pat-card">
+        <div class="pat-name" title="${esc(inq)}">${esc(inq)}</div>
+        <div class="pat-dots">${dots}</div>
+        <div class="pat-stats">
+          <div class="pat-stat"><div class="ps-val" style="color:var(--green)">${pagados}</div><div class="ps-lbl">Pagó</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:var(--amber)">${atras}</div><div class="ps-lbl">Atrasado</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:var(--red)">${nopag}</div><div class="ps-lbl">No pagó</div></div>
+          <div class="pat-stat"><div class="ps-val">${fmt(totPag)}</div><div class="ps-lbl">Total</div></div>
+          <div class="pat-stat"><div class="ps-val" style="color:${lastBal<0?'var(--red)':'var(--green)'}">${fmt(lastBal)}</div><div class="ps-lbl">Balance</div></div>
+        </div>
+      </div>`;
+    }).join('');
+    html+=`<div class="pat-grid">${cards}</div>`;
+  }
+
+  // ── TAB: PROVISIONES ──
+  else if(cobTab==='provisiones'){
+    const thM=kpiMeses.map(m=>`<th style="text-align:right">${mesLabel(m)}</th>`).join('');
+    function provRow(label,key,color=''){
+      const cells=kpiMeses.map(m=>{
+        const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{})[key]||0),0);
+        return`<td style="text-align:right;color:${color||'var(--text)'}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
+      }).join('');
+      const tot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{})[key]||0),0),0);
+      return`<tr><td style="font-weight:500">${label}</td>${cells}<td style="text-align:right;font-weight:700;color:${color||'var(--text)'}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
+    }
+    // cobrado row
+    const cobCells=kpiMeses.map(m=>{
+      const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
+      return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;
+    }).join('');
+    const cobTot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).monto||0),0),0);
+    // prov total row
+    const provCells=kpiMeses.map(m=>{
+      const bat=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).bat||0),0);
+      const ga=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);
+      const op=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).op||0),0);
+      return`<td style="text-align:right;font-weight:700;color:var(--accent)">${(bat+ga+op)>0?'$'+Math.round(bat+ga+op).toLocaleString():'—'}</td>`;
+    }).join('');
+    const provTot=kpiMeses.reduce((s,m)=>{
+      const t=shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0);
+      return s+t;
+    },0);
+    html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="prov-table">
+      <thead><tr><th>Concepto</th>${thM}<th style="text-align:right">Total</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:500;color:var(--green)">💵 Cobrado</td>${cobCells}<td style="text-align:right;font-weight:700;color:var(--green)">${fmt(cobTot)}</td></tr>
+        ${provRow('🏛 Baticueva 20%','bat','#a78bfa')}
+        ${provRow('🤝 G&A 60% (Socios)','ga','var(--accent)')}
+        ${provRow('🔧 Op & Mant. 20%','op','var(--amber)')}
+        <tr style="background:rgba(255,255,255,0.03)"><td style="font-weight:700">📦 PROVISIÓN TOTAL</td>${provCells}<td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(provTot)}</td></tr>
+        ${provRow('💰 Div. Socios (Registrado)','ga','var(--green)')}
+      </tbody>
+      <tfoot>
+        <tr><td>Mesada c/u (${N_SOCIOS} socios)</td>${kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t/N_SOCIOS).toLocaleString():'—'}</td>`;}).join('')}<td style="text-align:right;color:var(--green)">$${Math.round(totGa/N_SOCIOS).toLocaleString()}</td></tr>
+      </tfoot>
+    </table></div></div>`;
+  }
+
+  // ── TAB: DEUDA ──
+  else if(cobTab==='deuda'){
+    const lastMes=meses[meses.length-1];
+    const deudas=shownInqs
+      .map(inq=>({inq,bal:Math.abs((tenants[inq][lastMes]||{}).balance||0),canon:(tenants[inq][lastMes]||{}).canon||0}))
+      .filter(d=>d.bal>5)
+      .sort((a,b)=>b.bal-a.bal);
+    const maxD=deudas[0]?.bal||1;
+    const barRows=deudas.map(d=>{
+      const w=Math.round(d.bal/maxD*100);
+      const meses_deuda=d.canon>0?Math.round(d.bal/d.canon):0;
+      return`<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="font-weight:500;color:var(--text)">${esc(d.inq)}</span>
+          <span style="color:var(--red);font-weight:700">${fmt(d.bal)}${meses_deuda>0?` <span style="color:var(--muted);font-weight:400;font-size:10px">(≈${meses_deuda} mes${meses_deuda>1?'es':''})</span>`:''}</span>
+        </div>
+        <div style="background:var(--border);border-radius:3px;height:6px"><div style="width:${w}%;background:var(--red);border-radius:3px;height:6px"></div></div>
+      </div>`;
+    }).join('');
+    html+=`<div class="card">
+      <div class="card-title">Balance pendiente por inquilino — al ${mesLabel(lastMes)} 2026</div>
+      ${barRows||'<div style="color:var(--muted);font-size:13px">Sin deudas registradas.</div>'}
+    </div>`;
+  }
+
+  $('page-cobranzas').innerHTML=html;
+}
+
+
 </script>
 </body>
 </html>
