@@ -414,7 +414,38 @@ let cobRows=[],cobLoaded=false,cobTab='tabla',cobMesFilt='',cobInqFilt='',cobRep
 const ML=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 function mesLbl(ym){if(!ym)return'';const[,m]=ym.split('-');return ML[parseInt(m)-1]||ym;}
 function mesLblFull(ym){if(!ym)return'';const[y,m]=ym.split('-');return ML[parseInt(m)-1]+' '+y;}
-function cobN(v){const s=String(v||'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;}
+function cobN(v){
+  let s=String(v||'').trim();
+  if(!s||s==='-'||s==='')return 0;
+  // Remove currency symbols, spaces, $ signs
+  s=s.replace(/[$\s]/g,'');
+  // Detect format: if has dot AND comma, figure out which is decimal
+  // European: 2.490,00 → thousands=dot, decimal=comma
+  // US: 2,490.00 → thousands=comma, decimal=dot
+  if(s.includes(',')&&s.includes('.')){
+    const lastDot=s.lastIndexOf('.');
+    const lastComma=s.lastIndexOf(',');
+    if(lastComma>lastDot){
+      // European format: 2.490,00
+      s=s.replace(/\./g,'').replace(',','.');
+    } else {
+      // US format: 2,490.00
+      s=s.replace(/,/g,'');
+    }
+  } else if(s.includes(',')&&!s.includes('.')){
+    // Could be decimal comma (1,5) or thousands (1,500)
+    const parts=s.split(',');
+    if(parts.length===2&&parts[1].length<=2){
+      s=s.replace(',','.');  // decimal comma
+    } else {
+      s=s.replace(/,/g,'');  // thousands comma
+    }
+  }
+  // Remove any remaining non-numeric except dot and minus
+  s=s.replace(/[^0-9.\-]/g,'');
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
 function killCobCharts(){[cobRepChart,cobMetaChart,cobDeudaChart].forEach(c=>{try{if(c)c.destroy();}catch(e){}});cobRepChart=cobMetaChart=cobDeudaChart=null;}
 
 function loadCobData(cb){
