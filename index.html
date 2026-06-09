@@ -134,38 +134,40 @@ tr:hover td{background:var(--surface2)}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 /* ── COBRANZAS ── */
-.cob-topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
-.cob-sel{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;cursor:pointer}
-.cob-sel:focus{border-color:var(--accent)}
-.cob-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;width:180px}
-.cob-search::placeholder{color:var(--muted)}
+.cob-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem;padding:0}
+.cs{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;cursor:pointer}
+.cs:focus{border-color:var(--accent)}
 .cob-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
 @media(min-width:700px){.cob-kpis{grid-template-columns:repeat(4,1fr)}}
-.tab-btns{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
-.tab-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
-.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.cob-tbl th{background:var(--surface2)}
-.cob-tbl td.c-paid{color:var(--green);font-weight:600}
-.cob-tbl td.c-late{color:var(--amber);font-weight:600}
-.cob-tbl td.c-no{color:var(--muted)}
-.cob-tbl td.c-tot{font-weight:700;color:var(--text);background:rgba(255,255,255,0.03)}
-.cob-tbl tfoot td{background:var(--surface2);font-weight:700;font-size:11px;color:var(--text);padding:8px 10px}
-.pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:1rem}
+.ct td,.ct th{white-space:nowrap;padding:7px 10px;font-size:12px}
+.ct thead th{background:var(--surface2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.ct thead th:first-child{text-align:left}
+.ct th,.ct td{text-align:right}
+.ct th:first-child,.ct td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+.ct tbody tr:hover td:first-child{background:var(--surface2)}
+.ct tbody tr:hover{background:rgba(255,255,255,.03)}
+.ct tbody tr{border-bottom:1px solid var(--border)}
+.ct tfoot td{background:var(--surface2);font-weight:700;font-size:12px}
+.cpaid{color:var(--green);font-weight:600}.clate{color:var(--amber);font-weight:600}.cno{color:var(--muted)}.ctot{font-weight:700}
+.pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .pat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
-.pat-name{font-size:13px;font-weight:600;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pat-dots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
-.pd{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default;flex-shrink:0}
-.pd.paid{background:rgba(52,200,122,0.2);color:var(--green)}.pd.late{background:rgba(245,166,35,0.2);color:var(--amber)}.pd.no{background:rgba(240,84,84,0.15);color:var(--red)}.pd.fut{background:var(--surface2);color:var(--muted)}
-.pat-stats{display:flex;gap:10px;font-size:11px;flex-wrap:wrap}
-.pat-stat{text-align:center}.pat-stat .ps-val{font-weight:700;font-size:13px}.pat-stat .ps-lbl{color:var(--muted);margin-top:1px}
-.prov-table td,.prov-table th{white-space:nowrap}
-.prov-table tfoot td{background:var(--surface2);font-weight:700;color:var(--text)}
-.rep-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
-@media(min-width:600px){.rep-kpis{grid-template-columns:repeat(4,1fr)}}
-.rep-header{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;text-align:center}
-.rep-header h2{font-size:16px;font-weight:700;margin-bottom:4px}
-.rep-header .rep-period{font-size:12px;color:var(--muted)}
-@media print{.sidebar,.topbar,.tab-btns,.cob-topbar,.cob-kpis,.filterbar,.kpi-grid{display:none!important}.rep-print{display:block!important}.page{display:block!important}}
+.pat-name{font-size:13px;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
+.pd{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.pd.ok{background:rgba(52,200,122,.2);color:var(--green)}.pd.late{background:rgba(245,166,35,.2);color:var(--amber)}.pd.no{background:rgba(240,84,84,.15);color:var(--red)}.pd.fut{background:var(--surface2);color:var(--muted)}
+.pstats{display:flex;gap:10px;font-size:11px;flex-wrap:wrap}
+.pstat .pv{font-weight:700;font-size:13px}.pstat .pl{color:var(--muted);margin-top:1px}
+.rep-hdr{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;text-align:center}
+.rep-hdr h2{font-size:16px;font-weight:700;margin:4px 0}
+.rkpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+@media(min-width:600px){.rkpis{grid-template-columns:repeat(4,1fr)}}
+.saved-reports{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:12px}
+.saved-reports .sr-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.sr-list{display:flex;gap:6px;flex-wrap:wrap}
+.sr-tag{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;cursor:pointer;font-size:11px;color:var(--text);display:flex;align-items:center;gap:5px;transition:all .15s}
+.sr-tag:hover{border-color:var(--accent);color:var(--accent)}
+.sr-tag .sr-del{color:var(--muted);font-size:10px;margin-left:2px}
+.sr-tag .sr-del:hover{color:var(--red)}
 
 </style>
 </head>
@@ -200,10 +202,24 @@ tr:hover td{background:var(--surface2)}
       <div class="nav-item" id="nav-categorias" onclick="showPage('categorias')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Categorías
       </div>
-      <div style="margin:12px 1.25rem 4px;border-top:1px solid var(--border)"></div>
-      <div class="nav-label" style="margin-top:8px">Inquilinos</div>
-      <div class="nav-item" id="nav-cobranzas" onclick="showPage('cobranzas')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Cobranzas
+      <div style="margin:10px 1rem 4px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Inquilinos</div>
+      <div class="nav-item" id="nav-cob-pagos" onclick="showCob('pagos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Pagos por mes
+      </div>
+      <div class="nav-item" id="nav-cob-meta" onclick="showCob('meta')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Meta vs Cobrado
+      </div>
+      <div class="nav-item" id="nav-cob-deuda" onclick="showCob('deuda')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Ranking deuda
+      </div>
+      <div class="nav-item" id="nav-cob-patron" onclick="showCob('patron')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Patrón de pago
+      </div>
+      <div class="nav-item" id="nav-cob-prov" onclick="showCob('prov')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Provisiones
+      </div>
+      <div class="nav-item" id="nav-cob-reporte" onclick="showCob('reporte')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Reporte inquilino
       </div>
     </div>
   </nav>
@@ -391,8 +407,391 @@ function buildCategorias(rows){
   if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:aOpts}});}
 }
 
-function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();if(id==='cobranzas'){buildCobranzas();}else{renderCurrentPage(applyFilters());}}
+function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();renderCurrentPage(applyFilters());}
 function renderCurrentPage(rows){const kpi=buildKPI(rows);if(currentPage==='resumen')buildResumen(rows,kpi);else if(currentPage==='movimientos')buildMovimientos(rows);else if(currentPage==='ranking')buildRanking(rows);else if(currentPage==='categorias')buildCategorias(rows);}
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO COBRANZAS — mapeo directo desde Cobranzaspivot
+// ══════════════════════════════════════════════════════════
+const COB_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
+const NS=5; // socios
+let cobData={},cobMeses=[],cobInqs=[],cobLoaded=false,cobView='pagos',cobMF='',cobIF='',cobRI='',cobCharts={};
+let savedReports=JSON.parse(localStorage.getItem('cobReports')||'[]');
+const ML2=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function ml(ym){const[,m]=String(ym).split('-');return ML2[parseInt(m)-1]||ym;}
+function mlf(ym){const[y,m]=String(ym).split('-');return ML2[parseInt(m)-1]+' '+y;}
+function pn(v){// parse number: handles int, float, "  -  ", nan, European format
+  if(v===null||v===undefined||v==='')return 0;
+  const s=String(v).trim();
+  if(!s||s==='-'||s.toLowerCase()==='nan')return 0;
+  // strip currency/spaces
+  let c=s.replace(/[$\s]/g,'');
+  // European: 1.234,56 → dot=thousands, comma=decimal
+  if(c.includes('.')&&c.includes(',')){
+    const ld=c.lastIndexOf('.'),lc=c.lastIndexOf(',');
+    if(lc>ld){c=c.replace(/\./g,'').replace(',','.');}
+    else{c=c.replace(/,/g,'');}
+  } else if(c.includes(',')&&!c.includes('.')){
+    const pts=c.split(',');
+    c=(pts.length===2&&pts[1].length<=2)?c.replace(',','.'):c.replace(/,/g,'');
+  }
+  c=c.replace(/[^0-9.\-]/g,'');
+  const n=parseFloat(c);
+  return isNaN(n)?0:n;
+}
+function killCob(){Object.values(cobCharts).forEach(c=>{try{c.destroy();}catch(e){}});cobCharts={};}
+
+function loadCob(cb){
+  if(cobLoaded){cb();return;}
+  $('page-cobranzas').innerHTML='<div class="loading"><div class="spin"></div>Cargando cobranzas...</div>';
+  Papa.parse(COB_URL,{download:true,header:true,skipEmptyLines:true,
+    complete(res){parseCob(res.data);cobLoaded=true;cb();},
+    error(e){$('page-cobranzas').innerHTML=`<div class="loading" style="color:var(--red)">Error: ${e.message||e}. Verifica permisos del Sheet.</div>`;}
+  });
+}
+
+function parseCob(rows){
+  cobData={};const mesSet=new Set(),inqSet=new Set();
+  rows.forEach(r=>{
+    const ano=pn(r['ANO']);
+    const inq=(r['Inquilinos']||'').trim();
+    if(!inq||inq.startsWith('Desocupado')||!inq)return;
+    const mesRaw=r['MES']||'';
+    const d=new Date(mesRaw);if(isNaN(d.getTime()))return;
+    const mes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
+    const monto=Math.abs(pn(r['Monto $']));
+    const balance=pn(r['Balance']);
+    const canon=Math.abs(pn(r['Canon Vigente']));
+    const bat=Math.abs(pn(r['Baticueva 20%']));
+    const ga=Math.abs(pn(r['G&A 60% ($)']));
+    const op=Math.abs(pn(r['Op, & Mantenimiento 20% ($)']));
+    const comSocios=Math.abs(pn(r['Comision Socios C/U $']));
+    const prov=Math.abs(pn(r['Provision Reserva $']));
+    const key=`${inq}|||${mes}`;
+    // merge rows for same tenant+month (multiple payments)
+    if(!cobData[key]){
+      cobData[key]={ano,inq,mes,pago,monto,balance,canon,bat,ga,op,comSocios,prov};
+    } else {
+      cobData[key].monto+=monto;
+      if(balance!==0)cobData[key].balance=balance;
+      cobData[key].bat+=bat;cobData[key].ga+=ga;cobData[key].op+=op;cobData[key].comSocios+=comSocios;cobData[key].prov+=prov;
+      if(pago)cobData[key].pago=pago;
+    }
+    mesSet.add(mes);inqSet.add(inq);
+  });
+  cobMeses=[...mesSet].sort();
+  cobInqs=[...inqSet].sort();
+}
+
+function getTenants(yearFilt){
+  // Returns {inq: {mes: data}}
+  const t={};
+  Object.values(cobData).forEach(r=>{
+    if(yearFilt&&r.ano!==yearFilt)return;
+    if(!t[r.inq])t[r.inq]={};
+    t[r.inq][r.mes]=r;
+  });
+  return t;
+}
+
+function getMeses(yearFilt){
+  return cobMeses.filter(m=>!yearFilt||m.startsWith(String(yearFilt)));
+}
+
+function showCob(view){
+  cobView=view;
+  // Activate correct nav items
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $('page-cobranzas').classList.add('active');
+  const nav=$('nav-cob-'+view.replace('reporte','reporte').replace('prov','prov'));
+  if(nav)nav.classList.add('active');
+  closeSidebar();
+  killCob();
+  loadCob(()=>renderCob());
+}
+
+function renderCob(){
+  const tenants=getTenants(2026);
+  const meses=getMeses(2026);
+  const filtM=cobMF;
+  const filtInq=cobIF.toLowerCase();
+  const shownInqs=cobInqs.filter(i=>i.startsWith&&!i.startsWith('Desocupado')&&(!filtInq||i.toLowerCase().includes(filtInq)));
+  const kpiMeses=filtM?[filtM]:meses.filter(m=>{
+    return shownInqs.some(i=>(tenants[i]||{})[m]?.monto>0||(tenants[i]||{})[m]?.canon>0);
+  });
+
+  // KPIs
+  let totCob=0,totBal=0,totGa=0,totBat=0,totOp=0,pagaron=0,noPag=0,atrasados=0;
+  shownInqs.forEach(i=>{
+    kpiMeses.forEach(m=>{
+      const d=(tenants[i]||{})[m]||{};
+      totCob+=d.monto||0;
+      totGa+=d.ga||0;totBat+=d.bat||0;totOp+=d.op||0;
+    });
+    // last balance
+    const lastM=meses.filter(m=>(tenants[i]||{})[m]).slice(-1)[0];
+    if(lastM)totBal+=(tenants[i][lastM]||{}).balance||0;
+    if(filtM){const st=(tenants[i]||{})[filtM]?.pago||'';if(st.includes('Si'))pagaron++;else if(st==='No')noPag++;if(st.includes('Atrasado'))atrasados++;}
+  });
+  const prov=totBat+totGa+totOp;
+  const mesOpts=meses.map(m=>`<option value="${m}"${filtM===m?'selected':''}>${mlf(m)}</option>`).join('');
+  const inqOpts2026=shownInqs.map(i=>`<option value="${i}"${cobRI===i?'selected':''}>${i}</option>`).join('');
+
+  const topBar=`<div class="cob-bar">
+    <select class="cs" onchange="cobMF=this.value;killCob();renderCob()">
+      <option value="">Todos los meses 2026</option>${mesOpts}
+    </select>
+    <input class="cs" style="width:180px" placeholder="Buscar inquilino..." value="${esc(cobIF)}" oninput="cobIF=this.value;renderCob()">
+    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;killCob();loadCob(()=>renderCob())">🔄 Actualizar</button>
+    ${cobView!=='reporte'?`<button class="btn" style="font-size:11px;padding:5px 10px;background:var(--surface2);color:var(--text)" onclick="saveReport()">💾 Guardar vista</button>`:''}
+  </div>`;
+
+  const kpiBar=`<div class="cob-kpis">
+    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${filtM?pagaron+' inquilinos':'Acumulado 2026'}</div></div>
+    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value">${fmt(Math.abs(Math.min(totBal,0)))}</div><div class="kpi-sub">${atrasados?atrasados+' atrasados':'saldo pendiente'}</div></div>
+    <div class="kpi bal"><div class="kpi-label">Provisión total</div><div class="kpi-value">${fmt(prov)}</div><div class="kpi-sub">Bat+G&A+Op</div></div>
+    <div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">${fmt(totGa/NS)}</div><div class="kpi-sub">G&A ÷ ${NS} socios</div></div>
+  </div>`;
+
+  const savedBar=savedReports.length?`<div class="saved-reports">
+    <div class="sr-title">Vistas guardadas</div>
+    <div class="sr-list">${savedReports.map((r,i)=>`<div class="sr-tag" onclick="loadReport(${i})"><span>${r.label}</span><span class="sr-del" onclick="event.stopPropagation();delReport(${i})">✕</span></div>`).join('')}</div>
+  </div>`:'';
+
+  let body='';
+
+  // ── PAGOS POR MES ──
+  if(cobView==='pagos'){
+    const shownM=filtM?[filtM]:meses;
+    const thM=shownM.map(m=>`<th>${ml(m)}</th>`).join('');
+    const trows=shownInqs.map(inq=>{
+      let tot=0;
+      const cells=shownM.map(m=>{
+        const d=(tenants[inq]||{})[m]||{};tot+=d.monto||0;
+        const st=d.pago||'';
+        if(!st&&!d.canon)return`<td>—</td>`;
+        if(st.includes('Atrasado'))return`<td class="clate">⚠ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
+        if(st==='Si'||st.includes('Adelantado'))return`<td class="cpaid">✓ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
+        return`<td class="cno">✗ —</td>`;
+      }).join('');
+      return`<tr><td>${esc(inq)}</td>${cells}<td class="ctot">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
+    }).join('');
+    const tfootM=shownM.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0);return`<td>${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
+    const grand=shownInqs.reduce((s,i)=>s+shownM.reduce((ss,m)=>ss+((tenants[i]||{})[m]?.monto||0),0),0);
+    body=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">
+      <thead><tr><th>Inquilino</th>${thM}<th>Total</th></tr></thead>
+      <tbody>${trows||'<tr><td colspan="20" style="text-align:center;padding:1.5rem;color:var(--muted)">Sin datos</td></tr>'}</tbody>
+      <tfoot><tr><td>TOTAL</td>${tfootM}<td>$${Math.round(grand).toLocaleString()}</td></tr></tfoot>
+    </table></div></div>`;
+  }
+
+  // ── META vs COBRADO ──
+  else if(cobView==='meta'){
+    const hasMeses=meses.filter(m=>shownInqs.some(i=>(tenants[i]||{})[m]?.canon>0));
+    const metaV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.canon||0),0));
+    const cobV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0));
+    const pctV=hasMeses.map((m,i)=>metaV[i]>0?Math.round(cobV[i]/metaV[i]*100):0);
+    body=`<div class="card"><div class="card-title">Meta de cobro (canon) vs monto cobrado — USD</div>
+      <div class="chart-wrap"><canvas id="ch-meta" style="max-height:280px"></canvas></div></div>
+    <div class="card" style="margin-top:12px"><div class="tbl-wrap"><table class="ct">
+      <thead><tr><th>Mes</th><th>Meta (Canon)</th><th>Cobrado</th><th>Diferencia</th><th>% Cumplimiento</th></tr></thead>
+      <tbody>${hasMeses.map((m,i)=>{
+        const diff=cobV[i]-metaV[i];const pct=pctV[i];
+        return`<tr><td>${mlf(m)}</td><td>$${Math.round(metaV[i]).toLocaleString()}</td>
+          <td style="color:var(--green);font-weight:600">$${Math.round(cobV[i]).toLocaleString()}</td>
+          <td style="color:${diff>=0?'var(--green)':'var(--red)'};font-weight:600">${diff>=0?'+':''}$${Math.round(diff).toLocaleString()}</td>
+          <td><span style="font-weight:700;color:${pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)'}">${pct}%</span></td></tr>`;
+      }).join('')}</tbody></table></div></div>`;
+    setTimeout(()=>{
+      const ctx=$('ch-meta');if(!ctx)return;
+      cobCharts.meta=new Chart(ctx,{type:'bar',data:{labels:hasMeses.map(m=>mlf(m)),datasets:[
+        {label:'Meta canon',data:metaV,backgroundColor:'rgba(79,142,247,.25)',borderColor:'rgba(79,142,247,.8)',borderWidth:2,borderRadius:4},
+        {label:'Cobrado',data:cobV,backgroundColor:'rgba(52,200,122,.75)',borderRadius:4},
+        {label:'% cobrado',data:pctV,type:'line',yAxisID:'y2',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#f5a623',tension:0.3}
+      ]},options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='y2'?`${c.dataset.label}: ${c.raw}%`:`${c.dataset.label}: $${Math.round(c.raw).toLocaleString()}`}}},
+        scales:{x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+Math.round(v).toLocaleString()},grid:{color:gc}},y2:{position:'right',ticks:{color:'#f5a623',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0}}}});
+    },80);
+  }
+
+  // ── RANKING DEUDA ──
+  else if(cobView==='deuda'){
+    const lastM=meses[meses.length-1];
+    const deudas=shownInqs.map(i=>{
+      const d=(tenants[i]||{})[lastM]||{};
+      const bal=d.balance||0;
+      const deuda=bal<0?Math.abs(bal):0;
+      const canon=d.canon||0;
+      const mr=canon>0?Math.round(deuda/canon*10)/10:0;
+      return{i,deuda,canon,mr,bal};
+    }).filter(d=>d.deuda>0).sort((a,b)=>b.deuda-a.deuda);
+    const totalD=deudas.reduce((s,d)=>s+d.deuda,0);
+    body=`<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Ranking de deuda — al ${mlf(lastM)}</span>
+      <span style="color:var(--red);font-weight:700">Total: $${Math.round(totalD).toLocaleString()}</span></div>
+      <div class="chart-wrap"><canvas id="ch-deuda" style="max-height:${Math.max(180,deudas.length*40)}px"></canvas></div></div>
+    <div class="card" style="margin-top:12px"><div class="tbl-wrap"><table class="ct">
+      <thead><tr><th>#</th><th>Inquilino</th><th>Canon/mes</th><th>Deuda USD</th><th>Meses retraso</th><th>% del total</th></tr></thead>
+      <tbody>${deudas.map((d,idx)=>`<tr>
+        <td style="color:var(--muted)">${idx+1}</td><td>${esc(d.i)}</td>
+        <td>$${Math.round(d.canon).toLocaleString()}</td>
+        <td style="color:var(--red);font-weight:700">$${Math.round(d.deuda).toLocaleString()}</td>
+        <td style="color:${d.mr>3?'var(--red)':d.mr>1?'var(--amber)':'var(--muted)'};font-weight:600">${d.mr} mes${d.mr!==1?'es':''}</td>
+        <td>${Math.round(d.deuda/totalD*100)}%</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    setTimeout(()=>{
+      const ctx=$('ch-deuda');if(!ctx)return;
+      cobCharts.deuda=new Chart(ctx,{type:'bar',data:{labels:deudas.map(d=>d.i),datasets:[{label:'Deuda USD',data:deudas.map(d=>d.deuda),backgroundColor:deudas.map(d=>d.mr>3?'rgba(240,84,84,.8)':d.mr>1?'rgba(245,166,35,.8)':'rgba(79,142,247,.7)'),borderRadius:4}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Deuda: $${Math.round(c.parsed.x).toLocaleString()} · ${deudas[c.dataIndex]?.mr} meses`}}},
+        scales:{x:{ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10}},grid:{display:false}}}}});
+    },80);
+  }
+
+  // ── PATRÓN DE PAGO ──
+  else if(cobView==='patron'){
+    const cards=shownInqs.map(inq=>{
+      const dots=meses.map(m=>{
+        const d=(tenants[inq]||{})[m]||{};const st=d.pago||'';
+        if(!d.canon&&!d.monto&&!st)return`<div class="pd fut" title="${mlf(m)}">·</div>`;
+        if(st.includes('Atrasado'))return`<div class="pd late" title="${mlf(m)} Atrasado">A</div>`;
+        if(st==='Si'||st.includes('Adelantado'))return`<div class="pd ok" title="${mlf(m)} Pagó">✓</div>`;
+        return`<div class="pd no" title="${mlf(m)} No pagó">✗</div>`;
+      }).join('');
+      const rm=meses.filter(m=>(tenants[inq]||{})[m]?.canon>0||(tenants[inq]||{})[m]?.monto>0);
+      const pg=rm.filter(m=>{const st=(tenants[inq]||{})[m]?.pago||'';return st==='Si'||st.includes('Adelantado');}).length;
+      const at=rm.filter(m=>(tenants[inq]||{})[m]?.pago?.includes('Atrasado')).length;
+      const np=rm.filter(m=>(tenants[inq]||{})[m]?.pago==='No').length;
+      const totP=rm.reduce((s,m)=>s+((tenants[inq]||{})[m]?.monto||0),0);
+      const lastM=meses.filter(m=>(tenants[inq]||{})[m]).slice(-1)[0];
+      const lastBal=lastM?(tenants[inq][lastM]?.balance||0):0;
+      return`<div class="pat-card">
+        <div class="pat-name" title="${esc(inq)}">${esc(inq)}</div>
+        <div class="pdots">${dots}</div>
+        <div class="pstats">
+          <div class="pstat"><div class="pv" style="color:var(--green)">${pg}</div><div class="pl">Pagó</div></div>
+          <div class="pstat"><div class="pv" style="color:var(--amber)">${at}</div><div class="pl">Atrasado</div></div>
+          <div class="pstat"><div class="pv" style="color:var(--red)">${np}</div><div class="pl">No pagó</div></div>
+          <div class="pstat"><div class="pv">$${Math.round(totP).toLocaleString()}</div><div class="pl">Cobrado</div></div>
+          <div class="pstat"><div class="pv" style="color:${lastBal<0?'var(--red)':'var(--green)'}">$${Math.round(lastBal).toLocaleString()}</div><div class="pl">Balance</div></div>
+        </div></div>`;
+    }).join('');
+    body=`<div class="pat-grid">${cards||'<div style="color:var(--muted)">Sin datos</div>'}</div>`;
+  }
+
+  // ── PROVISIONES ──
+  else if(cobView==='prov'){
+    const hasMeses2=meses.filter(m=>shownInqs.some(i=>(tenants[i]||{})[m]?.bat>0||(tenants[i]||{})[m]?.monto>0));
+    const thM2=hasMeses2.map(m=>`<th>${mlf(m)}</th>`).join('');
+    function prow(label,key,color){
+      const cells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.[key]||0),0);return`<td style="color:${color}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
+      const tot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.[key]||0),0),0);
+      return`<tr><td>${label}</td>${cells}<td style="font-weight:700;color:${color}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
+    }
+    const cobCells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0);return`<td style="color:var(--green);font-weight:600">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
+    const cobTot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.monto||0),0),0);
+    const provTot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.bat||0)+((tenants[i]||{})[m]?.ga||0)+((tenants[i]||{})[m]?.op||0),0),0);
+    const provCells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.bat||0)+((tenants[i]||{})[m]?.ga||0)+((tenants[i]||{})[m]?.op||0),0);return`<td style="color:var(--accent);font-weight:700">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
+    body=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">
+      <thead><tr><th>Concepto</th>${thM2}<th>Total</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--green);font-weight:600">💵 Cobrado del mes</td>${cobCells}<td style="color:var(--green);font-weight:700">$${Math.round(cobTot).toLocaleString()}</td></tr>
+        ${prow('🏛 Baticueva 20%','bat','#a78bfa')}
+        ${prow('🤝 G&A 60% (base socios)','ga','var(--accent)')}
+        ${prow('🔧 Op & Mantenimiento 20%','op','var(--amber)')}
+        <tr><td style="font-weight:700">📦 PROVISIÓN TOTAL</td>${provCells}<td style="color:var(--accent);font-weight:700">$${Math.round(provTot).toLocaleString()}</td></tr>
+        ${prow('💰 Div. Socios registrado','comSocios','var(--green)')}
+      </tbody>
+      <tfoot><tr><td>Mesada estimada c/u (${NS} socios)</td>${hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.ga||0),0);return`<td style="color:var(--green)">${t>0?'$'+Math.round(t/NS).toLocaleString():'—'}</td>`;}).join('')}<td style="color:var(--green)">$${Math.round(totGa/NS).toLocaleString()}</td></tr></tfoot>
+    </table></div></div>`;
+  }
+
+  // ── REPORTE INQUILINO ──
+  else if(cobView==='reporte'){
+    const allT=getTenants(null);
+    const allInqs=[...new Set(Object.values(cobData).map(r=>r.inq))].sort();
+    const iOpts=allInqs.map(i=>`<option value="${esc(i)}"${cobRI===i?'selected':''}>${esc(i)}</option>`).join('');
+    let repBody='<div class="card" style="text-align:center;color:var(--muted);padding:3rem">Selecciona un inquilino arriba para ver su reporte completo</div>';
+    if(cobRI&&allT[cobRI]){
+      const td=allT[cobRI];
+      const tMeses=Object.keys(td).sort().filter(m=>td[m].canon>0||td[m].monto>0);
+      if(tMeses.length){
+        const lastD=td[tMeses[tMeses.length-1]];
+        const totCobR=tMeses.reduce((s,m)=>s+(td[m]?.monto||0),0);
+        const balActual=lastD.balance||0;
+        const canonActual=lastD.canon||0;
+        const mesesAtr=canonActual>0&&balActual<0?Math.round(Math.abs(balActual)/canonActual*10)/10:0;
+        const pg2=tMeses.filter(m=>{const st=td[m]?.pago||'';return st==='Si'||st.includes('Adelantado');}).length;
+        const at2=tMeses.filter(m=>td[m]?.pago?.includes('Atrasado')).length;
+        const np2=tMeses.filter(m=>td[m]?.pago==='No').length;
+        repBody=`
+        <div class="rep-hdr">
+          <div style="font-size:11px;color:var(--muted)">Fecha de Reporte: ${mlf(tMeses[0])} hasta ${mlf(tMeses[tMeses.length-1])}</div>
+          <h2>Reporte de Cobranzas Vs Balance</h2>
+          <div style="font-size:15px;font-weight:600;color:var(--accent)">${esc(cobRI)}</div>
+        </div>
+        <div class="rkpis">
+          <div class="kpi pos"><div class="kpi-label">Total período cobrado</div><div class="kpi-value">$${Math.round(totCobR).toLocaleString()}</div><div class="kpi-sub">${pg2} meses pagados</div></div>
+          <div class="kpi neg"><div class="kpi-label">Balance actual</div><div class="kpi-value" style="color:${balActual<0?'var(--red)':balActual>0?'var(--green)':'var(--muted)'}">$${Math.round(balActual).toLocaleString()}</div><div class="kpi-sub">${balActual<0?'Debe':'Al día'}</div></div>
+          <div class="kpi neu"><div class="kpi-label">Meses de retraso</div><div class="kpi-value" style="color:${mesesAtr>3?'var(--red)':mesesAtr>0?'var(--amber)':'var(--green)'}">${mesesAtr}</div><div class="kpi-sub">${at2} meses atrasado</div></div>
+          <div class="kpi bal"><div class="kpi-label">Canon vigente</div><div class="kpi-value">$${Math.round(canonActual).toLocaleString()}</div><div class="kpi-sub">${np2} meses sin pagar</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="display:flex;justify-content:space-between">
+            <span>Pagos vs Balance acumulado — ${esc(cobRI)}</span>
+            <button class="btn" style="font-size:11px;padding:4px 10px" onclick="window.print()">🖨 Imprimir / PDF</button>
+          </div>
+          <div class="chart-wrap"><canvas id="ch-rep" style="max-height:260px"></canvas></div>
+        </div>
+        <div class="card"><div class="card-title">Detalle mes a mes</div>
+        <div class="tbl-wrap"><table class="ct">
+          <thead><tr><th>Mes</th><th>Canon</th><th>Pagado</th><th>Balance</th><th>Estado</th></tr></thead>
+          <tbody>${tMeses.map(m=>{
+            const d=td[m]||{};const st=d.pago||'';
+            const stBadge=st.includes('Atrasado')?`<span style="color:var(--amber);font-weight:600">⚠ Atrasado</span>`:st==='Si'||st.includes('Adelantado')?`<span style="color:var(--green);font-weight:600">✓ ${st}</span>`:`<span style="color:var(--red)">✗ No pagó</span>`;
+            return`<tr><td>${mlf(m)}</td><td>${d.canon>0?'$'+Math.round(d.canon).toLocaleString():'—'}</td><td style="color:var(--green);font-weight:600">${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td><td style="color:${(d.balance||0)<0?'var(--red)':'var(--green)'};font-weight:600">$${Math.round(d.balance||0).toLocaleString()}</td><td>${stBadge}</td></tr>`;
+          }).join('')}</tbody></table></div></div>`;
+        setTimeout(()=>{
+          const ctx=$('ch-rep');if(!ctx)return;
+          const montos=tMeses.map(m=>td[m]?.monto||0);
+          const balances=tMeses.map(m=>td[m]?.balance||0);
+          cobCharts.rep=new Chart(ctx,{type:'bar',data:{labels:tMeses.map(m=>mlf(m)),datasets:[
+            {label:'Cobrado',data:montos,backgroundColor:'rgba(79,142,247,.75)',borderRadius:4},
+            {label:'Balance',data:balances,type:'line',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#f5a623',tension:0.3}
+          ]},options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${Math.round(c.raw).toLocaleString()}`}}},
+            scales:{x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+Math.round(v).toLocaleString()},grid:{color:gc}}}}});
+        },80);
+      }
+    }
+    body=`<div class="cob-bar" style="margin-bottom:1rem">
+      <select class="cs" style="min-width:280px" onchange="cobRI=this.value;killCob();renderCob()">
+        <option value="">— Seleccionar inquilino —</option>${iOpts}
+      </select></div>${repBody}`;
+  }
+
+  $('page-cobranzas').innerHTML=savedBar+topBar+kpiBar+body;
+}
+
+// ── SAVED REPORTS ──
+function saveReport(){
+  const label=prompt('Nombre para esta vista (ej: "Ene-Mar 2026 Liderpark"):');
+  if(!label)return;
+  savedReports.push({label,view:cobView,mf:cobMF,inf:cobIF,ri:cobRI});
+  localStorage.setItem('cobReports',JSON.stringify(savedReports));
+  renderCob();
+}
+function loadReport(i){
+  const r=savedReports[i];if(!r)return;
+  cobView=r.view;cobMF=r.mf;cobIF=r.inf;cobRI=r.ri;
+  showCob(cobView);
+}
+function delReport(i){
+  savedReports.splice(i,1);
+  localStorage.setItem('cobReports',JSON.stringify(savedReports));
+  renderCob();
+}
 function rerender(){buildFilters();renderCurrentPage(applyFilters());}
 function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').style.display=$('sidebar').classList.contains('open')?'block':'none';}
 function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').style.display='none';}
@@ -400,389 +799,11 @@ function loadData(){
   $('meta-txt').textContent='Actualizando...';killCharts();
   ['resumen','movimientos','ranking','categorias'].forEach(p=>{$('page-'+p).innerHTML='<div class="loading"><div class="spin"></div>Cargando...</div>';});
   $('kpi-grid').innerHTML='';
-  Papa.parse(CSV,{download:true,header:true,skipEmptyLines:true,
+  Papa.parse(CSV+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
     complete(res){if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}allRows=res.data;C=mapCols(res.meta.fields||[]);$('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;buildFilters();renderCurrentPage(applyFilters());},
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
 }
-// ══════════════════════════════════════════════════════════════
-// MÓDULO COBRANZAS
-// ══════════════════════════════════════════════════════════════
-const CSV_COB='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
-const N_SOCIOS=5;
-let cobRows=[],cobLoaded=false,cobTab='tabla',cobMesFilt='',cobInqFilt='',cobRepInq='',cobRepChart=null,cobMetaChart=null,cobDeudaChart=null;
-const ML=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-function mesLbl(ym){if(!ym)return'';const[,m]=ym.split('-');return ML[parseInt(m)-1]||ym;}
-function mesLblFull(ym){if(!ym)return'';const[y,m]=ym.split('-');return ML[parseInt(m)-1]+' '+y;}
-function cobN(v){
-  let s=String(v||'').trim();
-  if(!s||s==='-'||s==='')return 0;
-  // Remove currency symbols, spaces, $ signs
-  s=s.replace(/[$\s]/g,'');
-  // Detect format: if has dot AND comma, figure out which is decimal
-  // European: 2.490,00 → thousands=dot, decimal=comma
-  // US: 2,490.00 → thousands=comma, decimal=dot
-  if(s.includes(',')&&s.includes('.')){
-    const lastDot=s.lastIndexOf('.');
-    const lastComma=s.lastIndexOf(',');
-    if(lastComma>lastDot){
-      // European format: 2.490,00
-      s=s.replace(/\./g,'').replace(',','.');
-    } else {
-      // US format: 2,490.00
-      s=s.replace(/,/g,'');
-    }
-  } else if(s.includes(',')&&!s.includes('.')){
-    // Could be decimal comma (1,5) or thousands (1,500)
-    const parts=s.split(',');
-    if(parts.length===2&&parts[1].length<=2){
-      s=s.replace(',','.');  // decimal comma
-    } else {
-      s=s.replace(/,/g,'');  // thousands comma
-    }
-  }
-  // Remove any remaining non-numeric except dot and minus
-  s=s.replace(/[^0-9.\-]/g,'');
-  const n=parseFloat(s);
-  return isNaN(n)?0:n;
-}
-function killCobCharts(){[cobRepChart,cobMetaChart,cobDeudaChart].forEach(c=>{try{if(c)c.destroy();}catch(e){}});cobRepChart=cobMetaChart=cobDeudaChart=null;}
-
-function loadCobData(cb){
-  if(cobLoaded){cb();return;}
-  $('page-cobranzas').innerHTML='<div class="loading"><div class="spin"></div>Cargando cobranzas...</div>';
-  Papa.parse(CSV_COB,{download:true,header:true,skipEmptyLines:true,
-    complete(res){cobRows=res.data;cobLoaded=true;cb();},
-    error(){$('page-cobranzas').innerHTML='<div class="loading" style="color:var(--red)">Error cargando datos. Verifica permisos del Sheet.</div>';}
-  });
-}
-
-function parseTenants(yearFilter){
-  const tenants={};const mesSet=new Set();
-  cobRows.forEach(r=>{
-    const ano=String(r['ANO']||'').trim();
-    if(yearFilter&&ano!==String(yearFilter))return;
-    const inq=(r['Inquilinos']||'').trim();
-    if(!inq||inq.startsWith('Desocupado'))return;
-    const mesRaw=r['MES']||'';
-    const d=new Date(mesRaw);if(isNaN(d))return;
-    const mes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    mesSet.add(mes);
-    const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
-    const monto=Math.abs(cobN(r['Monto $']));
-    const balance=cobN(r['Balance']);
-    const canon=Math.abs(cobN(r['Canon Vigente']));
-    const bat=Math.abs(cobN(r['Baticueva 20%']));
-    const ga=Math.abs(cobN(r['G&A 60% ($)']));
-    const op=Math.abs(cobN(r['Op, & Mantenimiento 20% ($)']));
-    const comSocios=Math.abs(cobN(r['Comision Socios C/U $']));
-    const prov=Math.abs(cobN(r['Provision Reserva $']));
-    if(!tenants[inq])tenants[inq]={};
-    tenants[inq][mes]={pago,monto,balance,canon,bat,ga,op,comSocios,prov};
-  });
-  return{tenants,meses:[...mesSet].sort()};
-}
-
-function buildCobranzas(){loadCobData(()=>{killCobCharts();renderCobView();});}
-
-function renderCobView(){
-  const{tenants,meses}=parseTenants(2026);
-  const inqs=Object.keys(tenants).sort();
-  const filtInq=cobInqFilt.toLowerCase();
-  const shownInqs=inqs.filter(i=>!filtInq||i.toLowerCase().includes(filtInq));
-  const shownMeses=cobMesFilt?[cobMesFilt]:meses;
-  const kpiMeses=cobMesFilt?[cobMesFilt]:meses;
-
-  // KPIs
-  let totCob=0,totBal=0,totBat=0,totGa=0,totOp=0,pagaron=0,noPag=0,atrasados=0;
-  shownInqs.forEach(inq=>{
-    kpiMeses.forEach(m=>{
-      const d=tenants[inq][m]||{};
-      totCob+=d.monto||0;totBal+=d.balance||0;totBat+=d.bat||0;totGa+=d.ga||0;totOp+=d.op||0;
-    });
-    if(cobMesFilt){const st=(tenants[inq][cobMesFilt]||{}).pago||'';if(st.includes('Si'))pagaron++;else if(st==='No')noPag++;if(st.includes('Atrasado'))atrasados++;}
-  });
-  const provTotal=totBat+totGa+totOp;
-  const mesOptions=meses.map(m=>`<option value="${m}"${cobMesFilt===m?'selected':''}>${mesLblFull(m)}</option>`).join('');
-  const tb=(id,lbl)=>`<button class="tab-btn${cobTab===id?' active':''}" onclick="cobTab='${id}';killCobCharts();renderCobView()">${lbl}</button>`;
-
-  let html=`
-  <div class="cob-topbar">
-    <select class="cob-sel" onchange="cobMesFilt=this.value;killCobCharts();renderCobView()">
-      <option value="">Todos los meses 2026</option>${mesOptions}
-    </select>
-    <input class="cob-search" placeholder="Buscar inquilino..." value="${esc(cobInqFilt)}" oninput="cobInqFilt=this.value;renderCobView()">
-    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;killCobCharts();buildCobranzas()">🔄 Actualizar</button>
-  </div>
-  <div class="cob-kpis">
-    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${cobMesFilt?pagaron+' pagaron':'Acumulado 2026'}</div></div>
-    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value">${fmt(Math.abs(totBal<0?totBal:0))}</div><div class="kpi-sub">${atrasados?atrasados+' atrasados':noPag?noPag+' sin pagar':''}</div></div>
-    <div class="kpi bal"><div class="kpi-label">Provisión Total</div><div class="kpi-value">${fmt(provTotal)}</div><div class="kpi-sub">Bat+G&A+Op</div></div>
-    <div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">${fmt(totGa/N_SOCIOS)}</div><div class="kpi-sub">G&A ÷ ${N_SOCIOS} socios</div></div>
-  </div>
-  <div class="tab-btns">
-    ${tb('tabla','📋 Pagos por mes')}
-    ${tb('meta','🎯 Meta vs Cobrado')}
-    ${tb('deuda','📊 Ranking deuda')}
-    ${tb('patron','🔄 Patrón de pago')}
-    ${tb('provisiones','📐 Provisiones')}
-    ${tb('reporte','📄 Reporte inquilino')}
-  </div>`;
-
-  // ── TAB: TABLA ──
-  if(cobTab==='tabla'){
-    const thM=shownMeses.map(m=>`<th style="text-align:right">${mesLbl(m)}</th>`).join('');
-    const rows=shownInqs.map(inq=>{
-      let tot=0;
-      const cells=shownMeses.map(m=>{
-        const d=tenants[inq][m]||{};tot+=d.monto||0;
-        const st=d.pago||'';
-        if(!st||st==='Desocupado')return`<td style="text-align:right;color:var(--muted)">—</td>`;
-        if(st.includes('Atrasado'))return`<td class="c-late" style="text-align:right">⚠ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
-        if(st==='Si'||st.includes('Adelantado'))return`<td class="c-paid" style="text-align:right">✓ ${d.monto>0?'$'+Math.round(d.monto).toLocaleString():'—'}</td>`;
-        return`<td class="c-no" style="text-align:right">✗ —</td>`;
-      }).join('');
-      return`<tr><td style="font-weight:500;white-space:nowrap">${esc(inq)}</td>${cells}<td class="c-tot" style="text-align:right">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
-    }).join('');
-    const totCells=shownMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);return`<td style="text-align:right;font-weight:700">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-    const grand=shownInqs.reduce((s,i)=>s+shownMeses.reduce((ss,m)=>ss+((tenants[i][m]||{}).monto||0),0),0);
-    html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="cob-tbl">
-      <thead><tr><th>Inquilino</th>${thM}<th style="text-align:right">Total</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="20" style="text-align:center;color:var(--muted);padding:1.5rem">Sin resultados</td></tr>'}</tbody>
-      <tfoot><tr><td>TOTAL</td>${totCells}<td style="text-align:right">$${Math.round(grand).toLocaleString()}</td></tr></tfoot>
-    </table></div></div>`;
-  }
-
-  // ── TAB: META vs COBRADO ──
-  else if(cobTab==='meta'){
-    const metaMeses=meses.filter(m=>{
-      const canon=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).canon||0),0);
-      const cob=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);
-      return canon>0||cob>0;
-    });
-    const metaVals=metaMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).canon||0),0));
-    const cobVals=metaMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0));
-    const pctVals=metaMeses.map((m,i)=>metaVals[i]>0?Math.round(cobVals[i]/metaVals[i]*100):0);
-    html+=`<div class="card"><div class="card-title">Meta de cobros vs monto cobrado — todos los inquilinos</div>
-      <div class="chart-wrap"><canvas id="ch-meta" style="max-height:300px"></canvas></div>
-    </div>
-    <div class="card"><div class="card-title">% de cumplimiento por mes</div>
-      <div class="tbl-wrap"><table><thead><tr><th>Mes</th><th style="text-align:right">Meta (Canon)</th><th style="text-align:right">Cobrado</th><th style="text-align:right">Diferencia</th><th style="text-align:right">% Cumplimiento</th></tr></thead>
-      <tbody>${metaMeses.map((m,i)=>{
-        const diff=cobVals[i]-metaVals[i];
-        const pct=pctVals[i];
-        return`<tr>
-          <td>${mesLblFull(m)}</td>
-          <td style="text-align:right">${fmt(metaVals[i])}</td>
-          <td style="text-align:right;color:var(--green)">${fmt(cobVals[i])}</td>
-          <td style="text-align:right;color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${fmt(diff)}</td>
-          <td style="text-align:right"><span style="color:${pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)'}; font-weight:700">${pct}%</span></td>
-        </tr>`;
-      }).join('')}</tbody></table></div></div>`;
-    setTimeout(()=>{
-      const ctx=$('ch-meta');if(!ctx)return;
-      cobMetaChart=new Chart(ctx.getContext('2d'),{
-        type:'bar',
-        data:{labels:metaMeses.map(m=>mesLblFull(m)),datasets:[
-          {label:'Meta (Canon total)',data:metaVals,backgroundColor:'rgba(79,142,247,0.3)',borderColor:'rgba(79,142,247,0.8)',borderWidth:2,borderRadius:4},
-          {label:'Cobrado',data:cobVals,backgroundColor:'rgba(52,200,122,0.7)',borderRadius:4},
-          {label:'% cobrado',data:pctVals,type:'line',yAxisID:'y2',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#f5a623',tension:0.3}
-        ]},
-        options:{responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},
-            tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.dataset.yAxisID==='y2'?ctx.raw+'%':fmt(ctx.raw))}}},
-          scales:{
-            x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},
-            y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+Math.abs(v).toLocaleString()},grid:{color:gc}},
-            y2:{position:'right',ticks:{color:'#f5a623',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0,max:Math.max(130,...pctVals)+10}
-          }
-        }
-      });
-    },100);
-  }
-
-  // ── TAB: RANKING DEUDA ──
-  else if(cobTab==='deuda'){
-    const lastMes=meses[meses.length-1];
-    const deudas=shownInqs.map(inq=>{
-      const d=tenants[inq][lastMes]||{};
-      const bal=d.balance||0;
-      const canon=d.canon||0;
-      const deudaAbs=bal<0?Math.abs(bal):0;
-      const mesesR=canon>0?Math.round(deudaAbs/canon*10)/10:0;
-      return{inq,deuda:deudaAbs,canon,mesesR,bal};
-    }).filter(d=>d.deuda>0).sort((a,b)=>b.deuda-a.deuda);
-    const maxD=deudas[0]?.deuda||1;
-    const totalDeuda=deudas.reduce((s,d)=>s+d.deuda,0);
-    html+=`<div class="card"><div class="card-title" style="display:flex;justify-content:space-between">
-        <span>Ranking de deuda — al ${mesLblFull(lastMes)}</span>
-        <span style="color:var(--red);font-size:14px;font-weight:700">Total: ${fmt(totalDeuda)}</span>
-      </div>
-      <div class="chart-wrap"><canvas id="ch-deuda" style="max-height:${Math.max(200,deudas.length*42)}px"></canvas></div>
-    </div>
-    <div class="card"><div class="card-title">Detalle</div>
-    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Inquilino</th><th style="text-align:right">Canon</th><th style="text-align:right">Deuda USD</th><th style="text-align:right">Meses retraso</th><th style="text-align:right">% del total</th></tr></thead>
-    <tbody>${deudas.map((d,i)=>`<tr>
-      <td style="color:var(--muted);font-size:11px">${i+1}</td>
-      <td style="font-weight:500">${esc(d.inq)}</td>
-      <td style="text-align:right">${fmt(d.canon)}</td>
-      <td style="text-align:right;color:var(--red);font-weight:700">${fmt(d.deuda)}</td>
-      <td style="text-align:right;color:${d.mesesR>3?'var(--red)':d.mesesR>1?'var(--amber)':'var(--muted)'}; font-weight:600">${d.mesesR} mes${d.mesesR!==1?'es':''}</td>
-      <td style="text-align:right">${Math.round(d.deuda/totalDeuda*100)}%</td>
-    </tr>`).join('')}</tbody></table></div></div>`;
-    setTimeout(()=>{
-      const ctx=$('ch-deuda');if(!ctx)return;
-      cobDeudaChart=new Chart(ctx.getContext('2d'),{
-        type:'bar',
-        data:{labels:deudas.map(d=>d.inq),datasets:[
-          {label:'Deuda USD',data:deudas.map(d=>d.deuda),backgroundColor:deudas.map(d=>d.mesesR>3?'rgba(240,84,84,0.8)':d.mesesR>1?'rgba(245,166,35,0.8)':'rgba(79,142,247,0.7)'),borderRadius:4}
-        ]},
-        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` Deuda: ${fmt(ctx.parsed.x)} · ${deudas[ctx.dataIndex]?.mesesR} meses retraso`}}},
-          scales:{x:{ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{display:false}}}
-        }
-      });
-    },100);
-  }
-
-  // ── TAB: PATRÓN ──
-  else if(cobTab==='patron'){
-    const cards=shownInqs.map(inq=>{
-      const dots=meses.map(m=>{
-        const d=tenants[inq][m]||{};const st=d.pago||'';
-        const isFut=!d.canon&&!d.monto&&!st;
-        if(isFut)return`<div class="pd fut" title="${mesLblFull(m)}">·</div>`;
-        if(st.includes('Atrasado'))return`<div class="pd late" title="${mesLblFull(m)} — Atrasado">A</div>`;
-        if(st==='Si'||st.includes('Adelantado'))return`<div class="pd paid" title="${mesLblFull(m)} — Pagó">✓</div>`;
-        return`<div class="pd no" title="${mesLblFull(m)} — No pagó">✗</div>`;
-      }).join('');
-      const rm=meses.filter(m=>tenants[inq][m]&&(tenants[inq][m].canon>0||tenants[inq][m].monto>0));
-      const pg=rm.filter(m=>{const st=(tenants[inq][m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
-      const at=rm.filter(m=>(tenants[inq][m]||{}).pago?.includes('Atrasado')).length;
-      const np=rm.filter(m=>(tenants[inq][m]||{}).pago==='No').length;
-      const totP=rm.reduce((s,m)=>s+((tenants[inq][m]||{}).monto||0),0);
-      const lastBal=(tenants[inq][meses[meses.length-1]]||{}).balance||0;
-      return`<div class="pat-card">
-        <div class="pat-name" title="${esc(inq)}">${esc(inq)}</div>
-        <div class="pat-dots">${dots}</div>
-        <div class="pat-stats">
-          <div class="pat-stat"><div class="ps-val" style="color:var(--green)">${pg}</div><div class="ps-lbl">Pagó</div></div>
-          <div class="pat-stat"><div class="ps-val" style="color:var(--amber)">${at}</div><div class="ps-lbl">Atrasado</div></div>
-          <div class="pat-stat"><div class="ps-val" style="color:var(--red)">${np}</div><div class="ps-lbl">No pagó</div></div>
-          <div class="pat-stat"><div class="ps-val">${fmt(totP)}</div><div class="ps-lbl">Cobrado</div></div>
-          <div class="pat-stat"><div class="ps-val" style="color:${lastBal<0?'var(--red)':'var(--green)'}">${fmt(lastBal)}</div><div class="ps-lbl">Balance</div></div>
-        </div>
-      </div>`;
-    }).join('');
-    html+=`<div class="pat-grid">${cards||'<div style="color:var(--muted)">Sin datos</div>'}</div>`;
-  }
-
-  // ── TAB: PROVISIONES ──
-  else if(cobTab==='provisiones'){
-    const thM=kpiMeses.map(m=>`<th style="text-align:right">${mesLblFull(m)}</th>`).join('');
-    function pRow(label,key,color){
-      const cells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{})[key]||0),0);return`<td style="text-align:right;color:${color}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-      const tot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{})[key]||0),0),0);
-      return`<tr><td style="font-weight:500">${label}</td>${cells}<td style="text-align:right;font-weight:700;color:${color}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
-    }
-    const cobCells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).monto||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-    const cobTot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).monto||0),0),0);
-    const provCells=kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0);return`<td style="text-align:right;font-weight:700;color:var(--accent)">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-    const provTot=kpiMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i][m]||{}).bat||0)+((tenants[i][m]||{}).ga||0)+((tenants[i][m]||{}).op||0),0),0);
-    html+=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="prov-table">
-      <thead><tr><th>Concepto</th>${thM}<th style="text-align:right">Total</th></tr></thead>
-      <tbody>
-        <tr><td style="font-weight:600;color:var(--green)">💵 Cobrado del mes</td>${cobCells}<td style="text-align:right;font-weight:700;color:var(--green)">${fmt(cobTot)}</td></tr>
-        ${pRow('🏛 Baticueva 20%','bat','#a78bfa')}
-        ${pRow('🤝 G&A 60% (base socios)','ga','var(--accent)')}
-        ${pRow('🔧 Op & Mantenimiento 20%','op','var(--amber)')}
-        <tr style="background:rgba(255,255,255,0.03)"><td style="font-weight:700">📦 PROVISIÓN TOTAL</td>${provCells}<td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(provTot)}</td></tr>
-        ${pRow('💰 Div. Socios registrado','ga','var(--green)')}
-      </tbody>
-      <tfoot><tr><td>Mesada estimada c/u (${N_SOCIOS} socios)</td>${kpiMeses.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i][m]||{}).ga||0),0);return`<td style="text-align:right;color:var(--green)">${t>0?'$'+Math.round(t/N_SOCIOS).toLocaleString():'—'}</td>`;}).join('')}<td style="text-align:right;color:var(--green);font-weight:700">$${Math.round(totGa/N_SOCIOS).toLocaleString()}</td></tr></tfoot>
-    </table></div></div>`;
-  }
-
-  // ── TAB: REPORTE INQUILINO ──
-  else if(cobTab==='reporte'){
-    // Build full history across all years for selected tenant
-    const{tenants:allT,meses:allM}=parseTenants(null);
-    const inqOpts=Object.keys(allT).sort().map(i=>`<option value="${esc(i)}"${cobRepInq===i?'selected':''}>${esc(i)}</option>`).join('');
-    html+=`<div class="cob-topbar" style="margin-bottom:1rem">
-      <select class="cob-sel" style="min-width:280px" onchange="cobRepInq=this.value;killCobCharts();renderCobView()">
-        <option value="">— Seleccionar inquilino —</option>${inqOpts}
-      </select>
-      ${cobRepInq?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="window.print()">🖨 Imprimir / PDF</button>`:''}
-    </div>`;
-
-    if(!cobRepInq){html+=`<div class="card" style="text-align:center;color:var(--muted);padding:3rem">Selecciona un inquilino para ver su reporte</div>`;
-    } else {
-      const tData=allT[cobRepInq]||{};
-      const tMeses=Object.keys(tData).sort().filter(m=>tData[m]&&(tData[m].canon>0||tData[m].monto>0));
-      if(!tMeses.length){html+=`<div class="card" style="color:var(--muted)">Sin datos para este inquilino.</div>`;
-      } else {
-        const lastD=tData[tMeses[tMeses.length-1]]||{};
-        const totCobR=tMeses.reduce((s,m)=>s+(tData[m]?.monto||0),0);
-        const balActual=lastD.balance||0;
-        const canonActual=lastD.canon||0;
-        const mesesAtraso=canonActual>0&&balActual<0?Math.round(Math.abs(balActual)/canonActual*10)/10:0;
-        const periodoLabel=`${mesLblFull(tMeses[0])} hasta ${mesLblFull(tMeses[tMeses.length-1])}`;
-        const pagados=tMeses.filter(m=>{const st=(tData[m]||{}).pago||'';return st==='Si'||st.includes('Adelantado');}).length;
-        const atrasM=tMeses.filter(m=>(tData[m]||{}).pago?.includes('Atrasado')).length;
-        const noPagM=tMeses.filter(m=>(tData[m]||{}).pago==='No').length;
-        const montos=tMeses.map(m=>tData[m]?.monto||0);
-        const balances=tMeses.map(m=>tData[m]?.balance||0);
-        const canones=tMeses.map(m=>tData[m]?.canon||0);
-        html+=`
-        <div class="rep-header">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Fecha de Reporte: ${periodoLabel}</div>
-          <h2>Reporte de Cobranzas Vs Balance</h2>
-          <div style="font-size:15px;font-weight:600;color:var(--accent);margin-top:4px">${esc(cobRepInq)}</div>
-        </div>
-        <div class="rep-kpis">
-          <div class="kpi pos"><div class="kpi-label">Total período cobrado</div><div class="kpi-value">${fmt(totCobR)}</div><div class="kpi-sub">${pagados} meses pagados</div></div>
-          <div class="kpi neg"><div class="kpi-label">Balance actual</div><div class="kpi-value" style="color:${balActual<0?'var(--red)':balActual>0?'var(--green)':'var(--muted)'}">${fmt(balActual)}</div><div class="kpi-sub">${balActual<0?'Debe':'Al día'}</div></div>
-          <div class="kpi neu"><div class="kpi-label">Meses de retraso</div><div class="kpi-value" style="color:${mesesAtraso>3?'var(--red)':mesesAtraso>0?'var(--amber)':'var(--green)'}">${mesesAtraso}</div><div class="kpi-sub">${atrasM} meses atrasado</div></div>
-          <div class="kpi bal"><div class="kpi-label">Canon vigente</div><div class="kpi-value">${fmt(canonActual)}</div><div class="kpi-sub">${noPagM} meses sin pagar</div></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Pagos vs Balance acumulado — ${esc(cobRepInq)}</div>
-          <div class="chart-wrap"><canvas id="ch-rep" style="max-height:280px"></canvas></div>
-        </div>
-        <div class="card"><div class="card-title">Detalle mes a mes</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Mes</th><th style="text-align:right">Canon</th><th style="text-align:right">Pagado</th><th style="text-align:right">Balance</th><th>Estado</th></tr></thead>
-        <tbody>${tMeses.map(m=>{
-          const d=tData[m]||{};const st=d.pago||'';
-          const stBadge=st.includes('Atrasado')?`<span style="color:var(--amber);font-weight:600">⚠ Atrasado</span>`:st==='Si'||st.includes('Adelantado')?`<span style="color:var(--green);font-weight:600">✓ ${st}</span>`:`<span style="color:var(--red)">✗ No pagó</span>`;
-          return`<tr><td>${mesLblFull(m)}</td><td style="text-align:right">${d.canon>0?fmt(d.canon):'—'}</td><td style="text-align:right;color:var(--green);font-weight:600">${d.monto>0?fmt(d.monto):'—'}</td><td style="text-align:right;color:${(d.balance||0)<0?'var(--red)':'var(--green)'}; font-weight:600">${fmt(d.balance||0)}</td><td>${stBadge}</td></tr>`;
-        }).join('')}</tbody></table></div></div>`;
-
-        setTimeout(()=>{
-          const ctx=$('ch-rep');if(!ctx)return;
-          cobRepChart=new Chart(ctx.getContext('2d'),{
-            type:'bar',
-            data:{labels:tMeses.map(m=>mesLblFull(m)),datasets:[
-              {label:'Cobrado',data:montos,backgroundColor:'rgba(79,142,247,0.75)',borderRadius:4},
-              {label:'Balance',data:balances,type:'line',borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#f5a623',tension:0.3,yAxisID:'y'}
-            ]},
-            options:{responsive:true,maintainAspectRatio:false,
-              plugins:{legend:{position:'top',labels:{color:tc,font:{size:11},padding:12,boxWidth:12}},
-                tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
-              scales:{
-                x:{ticks:{color:tc,font:{size:10},maxRotation:45},grid:{color:gc}},
-                y:{ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}
-              }
-            }
-          });
-        },100);
-      }
-    }
-  }
-
-  $('page-cobranzas').innerHTML=html;
-  // Re-trigger chart renders after DOM update for non-setTimeout tabs
-}
-
 loadData();
 </script>
 </body>
