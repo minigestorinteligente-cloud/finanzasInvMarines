@@ -345,14 +345,14 @@ function buildFilters(){
   const bancoCounts={};allRows.forEach(r=>{const b=(r[C.banco]||'').trim();if(b)bancoCounts[b]=(bancoCounts[b]||0)+1;});
   const allBancos=Object.keys(bancoCounts).sort((a,b)=>bancoCounts[b]-bancoCounts[a]);
   const tipoCounts={};allRows.forEach(r=>{const t=(r[C.tipo]||'').trim();if(t)tipoCounts[t]=(tipoCounts[t]||0)+1;});
-  const allTipos=Object.keys(tipoCounts).sort((a,b)=>tipoCounts[b]-tipoCounts[a]).slice(0,3);
+  const allTipos=Object.keys(tipoCounts).sort((a,b)=>tipoCounts[b]-tipoCounts[a]);
   const cats=[...new Set(allRows.map(r=>(r[C.cat]||'').trim()).filter(Boolean))].sort();
   const topCats=cats.slice(0,3);const moreCats=cats.slice(3);
   const allBenefs=[...new Set(allRows.map(r=>getBenef(r)).filter(Boolean))].sort();
   const duenoCounts={};allRows.forEach(r=>{const d=getDueno(r);if(d)duenoCounts[d]=(duenoCounts[d]||0)+1;});
-  const allDuenos=Object.keys(duenoCounts).sort((a,b)=>duenoCounts[b]-duenoCounts[a]).slice(0,3);
+  const allDuenos=Object.keys(duenoCounts).sort((a,b)=>duenoCounts[b]-duenoCounts[a]);
   const inmCounts={};allRows.forEach(r=>{const i=getInmRef(r);if(i)inmCounts[i]=(inmCounts[i]||0)+1;});
-  const allInmRefs=Object.keys(inmCounts).sort((a,b)=>inmCounts[b]-inmCounts[a]).slice(0,3);
+  const allInmRefs=Object.keys(inmCounts).sort((a,b)=>inmCounts[b]-inmCounts[a]);
 
   const tags=[];
   if(F.tipoMov)tags.push({l:F.tipoMov,rm:()=>{F.tipoMov='';rerender();}});
@@ -393,8 +393,16 @@ function buildFilters(){
         </div>
       </div>
       <div>
+        <div class="fs-label">Categoría</div>
+        <div class="chips">${['DivSocios','GastosXtra','GastosOP'].map(v=>chip(v,F.cats,'cats')).join('')}${moreBtn(cats.filter(c=>!['DivSocios','GastosXtra','GastosOP'].includes(c)),F.cats,'cats','dd-cats')}</div>
+      </div>
+      <div>
         <div class="fs-label">Banco</div>
         <div class="chips">${allBancos.slice(0,3).map(v=>chip(v,F.bancos,'bancos')).join('')}${moreBtn(allBancos.slice(3),F.bancos,'bancos','dd-bancos')}</div>
+      </div>
+      <div>
+        <div class="fs-label">Tipo</div>
+        <div class="chips">${allTipos.slice(0,3).map(v=>chip(v,F.tipos,'tipos')).join('')}${moreBtn(allTipos.slice(3),F.tipos,'tipos','dd-tipos')}</div>
       </div>
       <div>
         <div class="fs-label">Beneficiario</div>
@@ -404,19 +412,14 @@ function buildFilters(){
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:3px;padding:0 1rem .5rem">${F.benefSel.map(b=>`<div class="pill">${esc(b)}<span class="pill-x" onclick="toggleBenef('${esc(b)}')">×</span></div>`).join('')}</div>
       </div>
-      <details style="padding:0 1rem .5rem">
-        <summary style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;list-style:none;padding:.4rem 0">
-          Más filtros ${(F.cats.length+F.tipos.length+F.duenos.length+F.inmRefs.length)>0?`<span style="background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px">${F.cats.length+F.tipos.length+F.duenos.length+F.inmRefs.length}</span>`:''}▾
-        </summary>
-        <div class="fs-label" style="padding-left:0;padding-top:.5rem">Categoría</div>
-        <div class="chips" style="padding-left:0">${topCats.map(v=>chip(v,F.cats,'cats')).join('')}${moreBtn(moreCats,F.cats,'cats','dd-cats')}</div>
-        <div class="fs-label" style="padding-left:0">Tipo</div>
-        <div class="chips" style="padding-left:0">${allTipos.map(v=>chip(v,F.tipos,'tipos')).join('')}${moreBtn(allTipos.slice(3),F.tipos,'tipos','dd-tipos')}</div>
-        <div class="fs-label" style="padding-left:0">Dueño Inmueble</div>
-        <div class="chips" style="padding-left:0">${allDuenos.map(v=>chip(v,F.duenos,'duenos')).join('')}</div>
-        <div class="fs-label" style="padding-left:0">Inmueble Ref</div>
-        <div class="chips" style="padding-left:0">${allInmRefs.map(v=>chip(v,F.inmRefs,'inmRefs')).join('')}</div>
-      </details>
+      <div>
+        <div class="fs-label">Dueño Inmueble</div>
+        <div class="chips">${['Limoncito','Parcela 7','El Negrito'].map(v=>chip(v,F.duenos,'duenos')).join('')}${moreBtn(allDuenos.filter(d=>!['Limoncito','Parcela 7','El Negrito'].includes(d)),F.duenos,'duenos','dd-duenos')}</div>
+      </div>
+      <div>
+        <div class="fs-label">Inmueble Ref</div>
+        <div class="chips">${allInmRefs.slice(0,3).map(v=>chip(v,F.inmRefs,'inmRefs')).join('')}${moreBtn(allInmRefs.slice(3),F.inmRefs,'inmRefs','dd-inmrefs')}</div>
+      </div>
     </div>
     ${activeRow}`;
 
