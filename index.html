@@ -223,6 +223,7 @@ tr:hover td{background:var(--surface2)}
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 <div class="layout">
   <nav class="sidebar" id="sidebar">
+    <div id="filterbar" class="filterbar"></div>
     <div style="padding:0 0.5rem;margin-bottom:0.5rem">
       <div class="nav-label" style="margin-bottom:10px">Principal</div>
       <div class="nav-item active" id="nav-resumen" onclick="showPage('resumen')">
@@ -257,7 +258,13 @@ tr:hover td{background:var(--surface2)}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Reporte inquilino
       </div>
     </div>
-      <div id="filterbar" class="filterbar"></div>
+      <div id="saved-fsets-nav" style="padding:.5rem 1rem .75rem;border-top:1px solid var(--border);margin-top:.25rem">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <span>Vistas guardadas</span>
+          <button style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit;padding:0" onclick="saveFilterSet()">+ Guardar</button>
+        </div>
+        <div id="saved-fsets-list" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
   </nav>
   <div class="main">
     <div class="kpi-grid" id="kpi-grid"></div>
@@ -326,24 +333,27 @@ function buildCatBreakdown(rows,ingMode){
 function toggleCat(id){const el=$(id);if(el)el.classList.toggle('open');}
 
 function buildFilters(){
-  const anos=[...new Set(allRows.map(r=>{const ym=parseYM(r[C.fecha]);return ym?ym.substring(0,4):''}).filter(Boolean))].sort();
+  const anos=[...new Set(allRows.map(r=>{
+    const ym=parseYM(r[C.fecha]);
+    const y=ym?ym.substring(0,4):'';
+    return y;
+  }).filter(y=>y&&parseInt(y)>=2023))].sort(); // filter out bad years
   const allM=[...new Set(allRows.map(r=>{const ym=parseYM(r[C.fecha]);return ym?ym.substring(5,7):''}).filter(Boolean))].sort();
   const mesNames=['01:Ene','02:Feb','03:Mar','04:Abr','05:May','06:Jun','07:Jul','08:Ago','09:Sep','10:Oct','11:Nov','12:Dic'];
   const availM=mesNames.filter(x=>allM.includes(x.split(':')[0]));
+  // Counts for smart defaults
   const bancoCounts={};allRows.forEach(r=>{const b=(r[C.banco]||'').trim();if(b)bancoCounts[b]=(bancoCounts[b]||0)+1;});
   const allBancos=Object.keys(bancoCounts).sort((a,b)=>bancoCounts[b]-bancoCounts[a]);
-  const topBancos=allBancos.slice(0,6);const moreBancos=allBancos.slice(6);
   const tipoCounts={};allRows.forEach(r=>{const t=(r[C.tipo]||'').trim();if(t)tipoCounts[t]=(tipoCounts[t]||0)+1;});
-  const allTipos=Object.keys(tipoCounts).sort((a,b)=>tipoCounts[b]-tipoCounts[a]);
-  const topTipos=allTipos.slice(0,6);const moreTipos=allTipos.slice(6);
+  const allTipos=Object.keys(tipoCounts).sort((a,b)=>tipoCounts[b]-tipoCounts[a]).slice(0,3);
   const cats=[...new Set(allRows.map(r=>(r[C.cat]||'').trim()).filter(Boolean))].sort();
+  const topCats=cats.slice(0,3);const moreCats=cats.slice(3);
   const allBenefs=[...new Set(allRows.map(r=>getBenef(r)).filter(Boolean))].sort();
   const duenoCounts={};allRows.forEach(r=>{const d=getDueno(r);if(d)duenoCounts[d]=(duenoCounts[d]||0)+1;});
-  const allDuenos=Object.keys(duenoCounts).sort((a,b)=>duenoCounts[b]-duenoCounts[a]);
-  const topDuenos=allDuenos.slice(0,5);const moreDuenos=allDuenos.slice(5);
+  const allDuenos=Object.keys(duenoCounts).sort((a,b)=>duenoCounts[b]-duenoCounts[a]).slice(0,3);
   const inmCounts={};allRows.forEach(r=>{const i=getInmRef(r);if(i)inmCounts[i]=(inmCounts[i]||0)+1;});
-  const allInmRefs=Object.keys(inmCounts).sort((a,b)=>inmCounts[b]-inmCounts[a]);
-  const topInmRefs=allInmRefs.slice(0,5);const moreInmRefs=allInmRefs.slice(5);
+  const allInmRefs=Object.keys(inmCounts).sort((a,b)=>inmCounts[b]-inmCounts[a]).slice(0,3);
+
   const tags=[];
   if(F.tipoMov)tags.push({l:F.tipoMov,rm:()=>{F.tipoMov='';rerender();}});
   F.anos.forEach(a=>tags.push({l:'Año: '+a,rm:()=>{F.anos=F.anos.filter(x=>x!==a);rerender();}}));
@@ -355,35 +365,71 @@ function buildFilters(){
   F.duenos.forEach(d=>tags.push({l:'Dueño: '+d,rm:()=>{F.duenos=F.duenos.filter(x=>x!==d);rerender();}}));
   F.inmRefs.forEach(i=>tags.push({l:'Inm: '+i,rm:()=>{F.inmRefs=F.inmRefs.filter(x=>x!==i);rerender();}}));
   window._rmFns=tags.map(t=>t.rm);
-  const chipRow=(arr,selArr,field)=>arr.map(v=>`<button class="chip${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</button>`).join('');
-  const moreDD=(items,selArr,field,id)=>!items.length?'':
-    `<div style="position:relative;display:inline-block"><button class="chip more" onclick="toggleDD('${id}')" id="btn-${id}">+${items.length} más ▾</button><div id="${id}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:160px;max-height:180px;overflow-y:auto;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4)">${items.map(v=>`<div class="search-option${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</div>`).join('')}</div></div>`;
-  const searchDD=(allItems,selArr,inputId,dropId,toggleFn)=>`<div class="search-filter"><input class="search-input" id="${inputId}" placeholder="Buscar..." oninput="filterSearchList('${inputId}','${dropId}')" onfocus="openDrop('${dropId}')" autocomplete="off"><div class="search-dropdown" id="${dropId}">${allItems.map(b=>`<div class="search-option${selArr.includes(b)?' sel':''}" onclick="${toggleFn}('${esc(b)}')">${esc(b)}</div>`).join('')}</div></div><div class="selected-pills">${selArr.map(b=>`<div class="pill">${esc(b)}<span class="pill-x" onclick="${toggleFn}('${esc(b)}')">×</span></div>`).join('')}</div>`;
+
+  const chip=(v,selArr,field,colorCls='')=>`<button class="chip${selArr.includes(v)?' sel'+colorCls:''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</button>`;
+  const moreBtn=(items,selArr,field,id)=>items.length?`<button class="chip more" onclick="toggleDD('${id}')" id="btn-${id}">+${items.length}▾</button><div id="${id}" style="display:none;position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:140px;max-height:180px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5)">${items.map(v=>`<div class="search-option${selArr.includes(v)?' sel':''}" onclick="toggleF('${field}','${esc(v)}')">${esc(v)}</div>`).join('')}</div>`:'';
+
+  // Active tags row
+  const activeRow=tags.length?`<div class="filterbar active-row"><span class="active-row-label">Activos: ${tags.length>0?`<span class="clear-all" onclick="clearAll()">Limpiar todo</span>`:''}</span>${tags.map((t,i)=>`<div class="atag">${esc(t.l)}<span class="atag-x" onclick="_rmFns[${i}]()">×</span></div>`).join('')}</div>`:'';
+
   $('filterbar').innerHTML=`
-    <div class="fb-top"><div class="fb-title">Filtros</div>${tags.length?`<button class="clear-all" onclick="clearAll()">Limpiar todo</button>`:''}</div>
+    <div class="fb-top"><div class="fb-title">Filtros</div>${tags.length?`<span class="clear-all" onclick="clearAll()">Limpiar</span>`:''}</div>
     <div class="filter-sections">
-      <div><div class="fs-label">Tipo movimiento</div><div class="chips"><button class="chip${F.tipoMov===''?' sel':''}" onclick="F.tipoMov='';rerender()">Todos</button><button class="chip${F.tipoMov==='Ingreso'?' sel-g sel':''}" onclick="F.tipoMov='Ingreso';rerender()">Ingresos</button><button class="chip${F.tipoMov==='Egreso'?' sel-r sel':''}" onclick="F.tipoMov='Egreso';rerender()">Egresos</button></div></div>
-      <div><div class="fs-label">Año</div><div class="chips">${chipRow(anos,F.anos,'anos')}</div></div>
-      <div><div class="fs-label">Mes</div><div class="chips">${availM.map(x=>{const[num,nom]=x.split(':');return`<button class="chip${F.meses.includes(num)?' sel':''}" onclick="toggleF('meses','${num}')">${nom}</button>`;}).join('')}</div></div>
-      <div><div class="fs-label">Banco <span style="font-weight:400;color:var(--muted)">(frecuentes)</span></div><div class="chips">${chipRow(topBancos,F.bancos,'bancos')}${moreDD(moreBancos,F.bancos,'bancos','dd-bancos')}</div></div>
-      <div><div class="fs-label">Categoría</div><div class="chips">${chipRow(cats,F.cats,'cats')}</div></div>
-      <div><div class="fs-label">Tipo <span style="font-weight:400;color:var(--muted)">(frecuentes)</span></div><div class="chips">${chipRow(topTipos,F.tipos,'tipos')}${moreDD(moreTipos,F.tipos,'tipos','dd-tipos')}</div></div>
-      <div><div class="fs-label">Beneficiario</div>${searchDD(allBenefs,F.benefSel,'benef-input','benef-drop','toggleBenef')}</div>
-      <div><div class="fs-label">Dueño Inmueble</div><div class="chips">${chipRow(topDuenos,F.duenos,'duenos')}${moreDD(moreDuenos,F.duenos,'duenos','dd-duenos')}</div></div>
-      <div><div class="fs-label">Inmueble Ref</div><div class="chips">${chipRow(topInmRefs,F.inmRefs,'inmRefs')}${moreDD(moreInmRefs,F.inmRefs,'inmRefs','dd-inmrefs')}</div></div>
+      <div>
+        <div class="fs-label">Período</div>
+        <div class="chips">
+          ${anos.map(a=>`<button class="chip${F.anos.includes(a)?' sel':''}" onclick="toggleF('anos','${a}')">${a}</button>`).join('')}
+        </div>
+        <div class="chips" style="padding-top:0">
+          ${availM.map(x=>{const[num,nom]=x.split(':');return`<button class="chip${F.meses.includes(num)?' sel':''}" onclick="toggleF('meses','${num}')" style="font-size:10px;padding:2px 7px">${nom}</button>`;}).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="fs-label">Movimiento</div>
+        <div class="chips">
+          <button class="chip${F.tipoMov===''?' sel':''}" onclick="F.tipoMov='';rerender()">Todos</button>
+          <button class="chip${F.tipoMov==='Ingreso'?' sel sel-g':''}" onclick="F.tipoMov='Ingreso';rerender()">↑ Ing</button>
+          <button class="chip${F.tipoMov==='Egreso'?' sel sel-r':''}" onclick="F.tipoMov='Egreso';rerender()">↓ Egr</button>
+        </div>
+      </div>
+      <div>
+        <div class="fs-label">Banco</div>
+        <div class="chips">${allBancos.slice(0,3).map(v=>chip(v,F.bancos,'bancos')).join('')}${moreBtn(allBancos.slice(3),F.bancos,'bancos','dd-bancos')}</div>
+      </div>
+      <div>
+        <div class="fs-label">Beneficiario</div>
+        <div style="padding:0 1rem .5rem;position:relative">
+          <input class="search-input" id="benef-input" placeholder="Buscar..." oninput="filterSearchList('benef-input','benef-drop')" onfocus="openDrop('benef-drop')" autocomplete="off" style="width:100%">
+          <div class="search-dropdown" id="benef-drop">${allBenefs.map(b=>`<div class="search-option${F.benefSel.includes(b)?' sel':''}" onclick="toggleBenef('${esc(b)}')">${esc(b)}</div>`).join('')}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;padding:0 1rem .5rem">${F.benefSel.map(b=>`<div class="pill">${esc(b)}<span class="pill-x" onclick="toggleBenef('${esc(b)}')">×</span></div>`).join('')}</div>
+      </div>
+      <details style="padding:0 1rem .5rem">
+        <summary style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;list-style:none;padding:.4rem 0">
+          Más filtros ${(F.cats.length+F.tipos.length+F.duenos.length+F.inmRefs.length)>0?`<span style="background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px">${F.cats.length+F.tipos.length+F.duenos.length+F.inmRefs.length}</span>`:''}▾
+        </summary>
+        <div class="fs-label" style="padding-left:0;padding-top:.5rem">Categoría</div>
+        <div class="chips" style="padding-left:0">${topCats.map(v=>chip(v,F.cats,'cats')).join('')}${moreBtn(moreCats,F.cats,'cats','dd-cats')}</div>
+        <div class="fs-label" style="padding-left:0">Tipo</div>
+        <div class="chips" style="padding-left:0">${allTipos.map(v=>chip(v,F.tipos,'tipos')).join('')}${moreBtn(allTipos.slice(3),F.tipos,'tipos','dd-tipos')}</div>
+        <div class="fs-label" style="padding-left:0">Dueño Inmueble</div>
+        <div class="chips" style="padding-left:0">${allDuenos.map(v=>chip(v,F.duenos,'duenos')).join('')}</div>
+        <div class="fs-label" style="padding-left:0">Inmueble Ref</div>
+        <div class="chips" style="padding-left:0">${allInmRefs.map(v=>chip(v,F.inmRefs,'inmRefs')).join('')}</div>
+      </details>
     </div>
-    ${tags.length?`<div class="active-row"><span class="active-row-label">Activos:</span>${tags.map((t,i)=>`<div class="atag">${esc(t.l)}<span class="atag-x" onclick="_rmFns[${i}]()">×</span></div>`).join('')}</div>`:''}`;
-  document.onclick=e=>{['dd-bancos','dd-tipos','dd-duenos','dd-inmrefs'].forEach(id=>{const el=$(id);if(el&&el.style.display!=='none'&&!el.contains(e.target)&&!e.target.closest('#btn-'+id))el.style.display='none';});['benef-drop'].forEach(id=>{const dd=$(id);if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)&&e.target.id!==id.replace('-drop','-input'))dd.classList.remove('open');});};
-  // Saved filter sets
+    ${activeRow}`;
+
+  // Update saved filter sets list
   const savedFS=JSON.parse(localStorage.getItem('filterSets')||'[]');
-  const sfHtml=savedFS.length?`<div class="saved-fsets">
-    <div class="sf-title"><span>Vistas guardadas</span><button style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit" onclick="saveFilterSet()">+ Guardar</button></div>
-    <div class="sf-list">${savedFS.map((s,i)=>`<div class="sf-item" onclick="loadFilterSet(${i})"><span>${esc(s.name)}</span><span class="sf-del" onclick="event.stopPropagation();delFilterSet(${i})">✕</span></div>`).join('')}</div>
-  </div>`:`<div class="saved-fsets">
-    <div class="sf-title"><span>Vistas guardadas</span><button style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit" onclick="saveFilterSet()">+ Guardar</button></div>
-    <div style="font-size:11px;color:var(--muted);padding:4px 0">Sin vistas guardadas</div>
-  </div>`;
-  $('filterbar').insertAdjacentHTML('beforeend', sfHtml);
+  const sfList=$('saved-fsets-list');
+  if(sfList){
+    sfList.innerHTML=savedFS.length
+      ?savedFS.map((s,i)=>`<div class="sf-item" onclick="loadFilterSet(${i})"><span>${esc(s.name)}</span><span class="sf-del" onclick="event.stopPropagation();delFilterSet(${i})">✕</span></div>`).join('')
+      :`<div style="font-size:11px;color:var(--muted);padding:2px 0">Sin vistas guardadas</div>`;
+  }
+
+  document.onclick=e=>{['dd-bancos','dd-cats','dd-tipos','dd-duenos','dd-inmrefs'].forEach(id=>{const el=$(id);if(el&&el.style.display!=='none'&&!el.contains(e.target)&&!e.target.closest('#btn-'+id))el.style.display='none';});['benef-drop'].forEach(id=>{const dd=$(id);if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)&&e.target.id!==id.replace('-drop','-input'))dd.classList.remove('open');});};
 }
 
 function toggleDD(id){const el=$(id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
@@ -392,6 +438,19 @@ function filterSearchList(inputId,dropId){const q=($(inputId)?.value||'').toLowe
 function openDrop(id){const dd=$(id);if(dd)dd.classList.add('open');}
 function toggleBenef(val){const i=F.benefSel.indexOf(val);if(i>=0)F.benefSel.splice(i,1);else F.benefSel.push(val);rerender();}
 function clearAll(){F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSel:[],duenos:[],inmRefs:[]};rerender();}
+function saveSession(){
+  try{localStorage.setItem('lastSession',JSON.stringify({page:currentPage,cobView,F:JSON.parse(JSON.stringify(F))}));}catch(e){}
+}
+function restoreSession(){
+  try{
+    const s=JSON.parse(localStorage.getItem('lastSession')||'{}');
+    if(s.F)F=s.F;
+    if(s.page&&s.page!=='resumen'){
+      if(s.page==='cobranzas'&&s.cobView){cobView=s.cobView;showCob(cobView);}
+      else showPage(s.page);
+    }
+  }catch(e){}
+}
 function saveFilterSet(){
   const name=prompt('Nombre para esta vista de filtros:');
   if(!name)return;
@@ -472,7 +531,7 @@ function buildCategorias(rows){
   if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:aOpts}});}
 }
 
-function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();renderCurrentPage(applyFilters());}
+function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();saveSession();renderCurrentPage(applyFilters());}
 function renderCurrentPage(rows){const kpi=buildKPI(rows);if(currentPage==='resumen')buildResumen(rows,kpi);else if(currentPage==='movimientos')buildMovimientos(rows);else if(currentPage==='ranking')buildRanking(rows);else if(currentPage==='categorias')buildCategorias(rows);}
 
 // ══════════════════════════════════════════════════════════
@@ -857,7 +916,7 @@ function delReport(i){
   localStorage.setItem('cobReports',JSON.stringify(savedReports));
   renderCob();
 }
-function rerender(){buildFilters();renderCurrentPage(applyFilters());}
+function rerender(){buildFilters();saveSession();renderCurrentPage(applyFilters());}
 function toggleSidebar(){$('sidebar').classList.toggle('open');$('overlay').style.display=$('sidebar').classList.contains('open')?'block':'none';}
 function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').style.display='none';}
 function loadData(){
@@ -865,7 +924,7 @@ function loadData(){
   ['resumen','movimientos','ranking','categorias'].forEach(p=>{$('page-'+p).innerHTML='<div class="loading"><div class="spin"></div>Cargando...</div>';});
   $('kpi-grid').innerHTML='';
   Papa.parse(CSV+'&nocache='+Date.now(),{download:true,header:true,skipEmptyLines:true,
-    complete(res){if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}allRows=res.data;C=mapCols(res.meta.fields||[]);$('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;buildFilters();renderCurrentPage(applyFilters());},
+    complete(res){if(!res.data||!res.data.length){$('page-resumen').innerHTML='<div class="loading">Sin datos</div>';return;}allRows=res.data;C=mapCols(res.meta.fields||[]);$('meta-txt').textContent=`Actualizado ${new Date().toLocaleString('es-VE')} · ${allRows.length} reg.`;buildFilters();restoreSession();renderCurrentPage(applyFilters());},
     error(e){$('page-resumen').innerHTML=`<div class="loading">Error: ${esc(e.message)}</div>`;}
   });
 }
