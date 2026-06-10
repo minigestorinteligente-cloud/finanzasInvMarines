@@ -23,7 +23,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .burger span{width:18px;height:2px;background:var(--muted);border-radius:2px}
 @media(min-width:900px){.burger{display:none}}
 .layout{display:flex;min-height:calc(100vh - 52px);position:relative}
-.sidebar{width:190px;background:var(--surface);border-right:1px solid var(--border);padding:1rem 0;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;transition:transform .25s;z-index:150}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);padding:1rem 0;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;transition:transform .25s;z-index:150}
 @media(max-width:899px){.sidebar{position:fixed;top:52px;left:0;height:calc(100vh - 52px);transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}}
 .overlay{display:none;position:fixed;inset:0;top:52px;background:rgba(0,0,0,.5);z-index:140}
 .nav-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 1.25rem;margin-bottom:6px}
@@ -33,7 +33,42 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-item svg{width:15px;height:15px;flex-shrink:0}
 .main{flex:1;padding:1rem;min-width:0;overflow-x:hidden}
 @media(min-width:600px){.main{padding:1.25rem 1.5rem}}
-.filterbar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;margin-bottom:1rem}
+.filterbar{padding:.5rem 0;border-top:1px solid var(--border);margin-top:.5rem}
+.filterbar .fb-top{display:flex;justify-content:space-between;align-items:center;padding:.25rem 1rem .5rem}
+.filterbar .fb-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.filterbar .filter-sections{display:flex;flex-direction:column;gap:0}
+.filterbar .fs-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:.6rem 1rem .3rem;display:flex;justify-content:space-between;align-items:center}
+.filterbar .chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 1rem .5rem}
+.filterbar .chip{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all .15s}
+.filterbar .chip:hover{border-color:var(--accent);color:var(--accent)}
+.filterbar .chip.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.filterbar .chip.sel-g{background:rgba(52,200,122,.15);border-color:var(--green);color:var(--green)}
+.filterbar .chip.sel-r{background:rgba(240,84,84,.15);border-color:var(--red);color:var(--red)}
+.filterbar .chip.more{background:transparent;color:var(--muted)}
+.filterbar .active-row{display:flex;flex-wrap:wrap;gap:4px;padding:.25rem 1rem .5rem;border-top:1px solid var(--border);margin-top:.25rem}
+.filterbar .active-row-label{font-size:10px;color:var(--muted);width:100%;margin-bottom:2px}
+.filterbar .atag{font-size:11px;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);color:#7fb3f5;border-radius:20px;padding:2px 8px;display:flex;align-items:center;gap:4px}
+.filterbar .atag-x{cursor:pointer;opacity:.6;font-size:12px}
+.filterbar .atag-x:hover{opacity:1}
+.filterbar .clear-all{font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.filterbar .search-filter{padding:0 1rem .25rem;position:relative}
+.filterbar .search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:11px;font-family:inherit;outline:none}
+.filterbar .search-input:focus{border-color:var(--accent)}
+.filterbar .search-dropdown{position:absolute;top:calc(100% - 4px);left:1rem;right:1rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.filterbar .search-dropdown.open{display:block}
+.filterbar .search-option{padding:6px 10px;font-size:11px;cursor:pointer;color:var(--text)}
+.filterbar .search-option:hover,.filterbar .search-option.sel{background:rgba(79,142,247,.15);color:#7fb3f5}
+.filterbar .selected-pills{display:flex;flex-wrap:wrap;gap:3px;padding:4px 1rem 0}
+.filterbar .pill{font-size:10px;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);color:#7fb3f5;border-radius:20px;padding:2px 6px;display:flex;align-items:center;gap:3px}
+.filterbar .pill-x{cursor:pointer;opacity:.6}
+.filterbar .pill-x:hover{opacity:1}
+.saved-fsets{padding:.5rem 1rem;border-top:1px solid var(--border)}
+.saved-fsets .sf-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+.sf-list{display:flex;flex-direction:column;gap:3px}
+.sf-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:11px;transition:all .15s}
+.sf-item:hover{border-color:var(--accent);color:var(--accent)}
+.sf-del{color:var(--muted);font-size:11px;padding:0 2px}
+.sf-del:hover{color:var(--red)}
 .fb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .fb-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
 .clear-all{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:inherit}
@@ -222,9 +257,9 @@ tr:hover td{background:var(--surface2)}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Reporte inquilino
       </div>
     </div>
+      <div id="filterbar" class="filterbar"></div>
   </nav>
   <div class="main">
-    <div class="filterbar" id="filterbar"></div>
     <div class="kpi-grid" id="kpi-grid"></div>
     <div id="page-resumen" class="page active"></div>
     <div id="page-movimientos" class="page"></div>
@@ -339,6 +374,16 @@ function buildFilters(){
     </div>
     ${tags.length?`<div class="active-row"><span class="active-row-label">Activos:</span>${tags.map((t,i)=>`<div class="atag">${esc(t.l)}<span class="atag-x" onclick="_rmFns[${i}]()">×</span></div>`).join('')}</div>`:''}`;
   document.onclick=e=>{['dd-bancos','dd-tipos','dd-duenos','dd-inmrefs'].forEach(id=>{const el=$(id);if(el&&el.style.display!=='none'&&!el.contains(e.target)&&!e.target.closest('#btn-'+id))el.style.display='none';});['benef-drop'].forEach(id=>{const dd=$(id);if(dd&&dd.classList.contains('open')&&!dd.contains(e.target)&&e.target.id!==id.replace('-drop','-input'))dd.classList.remove('open');});};
+  // Saved filter sets
+  const savedFS=JSON.parse(localStorage.getItem('filterSets')||'[]');
+  const sfHtml=savedFS.length?`<div class="saved-fsets">
+    <div class="sf-title"><span>Vistas guardadas</span><button style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit" onclick="saveFilterSet()">+ Guardar</button></div>
+    <div class="sf-list">${savedFS.map((s,i)=>`<div class="sf-item" onclick="loadFilterSet(${i})"><span>${esc(s.name)}</span><span class="sf-del" onclick="event.stopPropagation();delFilterSet(${i})">✕</span></div>`).join('')}</div>
+  </div>`:`<div class="saved-fsets">
+    <div class="sf-title"><span>Vistas guardadas</span><button style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit" onclick="saveFilterSet()">+ Guardar</button></div>
+    <div style="font-size:11px;color:var(--muted);padding:4px 0">Sin vistas guardadas</div>
+  </div>`;
+  $('filterbar').insertAdjacentHTML('beforeend', sfHtml);
 }
 
 function toggleDD(id){const el=$(id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
@@ -347,6 +392,26 @@ function filterSearchList(inputId,dropId){const q=($(inputId)?.value||'').toLowe
 function openDrop(id){const dd=$(id);if(dd)dd.classList.add('open');}
 function toggleBenef(val){const i=F.benefSel.indexOf(val);if(i>=0)F.benefSel.splice(i,1);else F.benefSel.push(val);rerender();}
 function clearAll(){F={tipoMov:'',anos:[],meses:[],bancos:[],cats:[],tipos:[],benefSel:[],duenos:[],inmRefs:[]};rerender();}
+function saveFilterSet(){
+  const name=prompt('Nombre para esta vista de filtros:');
+  if(!name)return;
+  const sets=JSON.parse(localStorage.getItem('filterSets')||'[]');
+  sets.push({name,F:JSON.parse(JSON.stringify(F))});
+  localStorage.setItem('filterSets',JSON.stringify(sets));
+  buildFilters();
+}
+function loadFilterSet(i){
+  const sets=JSON.parse(localStorage.getItem('filterSets')||'[]');
+  if(!sets[i])return;
+  F=JSON.parse(JSON.stringify(sets[i].F));
+  rerender();
+}
+function delFilterSet(i){
+  const sets=JSON.parse(localStorage.getItem('filterSets')||'[]');
+  sets.splice(i,1);
+  localStorage.setItem('filterSets',JSON.stringify(sets));
+  buildFilters();
+}
 
 function buildKPI(rows){
   const ing=rows.filter(r=>isIng(r));const eg=rows.filter(r=>!isIng(r));
