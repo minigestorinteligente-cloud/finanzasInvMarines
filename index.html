@@ -657,7 +657,11 @@ function parseCob(rows){
   cobData={};const mesSet=new Set(),inqSet=new Set();
   // DEBUG: log first few raw MES values
   const sample=rows.slice(0,5).map(r=>r['MES']);
-  console.warn('COB MES sample (first 5):', JSON.stringify(sample)); console.warn('Total rows:', rows.length);
+  console.warn('=== COB DEBUG ===');
+  console.warn('Total rows:', rows.length);
+  console.warn('First 3 MES raw:', JSON.stringify(rows.slice(0,3).map(r=>({ano:r['ANO'],mes:r['MES'],inq:r['Inquilinos']}))));
+  // After parsing, log what meses we get
+  setTimeout(()=>console.warn('cobMeses after parse:', JSON.stringify(cobMeses.filter(m=>m.startsWith('2026')))), 100);
   rows.forEach(r=>{
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
