@@ -672,14 +672,14 @@ function parseCob(rows){
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
     if(!inq||inq.startsWith('Desocupado')||!inq)return;
-    const mesRaw=String(r['MES']||'').trim();
+    const mesRaw=String(r['MES']||'').trim().replace(/\u00a0/g,' ').replace(/[\u2013\u2014]/g,'-');
     if(!mesRaw)return;
     let mes='';
     // Spanish month names as exported by Google Sheets
     const ESP={'ene':'01','feb':'02','mar':'03','abr':'04','may':'05','jun':'06',
                'jul':'07','ago':'08','sep':'09','oct':'10','nov':'11','dic':'12'};
-    // Format: "1-ene-25" or "1-ene-2025"
-    const espM=mesRaw.match(/^(\d{1,2})[\-\/\s]([a-zA-Z]{3})\.?[\-\/\s](\d{2,4})$/i);
+    // More flexible regex: any separator including dot, space combinations
+    const espM=mesRaw.match(/^(\d{1,2})[^a-zA-Z]+([a-zA-Z]{3})[^a-zA-Z\d]*(\d{2,4})$/i);
     // Format: YYYY-MM or YYYY-MM-DD
     const isoM=mesRaw.match(/^(\d{4})-(\d{2})/);
     // Format: MM/DD/YYYY or M/D/YYYY
