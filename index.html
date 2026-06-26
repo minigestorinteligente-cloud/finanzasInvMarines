@@ -666,10 +666,19 @@ function buildCategorias(rows){
 }
 
 function toggleCat(id, btn){
-  const tr=$(id);if(!tr)return;
-  const open=tr.style.display!=='none';
-  tr.style.display=open?'none':'table-row';
-  if(btn)btn.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+  const el=$(id);if(!el)return;
+  // Handle both div.cat-item and table tr systems
+  if(el.classList&&el.classList.contains('cat-item')){
+    // div-based system
+    el.classList.toggle('open');
+    const chevron=el.querySelector('.cat-chevron');
+    if(chevron)chevron.style.transform=el.classList.contains('open')?'rotate(90deg)':'rotate(0deg)';
+  } else {
+    // table tr system
+    const open=el.style.display!=='none';
+    el.style.display=open?'none':'table-row';
+    if(btn)btn.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+  }
 }
 
 function toggleDet(id, btn){
