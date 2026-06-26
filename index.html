@@ -731,10 +731,10 @@ function parseCob(rows){
 }
 
 function getTenants(yearFilt){
-  // Returns {inq: {mes: data}} - filter by year in mes, not ano column
   const t={};
   Object.values(cobData).forEach(r=>{
-    if(yearFilt&&!r.mes.startsWith(String(yearFilt)))return;
+    const mesYear=r.mes?r.mes.split('-')[0]:'';
+    if(yearFilt&&mesYear!==String(yearFilt))return;
     if(!t[r.inq])t[r.inq]={};
     t[r.inq][r.mes]=r;
   });
@@ -742,7 +742,7 @@ function getTenants(yearFilt){
 }
 
 function getMeses(yearFilt){
-  return cobMeses.filter(m=>!yearFilt||m.startsWith(String(yearFilt)));
+  return cobMeses.filter(m=>!yearFilt||m.split('-')[0]===String(yearFilt));
 }
 
 function showCob(view){
@@ -760,11 +760,11 @@ function showCob(view){
 
 function renderCob(){
   // Use selected year or default to most recent year with data
-  const allAvailYears=[...new Set(Object.values(cobData).map(r=>r.mes.split('-')[0]))].filter(y=>parseInt(y)>=2019).sort();
+  const allAvailYears=[...new Set(cobMeses.map(m=>m.split('-')[0]))].filter(y=>parseInt(y)>=2025).sort();
   if(!cobMetaYear||!allAvailYears.includes(cobMetaYear)) cobMetaYear=allAvailYears[allAvailYears.length-1]||'2026';
-  const activeYear=parseInt(cobMetaYear);
+  const activeYear=cobMetaYear;
   const tenants=getTenants(activeYear);
-  const meses=getMeses(cobMetaYear);
+  const meses=getMeses(activeYear);
   const filtM=cobMF;
   const filtInq=cobIF.toLowerCase();
   const shownInqs=Object.keys(tenants).filter(i=>!filtInq||i.toLowerCase().includes(filtInq)).sort();
@@ -840,7 +840,7 @@ function renderCob(){
   // ── META vs COBRADO ──
   else if(cobView==='meta'){
     // Year filter for meta tab
-    const availYears=[...new Set(Object.values(cobData).map(r=>r.mes.split('-')[0]))].filter(y=>parseInt(y)>=2019).sort();
+    const availYears=[...new Set(cobMeses.map(m=>m.split('-')[0]))].filter(y=>parseInt(y)>=2025).sort();
     const selYear=cobMetaYear||availYears[availYears.length-1]||'2026';
     const yearOpts=availYears.map(y=>`<option value="${y}"${y===selYear?'selected':''}>${y}</option>`).join('');
 
