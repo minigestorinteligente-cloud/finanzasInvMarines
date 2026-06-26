@@ -794,26 +794,24 @@ function renderCob(){
   const mesOpts=meses.map(m=>`<option value="${m}"${filtM===m?'selected':''}>${mlf(m)}</option>`).join('');
   const inqOpts2026=shownInqs.map(i=>`<option value="${i}"${cobRI===i?'selected':''}>${i}</option>`).join('');
 
-  const topBar=`<div class="cob-bar">
-    <select class="cs" onchange="cobMF=this.value;killCob();renderCob()">
-      <option value="">Todos los meses 2026</option>${mesOpts}
-    </select>
-    <input class="cs" style="width:180px" placeholder="Buscar inquilino..." value="${esc(cobIF)}" oninput="cobIF=this.value;renderCob()">
-    <button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;killCob();loadCob(()=>renderCob())">🔄 Actualizar</button>
-    ${cobView!=='reporte'?`<button class="btn" style="font-size:11px;padding:5px 10px;background:var(--surface2);color:var(--text)" onclick="saveReport()">💾 Guardar vista</button>`:''}
-  </div>`;
+  const saveBtn=cobView!=='reporte'?'<button class="btn" style="font-size:11px;padding:5px 10px;background:var(--surface2);color:var(--text)" onclick="saveReport()">💾 Guardar vista</button>':'';
+  const topBar='<div class="cob-bar">'
+    +'<select class="cs" onchange="cobMF=this.value;killCob();renderCob()">'
+      +'<option value="">Todos los meses 2026</option>'+mesOpts
+    +'</select>'
+    +'<input class="cs" style="width:180px" placeholder="Buscar inquilino..." value="'+esc(cobIF)+'" oninput="cobIF=this.value;renderCob()">'
+    +'<button class="btn" style="font-size:11px;padding:5px 10px" onclick="cobLoaded=false;killCob();loadCob(()=>renderCob())">🔄 Actualizar</button>'
+    +saveBtn
+    +'</div>';
 
-  const kpiBar=`<div class="cob-kpis">
-    <div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">${fmt(totCob)}</div><div class="kpi-sub">${filtM?pagaron+' inquilinos':'Acumulado 2026'}</div></div>
-    <div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value">${fmt(Math.abs(Math.min(totBal,0)))}</div><div class="kpi-sub">${atrasados?atrasados+' atrasados':'saldo pendiente'}</div></div>
-    <div class="kpi bal"><div class="kpi-label">Provisión total</div><div class="kpi-value">${fmt(prov)}</div><div class="kpi-sub">Bat+G&A+Op</div></div>
-    <div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">${fmt(totGa/NS)}</div><div class="kpi-sub">G&A ÷ ${NS} socios</div></div>
-  </div>`;
+  const kpiBar='<div class="cob-kpis">'
+    +'<div class="kpi pos"><div class="kpi-label">Cobrado</div><div class="kpi-value">'+fmt(totCob)+'</div><div class="kpi-sub">'+(filtM?pagaron+' inquilinos':'Acumulado 2026')+'</div></div>'
+    +'<div class="kpi neg"><div class="kpi-label">Cta × Cobrar</div><div class="kpi-value">'+fmt(Math.abs(Math.min(totBal,0)))+'</div><div class="kpi-sub">'+(atrasados?atrasados+' atrasados':'saldo pendiente')+'</div></div>'
+    +'<div class="kpi bal"><div class="kpi-label">Provisión total</div><div class="kpi-value">'+fmt(prov)+'</div><div class="kpi-sub">Bat+G&A+Op</div></div>'
+    +'<div class="kpi neu"><div class="kpi-label">Div. Socios c/u</div><div class="kpi-value">'+fmt(totGa/NS)+'</div><div class="kpi-sub">G&A ÷ '+NS+' socios</div></div>'
+    +'</div>';
 
-  const savedBar=savedReports.length?`<div class="saved-reports">
-    <div class="sr-title">Vistas guardadas</div>
-    <div class="sr-list">${savedReports.map((r,i)=>`<div class="sr-tag" onclick="loadReport(${i})"><span>${r.label}</span><span class="sr-del" onclick="event.stopPropagation();delReport(${i})">✕</span></div>`).join('')}</div>
-  </div>`:'';
+  const savedBar=savedReports.length?'<div class="saved-reports"><div class="sr-title">Vistas guardadas</div><div class="sr-list">'+savedReports.map((r,i)=>'<div class="sr-tag" onclick="loadReport('+i+')"><span>'+esc(r.label)+'</span><span class="sr-del" onclick="event.stopPropagation();delReport('+i+')">✕</span></div>').join('')+'</div></div>':'';
 
   let body='';
 
