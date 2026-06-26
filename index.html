@@ -679,7 +679,7 @@ function parseCob(rows){
     const ESP={'ene':'01','feb':'02','mar':'03','abr':'04','may':'05','jun':'06',
                'jul':'07','ago':'08','sep':'09','oct':'10','nov':'11','dic':'12'};
     // Format: "1-ene-25" or "1-ene-2025"
-    const espM=mesRaw.match(/^(\d{1,2})[\-\/\s]([a-zA-Z]{3})[\-\/\s](\d{2,4})$/i);
+    const espM=mesRaw.match(/^(\d{1,2})[\-\/\s]([a-zA-Z]{3})\.?[\-\/\s](\d{2,4})$/i);
     // Format: YYYY-MM or YYYY-MM-DD
     const isoM=mesRaw.match(/^(\d{4})-(\d{2})/);
     // Format: MM/DD/YYYY or M/D/YYYY
