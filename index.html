@@ -655,6 +655,9 @@ function loadCob(cb){
 
 function parseCob(rows){
   cobData={};const mesSet=new Set(),inqSet=new Set();
+  // DEBUG: log first few raw MES values
+  const sample=rows.slice(0,5).map(r=>r['MES']);
+  console.log('COB MES sample:', JSON.stringify(sample));
   rows.forEach(r=>{
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
