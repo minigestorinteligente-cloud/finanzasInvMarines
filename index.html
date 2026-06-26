@@ -669,32 +669,39 @@ function parseCob(rows){
     const mesRaw=String(r['MES']||'').trim();
     if(!mesRaw)return;
     let mes='';
-    // Try ISO format YYYY-MM-DD (avoid timezone shift by parsing parts directly)
+    // Spanish month names as exported by Google Sheets
+    const ESP={'ene':'01','feb':'02','mar':'03','abr':'04','may':'05','jun':'06',
+               'jul':'07','ago':'08','sep':'09','oct':'10','nov':'11','dic':'12'};
+    // Format: "1-ene-25" or "1-ene-2025"
+    const espM=mesRaw.match(/^(\d{1,2})[\-\/\s]([a-záéíóú]{3})[\-\/\s](\d{2,4})$/i);
+    // Format: YYYY-MM or YYYY-MM-DD
     const isoM=mesRaw.match(/^(\d{4})-(\d{2})/);
+    // Format: MM/DD/YYYY or M/D/YYYY
     const slashM=mesRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    const slashM2=mesRaw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
-    if(isoM){mes=isoM[1]+'-'+isoM[2].padStart(2,'0');}
-    else if(slashM){mes=slashM[3]+'-'+slashM[1].padStart(2,'0');}
-    else if(slashM2){mes=slashM2[1]+'-'+slashM2[2].padStart(2,'0');}
-    else if(/^\d{5}$/.test(mesRaw)){
-      // Excel serial number: days since 1900-01-01 (with Lotus bug)
+    // Excel serial number (5 digits)
+    const serialM=/^\d{5}$/.test(mesRaw);
+    if(espM){
+      const monthKey=espM[2].toLowerCase().substring(0,3);
+      const mm=ESP[monthKey]||'01';
+      const yy=espM[3].length===2?'20'+espM[3]:espM[3];
+      mes=yy+'-'+mm;
+    } else if(isoM){
+      mes=isoM[1]+'-'+isoM[2].padStart(2,'0');
+    } else if(slashM){
+      mes=slashM[3]+'-'+slashM[1].padStart(2,'0');
+    } else if(serialM){
       const serial=parseInt(mesRaw);
-      const epoch=new Date(1899,11,30);
-      const d=new Date(epoch.getTime()+serial*86400000);
+      const d=new Date(1899,11,30+serial);
       mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     } else {
-      // Last resort: parse but use local parts to avoid UTC shift
-      const d=new Date(mesRaw);if(isNaN(d.getTime()))return;
+      const d=new Date(mesRaw);
+      if(isNaN(d.getTime()))return;
       mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     }
     if(!mes)return;
-    // Sanity check: if ANO column exists and differs, use ANO+month from mes
-    if(ano&&ano>2000){
-      const parsedYear=parseInt(mes.split('-')[0]);
-      if(parsedYear!==ano){
-        // Timezone shifted the year - use ANO from the column
-        mes=String(ano)+'-'+mes.split('-')[1];
-      }
+    // Use ANO column to correct year if timezone shifted it
+    if(ano>2000&&parseInt(mes.split('-')[0])!==ano){
+      mes=String(ano)+'-'+mes.split('-')[1];
     }
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
