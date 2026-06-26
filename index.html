@@ -659,9 +659,15 @@ function parseCob(rows){
   const sample=rows.slice(0,5).map(r=>r['MES']);
   console.warn('=== COB DEBUG ===');
   console.warn('Total rows:', rows.length);
-  console.warn('First 3 MES raw:', JSON.stringify(rows.slice(0,3).map(r=>({ano:r['ANO'],mes:r['MES'],inq:r['Inquilinos']}))));
-  // After parsing, log what meses we get
-  setTimeout(()=>console.warn('cobMeses after parse:', JSON.stringify(cobMeses.filter(m=>m.startsWith('2026')))), 100);
+  // Show sample of 2025 rows
+  const rows2025=rows.filter(r=>String(r['ANO']).trim()==='2025').slice(0,5);
+  console.warn('2025 sample:', JSON.stringify(rows2025.map(r=>({ano:r['ANO'],mes:r['MES'],inq:(r['Inquilinos']||'').substring(0,20)}))));
+  setTimeout(()=>{
+    console.warn('cobMeses 2025:', JSON.stringify(cobMeses.filter(m=>m.startsWith('2025'))));
+    console.warn('cobMeses 2026:', JSON.stringify(cobMeses.filter(m=>m.startsWith('2026'))));
+    const anos=[...new Set(Object.values(cobData).map(r=>r.ano))].sort();
+    console.warn('anos in cobData:', JSON.stringify(anos));
+  }, 200);
   rows.forEach(r=>{
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
