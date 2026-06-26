@@ -709,14 +709,22 @@ function parseCob(rows){
     const op=Math.abs(pn(r['Op, & Mantenimiento 20% ($)']));
     const comSocios=Math.abs(pn(r['Comision Socios C/U $']));
     const prov=Math.abs(pn(r['Provision Reserva $']));
+    // Use inq+mes as key - mes already contains correct year from parsing
+    const mesYear=mes.split('-')[0];
     const key=`${inq}|||${mes}`;
-    // merge rows for same tenant+month (multiple payments)
+    // Only merge if same parsed year (prevents cross-year accumulation)
     if(!cobData[key]){
-      cobData[key]={ano,inq,mes,pago,monto,balance,canon,bat,ga,op,comSocios,prov};
+      cobData[key]={ano:parseInt(mesYear),inq,mes,pago,monto,balance,canon,bat,ga,op,comSocios,prov};
     } else {
       cobData[key].monto+=monto;
       if(balance!==0)cobData[key].balance=balance;
-      cobData[key].bat+=bat;cobData[key].ga+=ga;cobData[key].op+=op;cobData[key].comSocios+=comSocios;cobData[key].prov+=prov;
+      // Canon/provision: take the non-zero value, don't sum (same month = same canon)
+      if(canon>0)cobData[key].canon=canon;
+      if(bat>0)cobData[key].bat=bat;
+      if(ga>0)cobData[key].ga=ga;
+      if(op>0)cobData[key].op=op;
+      if(comSocios>0)cobData[key].comSocios=comSocios;
+      if(prov>0)cobData[key].prov=prov;
       if(pago)cobData[key].pago=pago;
     }
     mesSet.add(mes);inqSet.add(inq);
