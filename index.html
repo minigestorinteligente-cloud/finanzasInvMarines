@@ -700,6 +700,8 @@ function parseCob(rows){
       mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     }
     if(!mes)return;
+    // Only process 2025 onwards
+    if(parseInt(mes.split('-')[0])<2025)return;
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
     const balance=pn(r['Balance']);
