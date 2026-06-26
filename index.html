@@ -705,10 +705,6 @@ function parseCob(rows){
       mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     }
     if(!mes)return;
-    // Use ANO column to correct year if timezone shifted it
-    if(ano>2000&&parseInt(mes.split('-')[0])!==ano){
-      mes=String(ano)+'-'+mes.split('-')[1];
-    }
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
     const balance=pn(r['Balance']);
@@ -735,10 +731,10 @@ function parseCob(rows){
 }
 
 function getTenants(yearFilt){
-  // Returns {inq: {mes: data}}
+  // Returns {inq: {mes: data}} - filter by year in mes, not ano column
   const t={};
   Object.values(cobData).forEach(r=>{
-    if(yearFilt&&r.ano!==yearFilt)return;
+    if(yearFilt&&!r.mes.startsWith(String(yearFilt)))return;
     if(!t[r.inq])t[r.inq]={};
     t[r.inq][r.mes]=r;
   });
@@ -764,7 +760,7 @@ function showCob(view){
 
 function renderCob(){
   // Use selected year or default to most recent year with data
-  const allAvailYears=[...new Set(Object.values(cobData).map(r=>String(r.ano)))].filter(y=>parseInt(y)>=2019).sort();
+  const allAvailYears=[...new Set(Object.values(cobData).map(r=>r.mes.split('-')[0]))].filter(y=>parseInt(y)>=2019).sort();
   if(!cobMetaYear||!allAvailYears.includes(cobMetaYear)) cobMetaYear=allAvailYears[allAvailYears.length-1]||'2026';
   const activeYear=parseInt(cobMetaYear);
   const tenants=getTenants(activeYear);
@@ -844,7 +840,7 @@ function renderCob(){
   // ── META vs COBRADO ──
   else if(cobView==='meta'){
     // Year filter for meta tab
-    const availYears=[...new Set(Object.values(cobData).map(r=>String(r.ano)))].filter(y=>parseInt(y)>=2019).sort();
+    const availYears=[...new Set(Object.values(cobData).map(r=>r.mes.split('-')[0]))].filter(y=>parseInt(y)>=2019).sort();
     const selYear=cobMetaYear||availYears[availYears.length-1]||'2026';
     const yearOpts=availYears.map(y=>`<option value="${y}"${y===selYear?'selected':''}>${y}</option>`).join('');
 
