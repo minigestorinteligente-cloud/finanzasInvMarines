@@ -618,7 +618,7 @@ function renderCurrentPage(rows){const kpi=buildKPI(rows);if(currentPage==='resu
 // ══════════════════════════════════════════════════════════
 const COB_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1648764460&single=true&output=csv';
 const NS=5; // socios
-let cobData={},cobMeses=[],cobInqs=[],cobLoaded=false,cobView='pagos',cobMF='',cobIF='',cobRI='',cobCharts={};
+let cobData={},cobMeses=[],cobInqs=[],cobLoaded=false,cobView='pagos',cobMF='',cobIF='',cobRI='',cobMetaYear='',cobCharts={};
 let savedReports=JSON.parse(localStorage.getItem('cobReports')||'[]');
 const ML2=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 function ml(ym){const[,m]=String(ym).split('-');return ML2[parseInt(m)-1]||ym;}
@@ -792,30 +792,74 @@ function renderCob(){
 
   // ── META vs COBRADO ──
   else if(cobView==='meta'){
-    // Only show months with actual payments OR where cobrado>0; exclude future empty months
+    // Year filter for meta tab
+    const availYears=[...new Set(meses.map(m=>m.split('-')[0]))].sort();
+    const selYear=cobMetaYear||(availYears.includes('2026')?'2026':availYears[availYears.length-1]);
+    if(!cobMetaYear)cobMetaYear=selYear;
+    const yearOpts=availYears.map(y=>`<option value="${y}"${y===selYear?'selected':''}>${y}</option>`).join('');
+
+    // Filter months by selected year, with data
     const today=new Date();
     const hasMeses=meses.filter(m=>{
+      if(!m.startsWith(selYear))return false;
       const [y,mo]=m.split('-');
       const mesDate=new Date(parseInt(y),parseInt(mo)-1,1);
-      const hasCanon=shownInqs.some(i=>(tenants[i]||{})[m]?.canon>0);
+      const hasCanon=shownInqs.some(i=>Math.abs((tenants[i]||{})[m]?.canon||0)>0);
       const hasCobro=shownInqs.some(i=>((tenants[i]||{})[m]?.monto||0)>0);
-      // Show if: has cobro, OR month is in the past/current with canon
       return hasCobro||(hasCanon&&mesDate<=today);
     });
     const metaV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+Math.abs((tenants[i]||{})[m]?.canon||0),0));
     const cobV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0));
     const pctV=hasMeses.map((m,i)=>metaV[i]>0?Math.round(cobV[i]/metaV[i]*100):0);
-    body=`<div class="card"><div class="card-title">Meta de cobro (canon) vs monto cobrado — USD</div>
-      <div class="chart-wrap"><canvas id="ch-meta" style="max-height:280px"></canvas></div></div>
+    // Totals and averages
+    const totalMeta=metaV.reduce((s,v)=>s+v,0);
+    const totalCob=cobV.reduce((s,v)=>s+v,0);
+    const avgMeta=hasMeses.length>0?Math.round(totalMeta/hasMeses.length):0;
+    const avgCob=hasMeses.length>0?Math.round(totalCob/hasMeses.length):0;
+    const totalPct=totalMeta>0?Math.round(totalCob/totalMeta*100):0;
+    const totalMeta=metaV.reduce((s,v)=>s+v,0);
+    const totalCob=cobV.reduce((s,v)=>s+v,0);
+    const avgCob=hasMeses.length>0?Math.round(totalCob/hasMeses.length):0;
+    const avgMeta=hasMeses.length>0?Math.round(totalMeta/hasMeses.length):0;
+    const totalPct=totalMeta>0?Math.round(totalCob/totalMeta*100):0;
+    body=`
+    <div class="cob-bar" style="margin-bottom:12px;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--muted);font-weight:600">Año:</span>
+      <select class="cs" onchange="cobMetaYear=this.value;killCob();renderCob()">${yearOpts}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+      <div class="kpi pos"><div class="kpi-label">Total cobrado</div><div class="kpi-value">$${Math.round(totalCob).toLocaleString()}</div><div class="kpi-sub">${hasMeses.length} meses</div></div>
+      <div class="kpi bal"><div class="kpi-label">Total meta</div><div class="kpi-value">$${Math.round(totalMeta).toLocaleString()}</div><div class="kpi-sub">Canon acumulado</div></div>
+      <div class="kpi neu"><div class="kpi-label">Promedio/mes</div><div class="kpi-value">$${avgCob.toLocaleString()}</div><div class="kpi-sub">Meta: $${avgMeta.toLocaleString()}</div></div>
+      <div class="kpi ${totalPct>=100?'pos':totalPct>=75?'neu':'neg'}"><div class="kpi-label">% Cumplimiento</div><div class="kpi-value">${totalPct}%</div><div class="kpi-sub">del año</div></div>
+    </div>
+    <div class="card"><div class="card-title">Meta (Canon Vigente) vs Cobrado — ${selYear}</div>
+      <div class="chart-wrap"><canvas id="ch-meta" style="max-height:260px"></canvas></div></div>
     <div class="card" style="margin-top:12px"><div class="tbl-wrap"><table class="ct">
       <thead><tr><th>Mes</th><th>Meta (Canon)</th><th>Cobrado</th><th>Diferencia</th><th>% Cumplimiento</th></tr></thead>
-      <tbody>${hasMeses.map((m,i)=>{
-        const diff=cobV[i]-metaV[i];const pct=pctV[i];
-        return`<tr><td>${mlf(m)}</td><td>$${Math.round(metaV[i]).toLocaleString()}</td>
-          <td style="color:var(--green);font-weight:600">$${Math.round(cobV[i]).toLocaleString()}</td>
-          <td style="color:${diff>=0?'var(--green)':'var(--red)'};font-weight:600">${diff>=0?'+':''}$${Math.round(diff).toLocaleString()}</td>
-          <td><span style="font-weight:700;color:${pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)'}">${pct}%</span></td></tr>`;
-      }).join('')}</tbody></table></div></div>`;
+      <tbody>
+      ${hasMeses.map((m,i)=>{const diff=cobV[i]-metaV[i];const pct=pctV[i];
+        return '<tr><td>'+mlf(m)+'</td><td>$'+Math.round(metaV[i]).toLocaleString()+'</td>'
+          +'<td style="color:var(--green);font-weight:600">$'+Math.round(cobV[i]).toLocaleString()+'</td>'
+          +'<td style="color:'+(diff>=0?'var(--green)':'var(--red)')+';font-weight:600">'+(diff>=0?'+':'')+'$'+Math.round(Math.abs(diff)).toLocaleString()+'</td>'
+          +'<td><span style="font-weight:700;color:'+(pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)')+'">'+pct+'%</span></td></tr>';
+      }).join('')}
+      <tr style="background:var(--surface2);border-top:2px solid var(--border)">
+        <td style="font-weight:700">TOTAL</td>
+        <td style="font-weight:700">$${Math.round(totalMeta).toLocaleString()}</td>
+        <td style="font-weight:700;color:var(--green)">$${Math.round(totalCob).toLocaleString()}</td>
+        <td style="font-weight:700;color:${totalCob>=totalMeta?'var(--green)':'var(--red)'}">
+          ${totalCob>=totalMeta?'+':''}$${Math.round(Math.abs(totalCob-totalMeta)).toLocaleString()}</td>
+        <td style="font-weight:700;color:${totalPct>=100?'var(--green)':totalPct>=75?'var(--amber)':'var(--red)'}">
+          ${totalPct}%</td>
+      </tr>
+      <tr style="background:var(--surface2)">
+        <td style="font-weight:600;color:var(--muted)">PROMEDIO/MES</td>
+        <td style="color:var(--muted)">$${avgMeta.toLocaleString()}</td>
+        <td style="color:var(--green);font-weight:600">$${avgCob.toLocaleString()}</td>
+        <td>—</td><td>—</td>
+      </tr>
+      </tbody></table></div></div>`;
     setTimeout(()=>{
       const ctx=$('ch-meta');if(!ctx)return;
       cobCharts.meta=new Chart(ctx,{type:'bar',data:{labels:hasMeses.map(m=>mlf(m)),datasets:[
@@ -1019,4 +1063,4 @@ function loadData(){
 loadData();
 </script>
 </body>
-</html>
+</cobMetaYear='',html>
