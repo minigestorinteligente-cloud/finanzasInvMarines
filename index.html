@@ -532,12 +532,12 @@ function buildCategorias(rows){
     <div class="card"><div class="card-title">Detalle por categoría <span style="font-size:11px;color:var(--muted);font-weight:400">— clic en una fila para ver el desglose</span></div>
     <div class="tbl-wrap"><table><thead><tr><th>Categoría</th>${msL.map(m=>`<th style="text-align:right">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead>
     <tbody>${catTotals.map(({c,t})=>`
-      <tr style="cursor:pointer" onclick="showCatDetail('${esc(c)}',rows)">
+      <tr style="cursor:pointer" onclick="showCatDetail('${esc(c)}')">
         <td style="font-weight:500;white-space:nowrap">▶ ${esc(c)}</td>
         ${months.map(m=>`<td style="text-align:right;color:${data[c][m]>0?'var(--red)':'var(--muted)'};white-space:nowrap">${data[c][m]>0?fmt(data[c][m]):'—'}</td>`).join('')}
         <td style="text-align:right;font-weight:600;color:var(--red);white-space:nowrap">${fmt(t)}</td>
       </tr>
-      <tr id="det-${esc(c).replace(/\s/g,'-')}" style="display:none">
+      <tr id="det-${esc(c).replace(/[^a-zA-Z0-9]/g,'-')}" style="display:none">
         <td colspan="${months.length+2}" style="padding:0;background:var(--surface2)"></td>
       </tr>`).join('')}
     </tbody></table></div></div>`;
@@ -547,13 +547,14 @@ function buildCategorias(rows){
   }
 }
 
-function showCatDetail(cat, rows){
-  const detId='det-'+cat.replace(/\s/g,'-');
+function showCatDetail(cat){
+  const detId='det-'+cat.replace(/[^a-zA-Z0-9]/g,'-');
   const tr=document.getElementById(detId);
   if(!tr)return;
   const open=tr.style.display!=='none';
-  if(open){tr.style.display='none';return;}
-  // Build tipo breakdown
+  if(open){tr.style.display='none';// flip arrow back
+    const catRow=tr.previousElementSibling;if(catRow){const td=catRow.querySelector('td:first-child');if(td)td.innerHTML=td.innerHTML.replace('▼','▶');}return;}
+  const rows=applyFilters();
   const eg=rows.filter(r=>!isIng(r)&&(r[C.cat]||'').trim()===cat);
   const tipoMap={};
   eg.forEach(r=>{
@@ -597,6 +598,8 @@ function showCatDetail(cat, rows){
   html+=`</table>`;
   tr.querySelector('td').innerHTML=html;
   tr.style.display='table-row';
+  // flip arrow
+  const catRow=tr.previousElementSibling;if(catRow){const td=catRow.querySelector('td:first-child');if(td)td.innerHTML=td.innerHTML.replace('▶','▼');}
 }
 
 function showTipoDetail(id, rowEl){
