@@ -659,9 +659,18 @@ function parseCob(rows){
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
     if(!inq||inq.startsWith('Desocupado')||!inq)return;
-    const mesRaw=r['MES']||'';
-    const d=new Date(mesRaw);if(isNaN(d.getTime()))return;
-    const mes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const mesRaw=String(r['MES']||'').trim();
+    if(!mesRaw)return;
+    let mes='';
+    // Try ISO format YYYY-MM-DD (avoid timezone shift by parsing parts directly)
+    const isoM=mesRaw.match(/^(\d{4})-(\d{2})/);
+    const slashM=mesRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const slashM2=mesRaw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if(isoM){mes=isoM[1]+'-'+isoM[2].padStart(2,'0');}
+    else if(slashM){mes=slashM[3]+'-'+slashM[1].padStart(2,'0');}
+    else if(slashM2){mes=slashM2[1]+'-'+slashM2[2].padStart(2,'0');}
+    else{const d=new Date(mesRaw);if(isNaN(d.getTime()))return;mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+    if(!mes)return;
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
     const balance=pn(r['Balance']);
