@@ -924,53 +924,59 @@ function renderCob(){
 
   // ── RANKING DEUDA ──
   else if(cobView==='deuda'){
-    // Always use current month (most recent with data)
+    // Find current month: most recent month <= today with actual canon data
     const now=new Date();
-    const curYM=cobMetaYear+'-'+String(now.getMonth()+1).padStart(2,'0');
-    // Find the best month: current month if exists, else last available
-    const curM=meses.includes(curYM)?curYM:meses.filter(m=>m<=curYM).slice(-1)[0]||meses[meses.length-1];
+    const nowYM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    // Get all months across ALL years with data
+    const allMesesAll=cobMeses.filter(m=>parseInt(m.split('-')[0])>=2025).sort();
+    // Pick the most recent month that is <= current date
+    const curM=allMesesAll.filter(m=>m<=nowYM).slice(-1)[0]||allMesesAll[allMesesAll.length-1];
+    const curYear=curM?curM.split('-')[0]:'2026';
 
-    // Get ALL active tenants for that month (include zero balance)
-    const allTenantsList=Object.keys(getTenants(activeYear));
-    const rankRows=allTenantsList.map(inq=>{
-      const d=(tenants[inq]||{})[curM]||{};
-      const bal=pn(d.balance||0);
+    // Get all tenants for that year
+    const tenantsAll=getTenants(curYear);
+    const allInqsForMonth=Object.keys(tenantsAll).filter(i=>tenantsAll[i][curM]);
+
+    // Build ranking from balance column
+    const rankRows=allInqsForMonth.map(inq=>{
+      const d=tenantsAll[inq][curM]||{};
+      const bal=d.balance||0;
+      // Negative balance = owes money
       const deuda=bal<0?Math.abs(bal):0;
       const canon=Math.abs(d.canon||0);
-      const mr=canon>0?Math.round(deuda/canon*10)/10:0;
-      const pago=d.pago||'';
-      return{inq,deuda,canon,mr,bal,pago};
+      return{inq,deuda,canon,bal};
     }).sort((a,b)=>b.deuda-a.deuda);
 
     const totalD=rankRows.reduce((s,r)=>s+r.deuda,0);
-    const maxD=rankRows[0]?.deuda||1;
+    const maxD=rankRows.find(r=>r.deuda>0)?.deuda||1;
 
     const barRows=rankRows.map(r=>{
-      const w=maxD>0?Math.round(r.deuda/maxD*100):0;
-      const color=r.deuda>0?'rgba(79,142,247,0.8)':'rgba(255,255,255,0.1)';
-      const amtStr=r.deuda>0?'$'+Math.round(r.deuda).toLocaleString():'$0';
-      return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:180px;font-size:12px;text-align:right;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${esc(r.inq)}</div>
-        <div style="flex:1;background:var(--border);border-radius:3px;height:18px;position:relative">
-          <div style="width:${w}%;height:18px;background:${color};border-radius:3px;min-width:${r.deuda>0?'4px':'0'}"></div>
-        </div>
-        <div style="width:80px;font-size:12px;font-weight:700;color:${r.deuda>0?'var(--blue)':'var(--muted)'};">${amtStr}</div>
-      </div>`;
+      const w=r.deuda>0?Math.round(r.deuda/maxD*100):0;
+      const amtStr='$'+Math.round(r.deuda).toLocaleString();
+      const barColor=r.deuda>0?'rgba(79,142,247,0.85)':'rgba(255,255,255,0.06)';
+      const amtColor=r.deuda>0?'#5b9cf6':'var(--muted)';
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">'
+        +'<div style="width:190px;font-size:12px;text-align:right;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">'+esc(r.inq)+'</div>'
+        +'<div style="flex:1;background:var(--border);border-radius:3px;height:18px">'
+          +'<div style="width:'+w+'%;height:18px;background:'+barColor+';border-radius:3px;transition:width .3s;min-width:'+(r.deuda>0?'3px':'0')+'"></div>'
+        +'</div>'
+        +'<div style="width:90px;font-size:12px;font-weight:700;color:'+amtColor+';text-align:right">'+amtStr+'</div>'
+        +'</div>';
     }).join('');
 
-    body=`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div>
-          <div style="font-size:13px;font-weight:700">Balance Inquilinos — ${mlf(curM)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Saldo pendiente por inquilino al mes en curso</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted)">Total pendiente</div>
-          <div style="font-size:18px;font-weight:700;color:var(--red)">$${Math.round(totalD).toLocaleString()}</div>
-        </div>
-      </div>
-      ${barRows}
-    </div>`;
+    body='<div class="card">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'
+        +'<div>'
+          +'<div style="font-size:14px;font-weight:700">Balance Inquilinos — '+mlf(curM)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);margin-top:3px">Saldo pendiente columna Balance — mayor a menor</div>'
+        +'</div>'
+        +'<div style="text-align:right">'
+          +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Total pendiente</div>'
+          +'<div style="font-size:20px;font-weight:700;color:var(--red)">$'+Math.round(totalD).toLocaleString()+'</div>'
+        +'</div>'
+      +'</div>'
+      +barRows
+      +'</div>';
   } else if(cobView==='patron'){
     const cards=shownInqs.map(inq=>{
       const dots=meses.map(m=>{
