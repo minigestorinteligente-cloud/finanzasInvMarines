@@ -971,9 +971,7 @@ function renderCob(){
       </div>
       ${barRows}
     </div>`;
-  }
-
-  else if(cobView==='patron'){
+  } else if(cobView==='patron'){
     const cards=shownInqs.map(inq=>{
       const dots=meses.map(m=>{
         const d=(tenants[inq]||{})[m]||{};const st=d.pago||'';
