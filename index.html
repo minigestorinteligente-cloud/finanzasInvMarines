@@ -684,6 +684,14 @@ function parseCob(rows){
       mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     }
     if(!mes)return;
+    // Sanity check: if ANO column exists and differs, use ANO+month from mes
+    if(ano&&ano>2000){
+      const parsedYear=parseInt(mes.split('-')[0]);
+      if(parsedYear!==ano){
+        // Timezone shifted the year - use ANO from the column
+        mes=String(ano)+'-'+mes.split('-')[1];
+      }
+    }
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
     const balance=pn(r['Balance']);
@@ -738,11 +746,15 @@ function showCob(view){
 }
 
 function renderCob(){
-  const tenants=getTenants(2026);
-  const meses=getMeses(2026);
+  // Use selected year or default to most recent year with data
+  const allAvailYears=[...new Set(Object.values(cobData).map(r=>String(r.ano)))].filter(y=>parseInt(y)>=2019).sort();
+  if(!cobMetaYear||!allAvailYears.includes(cobMetaYear)) cobMetaYear=allAvailYears[allAvailYears.length-1]||'2026';
+  const activeYear=parseInt(cobMetaYear);
+  const tenants=getTenants(activeYear);
+  const meses=getMeses(cobMetaYear);
   const filtM=cobMF;
   const filtInq=cobIF.toLowerCase();
-  const shownInqs=cobInqs.filter(i=>i.startsWith&&!i.startsWith('Desocupado')&&(!filtInq||i.toLowerCase().includes(filtInq)));
+  const shownInqs=Object.keys(tenants).filter(i=>!filtInq||i.toLowerCase().includes(filtInq)).sort();
   const kpiMeses=filtM?[filtM]:meses.filter(m=>{
     return shownInqs.some(i=>(tenants[i]||{})[m]?.monto>0||(tenants[i]||{})[m]?.canon>0);
   });
@@ -815,9 +827,8 @@ function renderCob(){
   // ── META vs COBRADO ──
   else if(cobView==='meta'){
     // Year filter for meta tab
-    const availYears=[...new Set(meses.map(m=>m.split('-')[0]))].sort();
-    const selYear=cobMetaYear||(availYears.includes('2026')?'2026':availYears[availYears.length-1]);
-    if(!cobMetaYear)cobMetaYear=selYear;
+    const availYears=[...new Set(Object.values(cobData).map(r=>String(r.ano)))].filter(y=>parseInt(y)>=2019).sort();
+    const selYear=cobMetaYear||availYears[availYears.length-1]||'2026';
     const yearOpts=availYears.map(y=>`<option value="${y}"${y===selYear?'selected':''}>${y}</option>`).join('');
 
     // Filter months by selected year, with data
