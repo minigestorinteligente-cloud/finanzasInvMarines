@@ -792,8 +792,17 @@ function renderCob(){
 
   // ── META vs COBRADO ──
   else if(cobView==='meta'){
-    const hasMeses=meses.filter(m=>shownInqs.some(i=>(tenants[i]||{})[m]?.canon>0));
-    const metaV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.canon||0),0));
+    // Only show months with actual payments OR where cobrado>0; exclude future empty months
+    const today=new Date();
+    const hasMeses=meses.filter(m=>{
+      const [y,mo]=m.split('-');
+      const mesDate=new Date(parseInt(y),parseInt(mo)-1,1);
+      const hasCanon=shownInqs.some(i=>(tenants[i]||{})[m]?.canon>0);
+      const hasCobro=shownInqs.some(i=>((tenants[i]||{})[m]?.monto||0)>0);
+      // Show if: has cobro, OR month is in the past/current with canon
+      return hasCobro||(hasCanon&&mesDate<=today);
+    });
+    const metaV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+Math.abs((tenants[i]||{})[m]?.canon||0),0));
     const cobV=hasMeses.map(m=>shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0));
     const pctV=hasMeses.map((m,i)=>metaV[i]>0?Math.round(cobV[i]/metaV[i]*100):0);
     body=`<div class="card"><div class="card-title">Meta de cobro (canon) vs monto cobrado — USD</div>
