@@ -657,7 +657,7 @@ function parseCob(rows){
   cobData={};const mesSet=new Set(),inqSet=new Set();
   // DEBUG: log first few raw MES values
   const sample=rows.slice(0,5).map(r=>r['MES']);
-  console.log('COB MES sample:', JSON.stringify(sample));
+  console.warn('COB MES sample (first 5):', JSON.stringify(sample)); console.warn('Total rows:', rows.length);
   rows.forEach(r=>{
     const ano=pn(r['ANO']);
     const inq=(r['Inquilinos']||'').trim();
@@ -672,7 +672,17 @@ function parseCob(rows){
     if(isoM){mes=isoM[1]+'-'+isoM[2].padStart(2,'0');}
     else if(slashM){mes=slashM[3]+'-'+slashM[1].padStart(2,'0');}
     else if(slashM2){mes=slashM2[1]+'-'+slashM2[2].padStart(2,'0');}
-    else{const d=new Date(mesRaw);if(isNaN(d.getTime()))return;mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+    else if(/^\d{5}$/.test(mesRaw)){
+      // Excel serial number: days since 1900-01-01 (with Lotus bug)
+      const serial=parseInt(mesRaw);
+      const epoch=new Date(1899,11,30);
+      const d=new Date(epoch.getTime()+serial*86400000);
+      mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    } else {
+      // Last resort: parse but use local parts to avoid UTC shift
+      const d=new Date(mesRaw);if(isNaN(d.getTime()))return;
+      mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    }
     if(!mes)return;
     const pago=(r[' Pagó?']||r['Pagó?']||'').trim();
     const monto=Math.abs(pn(r['Monto $']));
