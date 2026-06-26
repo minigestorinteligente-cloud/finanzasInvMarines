@@ -520,18 +520,166 @@ function buildRanking(rows){
 
 function buildCategorias(rows){
   const eg=rows.filter(r=>!isIng(r));
-  const cats=[...new Set(eg.map(r=>(r[C.cat]||'Sin cat.').trim()))].sort();
+  if(!eg.length){$('page-categorias').innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:2rem">Sin datos de egresos para el filtro seleccionado.</div>';return;}
   const months=[...new Set(eg.map(r=>parseYM(r[C.fecha])).filter(Boolean))].sort();
   const msL=months.map(mlabel);
-  const data={};cats.forEach(c=>{data[c]={};months.forEach(m=>data[c][m]=0);});
-  eg.forEach(r=>{const c=(r[C.cat]||'Sin cat.').trim();const m=parseYM(r[C.fecha]);if(!m)return;data[c][m]=(data[c][m]||0)+getMonto(r);});
   const palette=['#4f8ef7','#34c87a','#f05454','#f5a623','#a78bfa','#34d1bf','#fb7185','#fbbf24','#60a5fa','#4ade80'];
-  const catTotals=cats.map(c=>({c,t:months.reduce((s,m)=>s+data[c][m],0)})).sort((a,b)=>b.t-a.t);
-  const topCats=catTotals.slice(0,8).map(x=>x.c);
+
+  // Build structure: cat -> tipo -> [rows]
+  const struct={};
+  eg.forEach(r=>{
+    const cat=(r[C.cat]||'Sin cat.').trim();
+    const tipo=(r[C.tipo]||'Sin tipo').trim();
+    if(!struct[cat])struct[cat]={};
+    if(!struct[cat][tipo])struct[cat][tipo]=[];
+    struct[cat][tipo].push(r);
+  });
+
+  // Cat totals sorted desc
+  const catTotals=Object.keys(struct).map(cat=>{
+    const t=eg.filter(r=>(r[C.cat]||'').trim()===cat).reduce((s,r)=>s+getMonto(r),0);
+    return{cat,t};
+  }).sort((a,b)=>b.t-a.t);
+  const grandTotal=catTotals.reduce((s,x)=>s+x.t,0);
+
+  // Chart data
+  const chartData={};
+  catTotals.slice(0,6).forEach(({cat})=>{
+    chartData[cat]={};
+    months.forEach(m=>{
+      chartData[cat][m]=eg.filter(r=>(r[C.cat]||'').trim()===cat&&parseYM(r[C.fecha])===m).reduce((s,r)=>s+getMonto(r),0);
+    });
+  });
+
+  // Build collapsible rows HTML
+  function buildCatRows(){
+    return catTotals.map(({cat,t},ci)=>{
+      const pct=grandTotal>0?Math.round(t/grandTotal*100):0;
+      const color=palette[ci%palette.length];
+      const tipos=Object.keys(struct[cat]).map(tipo=>{
+        const tipoRows=struct[cat][tipo];
+        const tipoTotal=tipoRows.reduce((s,r)=>s+getMonto(r),0);
+        const tipoPct=t>0?Math.round(tipoTotal/t*100):0;
+        return{tipo,rows:tipoRows,total:tipoTotal,pct:tipoPct};
+      }).sort((a,b)=>b.total-a.total);
+
+      // Tipo rows with detail toggle
+      const tipoHtml=tipos.map((tp,ti)=>{
+        const detailId=`det-${ci}-${ti}`;
+        const detailRows=tp.rows.map(r=>{
+          const fecha=(r[C.fecha]||'').substring(0,10);
+          const benef=getBenef(r)||'—';
+          const com=(r[C.comentarios]||r['COMENTARIOS']||'').trim();
+          const monto=getMonto(r);
+          return`<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 12px 5px 48px;font-size:11px;color:var(--muted)">${fecha}</td>
+            <td style="padding:5px 12px;font-size:11px;color:var(--text)">${esc(benef)}</td>
+            <td style="padding:5px 12px;font-size:11px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(com)}</td>
+            <td style="padding:5px 12px;font-size:11px;color:var(--red);font-weight:600;text-align:right">${fmt(monto)}</td>
+          </tr>`;
+        }).join('');
+
+        return`<tr style="background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border)" id="tipo-row-${ci}-${ti}">
+          <td style="padding:7px 12px 7px 28px">
+            <button onclick="toggleDet('${detailId}',this)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;margin-right:4px;width:16px;display:inline-block;transition:transform .2s">▶</button>
+            <span style="font-size:12px;color:var(--muted)">${esc(tp.tipo)}</span>
+          </td>
+          <td style="padding:7px 12px;text-align:right">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+              <div style="width:80px;height:4px;background:var(--border);border-radius:2px"><div style="width:${tp.pct}%;height:4px;background:${color};border-radius:2px;opacity:.6"></div></div>
+              <span style="font-size:11px;color:var(--muted);width:32px;text-align:right">${tp.pct}%</span>
+              <span style="font-size:12px;color:var(--red);font-weight:600;min-width:80px;text-align:right">${fmt(tp.total)}</span>
+            </div>
+          </td>
+        </tr>
+        <tr id="${detailId}" style="display:none">
+          <td colspan="2" style="padding:0">
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:var(--surface2)">
+                <th style="padding:4px 12px 4px 48px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);text-align:left">Fecha</th>
+                <th style="padding:4px 12px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);text-align:left">Beneficiario</th>
+                <th style="padding:4px 12px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);text-align:left">Comentario</th>
+                <th style="padding:4px 12px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);text-align:right">Monto</th>
+              </tr></thead>
+              <tbody>${detailRows}</tbody>
+            </table>
+          </td>
+        </tr>`;
+      }).join('');
+
+      const catId=`cat-tipos-${ci}`;
+      return`
+      <tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleCat('${catId}',this)">
+        <td style="padding:10px 12px">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${color};margin-right:6px"></span>
+          <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;margin-right:4px;width:16px;display:inline-block;transition:transform .2s" id="arr-${ci}">▶</button>
+          <span style="font-weight:600;font-size:13px">${esc(cat)}</span>
+        </td>
+        <td style="padding:10px 12px;text-align:right">
+          <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+            <div style="width:120px;height:5px;background:var(--border);border-radius:3px"><div style="width:${pct}%;height:5px;background:${color};border-radius:3px"></div></div>
+            <span style="font-size:12px;color:var(--muted);width:36px;text-align:right">${pct}%</span>
+            <span style="font-weight:700;color:var(--red);min-width:90px;text-align:right">${fmt(t)}</span>
+          </div>
+        </td>
+      </tr>
+      <tr id="${catId}" style="display:none">
+        <td colspan="2" style="padding:0">
+          <table style="width:100%;border-collapse:collapse">
+            <tbody>${tipoHtml}</tbody>
+          </table>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
   $('page-categorias').innerHTML=`
-    ${eg.length&&months.length?`<div class="card"><div class="card-title">Egresos por categoría — mes a mes</div><div class="chart-wrap"><canvas id="ch-catline" style="max-height:280px"></canvas></div></div>`:`<div class="card" style="color:var(--muted);font-size:13px">Sin datos de egresos.</div>`}
-    <div class="card"><div class="card-title">Detalle por categoría y mes</div><div class="tbl-wrap"><table><thead><tr><th>Categoría</th>${msL.map(m=>`<th style="text-align:right">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>${catTotals.map(({c,t})=>`<tr><td style="font-weight:500;white-space:nowrap">${esc(c)}</td>${months.map(m=>`<td style="text-align:right;color:${data[c][m]>0?'var(--red)':'var(--muted)'};white-space:nowrap">${data[c][m]>0?fmt(data[c][m]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:600;color:var(--red);white-space:nowrap">${fmt(t)}</td></tr>`).join('')}</tbody></table></div></div>`;
-  if(eg.length&&months.length&&$('ch-catline')){charts.catline=new Chart($('ch-catline').getContext('2d'),{type:'line',data:{labels:msL,datasets:topCats.map((c,i)=>({label:c,data:months.map(m=>Math.round(data[c][m])),borderColor:palette[i%palette.length],backgroundColor:'transparent',borderWidth:2,pointRadius:4,tension:0.3}))},options:{plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:aOpts}});}
+    <div class="card"><div class="card-title">Egresos por categoría — mes a mes</div><div class="chart-wrap"><canvas id="ch-catline" style="max-height:250px"></canvas></div></div>
+    <div class="card" style="padding:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Egresos por Categoría</span>
+        <span style="font-weight:700;color:var(--red)">${fmt(grandTotal)}</span>
+      </div>
+      <div class="tbl-wrap">
+        <table style="width:100%;border-collapse:collapse">
+          <tbody id="cat-tbody">${buildCatRows()}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Chart
+  if($('ch-catline')){
+    charts.catline=new Chart($('ch-catline').getContext('2d'),{
+      type:'bar',
+      data:{labels:msL,datasets:catTotals.slice(0,6).map(({cat},i)=>({
+        label:cat,
+        data:months.map(m=>Math.round((chartData[cat]||{})[m]||0)),
+        backgroundColor:palette[i%palette.length]+'cc',
+        borderRadius:3
+      }))},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{color:tc,font:{size:10},padding:10,boxWidth:10}},
+          tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+        scales:{x:{stacked:true,ticks:{color:tc,font:{size:10}},grid:{color:gc}},
+          y:{stacked:true,ticks:{color:tc,font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}}}
+    });
+  }
+}
+
+function toggleCat(id, rowEl){
+  const tr=$(id);if(!tr)return;
+  const open=tr.style.display!=='none';
+  tr.style.display=open?'none':'table-row';
+  // rotate arrow
+  const arr=rowEl.querySelector('button[id^="arr-"]')||rowEl.querySelector('button');
+  if(arr)arr.style.transform=open?'':'rotate(90deg)';
+}
+
+function toggleDet(id, btn){
+  const tr=$(id);if(!tr)return;
+  const open=tr.style.display!=='none';
+  tr.style.display=open?'none':'table-row';
+  if(btn)btn.style.transform=open?'':'rotate(90deg)';
 }
 
 function showPage(id){currentPage=id;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$('page-'+id).classList.add('active');const nav=$('nav-'+id);if(nav)nav.classList.add('active');closeSidebar();saveSession();renderCurrentPage(applyFilters());}
