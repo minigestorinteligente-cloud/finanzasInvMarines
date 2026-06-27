@@ -1007,29 +1007,56 @@ function renderCob(){
 
   // ── PROVISIONES ──
   else if(cobView==='prov'){
-    const hasMeses2=meses.filter(m=>shownInqs.some(i=>(tenants[i]||{})[m]?.bat>0||(tenants[i]||{})[m]?.monto>0));
-    const thM2=hasMeses2.map(m=>`<th>${mlf(m)}</th>`).join('');
-    function prow(label,key,color){
-      const cells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.[key]||0),0);return`<td style="color:${color}">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-      const tot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.[key]||0),0),0);
-      return`<tr><td>${label}</td>${cells}<td style="font-weight:700;color:${color}">${tot>0?'$'+Math.round(tot).toLocaleString():'—'}</td></tr>`;
+    // Only show months with actual data, no future months
+    const now2=new Date();
+    const nowYM2=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+    const provMeses=meses.filter(m=>m<=nowYM2&&shownInqs.some(i=>(tenants[i]||{})[m]?.monto>0||(tenants[i]||{})[m]?.comCob>0));
+
+    function pCell(m,fn){const t=shownInqs.reduce((s,i)=>s+fn((tenants[i]||{})[m]||{}),0);return '<td style="text-align:right">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';}
+    function pRow(label,fn,color){
+      const cells=provMeses.map(m=>pCell(m,fn)).join('');
+      const tot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+fn((tenants[i]||{})[m]||{}),0),0);
+      return '<tr><td>'+label+'</td>'+cells+'<td style="text-align:right;font-weight:700;color:'+color+'">'+(tot>0?'$'+Math.round(tot).toLocaleString():'—')+'</td></tr>';
     }
-    const cobCells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.monto||0),0);return`<td style="color:var(--green);font-weight:600">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-    const cobTot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.monto||0),0),0);
-    const provTot=hasMeses2.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.bat||0)+((tenants[i]||{})[m]?.ga||0)+((tenants[i]||{})[m]?.op||0),0),0);
-    const provCells=hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.bat||0)+((tenants[i]||{})[m]?.ga||0)+((tenants[i]||{})[m]?.op||0),0);return`<td style="color:var(--accent);font-weight:700">${t>0?'$'+Math.round(t).toLocaleString():'—'}</td>`;}).join('');
-    body=`<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">
-      <thead><tr><th>Concepto</th>${thM2}<th>Total</th></tr></thead>
-      <tbody>
-        <tr><td style="color:var(--green);font-weight:600">💵 Cobrado del mes</td>${cobCells}<td style="color:var(--green);font-weight:700">$${Math.round(cobTot).toLocaleString()}</td></tr>
-        ${prow('🏛 Baticueva 20%','bat','#a78bfa')}
-        ${prow('🤝 G&A 60% (base socios)','ga','var(--accent)')}
-        ${prow('🔧 Op & Mantenimiento 20%','op','var(--amber)')}
-        <tr><td style="font-weight:700">📦 PROVISIÓN TOTAL</td>${provCells}<td style="color:var(--accent);font-weight:700">$${Math.round(provTot).toLocaleString()}</td></tr>
-        ${prow('💰 Div. Socios registrado','comSocios','var(--green)')}
-      </tbody>
-      <tfoot><tr><td>Mesada estimada c/u (${NS} socios)</td>${hasMeses2.map(m=>{const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.ga||0),0);return`<td style="color:var(--green)">${t>0?'$'+Math.round(t/NS).toLocaleString():'—'}</td>`;}).join('')}<td style="color:var(--green)">$${Math.round(totGa/NS).toLocaleString()}</td></tr></tfoot>
-    </table></div></div>`;
+
+    const thM2=provMeses.map(m=>'<th style="text-align:right">'+mlf(m)+'</th>').join('');
+
+    // Cobrado row
+    const cobCells=provMeses.map(m=>pCell(m,d=>d.monto||0)).join('');
+    const cobTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.monto||0),0),0);
+
+    // ComTot = comSocios * NS
+    const comTotCells=provMeses.map(m=>{
+      const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.comSocios||0),0)*NS;
+      return '<td style="text-align:right;color:var(--accent);font-weight:600">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+    }).join('');
+    const comTotTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.comSocios||0),0),0)*NS;
+
+    // Provision total
+    const provTotCells=provMeses.map(m=>{
+      const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.prov||0),0);
+      return '<td style="text-align:right;font-weight:700;color:var(--accent)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+    }).join('');
+    const provTotTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.prov||0),0),0);
+
+    // Mesada c/u row
+    const mesadaCells=provMeses.map(m=>{
+      const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.comSocios||0),0);
+      return '<td style="text-align:right;color:var(--green)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+    }).join('');
+    const mesadaTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.comSocios||0),0),0);
+
+    body='<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">'
+      +'<thead><tr><th>Concepto</th>'+thM2+'<th style="text-align:right">Total</th></tr></thead>'
+      +'<tbody>'
+      +'<tr><td style="color:var(--green);font-weight:600">💵 Cobrado del mes</td>'+cobCells+'<td style="text-align:right;font-weight:700;color:var(--green)">$'+Math.round(cobTot).toLocaleString()+'</td></tr>'
+      +pRow('💼 Comisión Cobranzas',d=>d.comCob||0,'#a78bfa')
+      +pRow('👤 Comisión Socios C/U',d=>d.comSocios||0,'var(--accent)')
+      +'<tr><td style="font-weight:600">👥 Comisión Total (x'+NS+' socios)</td>'+comTotCells+'<td style="text-align:right;font-weight:700;color:var(--accent)">$'+Math.round(comTotTot).toLocaleString()+'</td></tr>'
+      +'<tr><td style="font-weight:700">📦 Provisión Reserva</td>'+provTotCells+'<td style="text-align:right;font-weight:700;color:var(--accent)">$'+Math.round(provTotTot).toLocaleString()+'</td></tr>'
+      +'</tbody>'
+      +'<tfoot><tr><td>💰 Mesada estimada c/u</td>'+mesadaCells+'<td style="text-align:right;color:var(--green);font-weight:700">$'+Math.round(mesadaTot/provMeses.length||0).toLocaleString()+'</td></tr></tfoot>'
+      +'</table></div></div>';
   }
 
   // ── REPORTE INQUILINO ──
