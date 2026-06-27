@@ -1094,67 +1094,53 @@ function renderCob(){
         +'<div id="flujo-container"><div style="color:var(--muted);font-size:12px;padding:1rem">Cargando datos del Consolidado...</div></div>'
       +'</div>';
 
-    // Load flujo data from Consolidado CSV
+    // Use allRows (already loaded Consolidado) instead of re-fetching
     setTimeout(()=>{
       const flujoEl=document.getElementById('flujo-container');
       if(!flujoEl)return;
-      const CONS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMekDVhvEC1crwqEsgKj-S9FX9rkMhuzrQ84C-8SCo-qFD2oi6943XF6l6PUVzGLsVhyJVUSMztHa/pub?gid=1817920401&single=true&output=csv';
-      Papa.parse(CONS_URL,{download:true,header:true,skipEmptyLines:true,
-        complete(res){
-          const rows=res.data;
-          // Get months matching provMeses
-          const realGOP={},realGXT={};
-          provMeses.forEach(m=>{realGOP[m]=0;realGXT[m]=0;});
-          rows.forEach(r=>{
-            const ano=pn(r['ANO']);if(ano<2025)return;
-            const mesRaw=String(r['MES']||'').trim();
-            let mes='';
-            const isoM=mesRaw.match(/^(\d{4})-(\d{2})/);
-            const espM=mesRaw.match(/^(\d{1,2})[^a-zA-Z]+([a-zA-Z]{3})[^a-zA-Z\d]*(\d{2,4})$/i);
-            const ESP2={'ene':'01','feb':'02','mar':'03','abr':'04','may':'05','jun':'06','jul':'07','ago':'08','sep':'09','oct':'10','nov':'11','dic':'12'};
-            if(isoM)mes=isoM[1]+'-'+isoM[2];
-            else if(espM){const mm=ESP2[espM[2].toLowerCase()];const yy=espM[3].length===2?'20'+espM[3]:espM[3];if(mm)mes=yy+'-'+mm;}
-            if(!mes||!provMeses.includes(mes))return;
-            const cat=(r['CATEGORIA']||'').trim();
-            const tipo=(r['INGRESO / EGRESO']||'').trim().toLowerCase();
-            const monto=Math.abs(pn(r['Monto_Limpio']||r['MONTO USD']||0));
-            if(tipo==='egreso'&&cat==='GastosOP')realGOP[mes]=(realGOP[mes]||0)+monto;
-            if(tipo==='egreso'&&/xtra/i.test(cat))realGXT[mes]=(realGXT[mes]||0)+monto;
-          });
-
-          const thM=provMeses.map(m=>'<th style="text-align:right">'+mlf(m)+'</th>').join('');
-          function flujoRow(label,teoricoFn,realMap,color){
-            let html='<tr><td style="font-weight:500">'+label+'</td>';
-            let sumTeo=0,sumReal=0;
-            provMeses.forEach(m=>{
-              const provM=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.prov||0),0);
-              const teo=Math.round(teoricoFn(provM));
-              const real=Math.round(realMap[m]||0);
-              const diff=teo-real;
-              sumTeo+=teo;sumReal+=real;
-              html+='<td style="text-align:right">'
-                +'<div style="font-size:11px;color:var(--muted)">Teo: $'+teo.toLocaleString()+'</div>'
-                +'<div style="font-size:11px;color:'+color+'">Real: $'+real.toLocaleString()+'</div>'
-                +'<div style="font-size:11px;font-weight:700;color:'+(diff>=0?'var(--green)':'var(--red)')+'">Dif: '+(diff>=0?'+':'')+'$'+diff.toLocaleString()+'</div>'
-                +'</td>';
-            });
-            const avgDiff=Math.round((sumTeo-sumReal)/Math.max(provMeses.length,1));
-            html+='<td style="text-align:right;font-weight:700;color:'+(avgDiff>=0?'var(--green)':'var(--red)')+'"><div style="font-size:10px;color:var(--muted)">Prom dif</div>$'+avgDiff.toLocaleString()+'</td></tr>';
-            return html;
-          }
-
-          flujoEl.innerHTML='<div style="overflow-x:auto"><table class="ct">'
-            +'<thead><tr><th>Concepto</th>'+thM+'<th style="text-align:right">Prom. Dif</th></tr></thead>'
-            +'<tbody>'
-            +flujoRow('🔧 GastosOP (60% Prov)',p=>p*0.6,realGOP,'var(--blue)')
-            +flujoRow('⚡ GastosXtra (30% Prov)',p=>p*0.3,realGXT,'var(--amber)')
-            +'</tbody></table></div>'
-            +'<div style="font-size:11px;color:var(--muted);margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">'
-              +'💡 <strong>Teo</strong> = % de Provisión reservado · <strong>Real</strong> = gasto real del Consolidado · <strong>Dif positiva</strong> = dinero disponible · <strong>Dif negativa</strong> = excedido'
-            +'</div>';
-        },
-        error(){flujoEl.innerHTML='<div style="color:var(--muted);font-size:12px">Error cargando Consolidado</div>';}
+      // Build real spending per month from allRows
+      const realGOP={},realGXT={};
+      provMeses.forEach(m=>{realGOP[m]=0;realGXT[m]=0;});
+      allRows.forEach(r=>{
+        const ym=parseYM(r[C.fecha]);
+        if(!ym||!provMeses.includes(ym))return;
+        if(isIng(r))return;
+        const cat=(r[C.cat]||'').trim();
+        const monto=getMonto(r);
+        if(cat==='GastosOP')realGOP[ym]=(realGOP[ym]||0)+monto;
+        if(/xtra/i.test(cat))realGXT[ym]=(realGXT[ym]||0)+monto;
       });
+
+      const thM=provMeses.map(m=>'<th style="text-align:right">'+mlf(m)+'</th>').join('');
+      function flujoRow(label,teoricoFn,realMap,color){
+        let html='<tr><td style="font-weight:500">'+label+'</td>';
+        let sumTeo=0,sumReal=0;
+        provMeses.forEach(m=>{
+          const provM=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.prov||0),0);
+          const teo=Math.round(teoricoFn(provM));
+          const real=Math.round(realMap[m]||0);
+          const diff=teo-real;
+          sumTeo+=teo;sumReal+=real;
+          html+='<td style="text-align:right">'
+            +'<div style="font-size:11px;color:var(--muted)">Teo: $'+teo.toLocaleString()+'</div>'
+            +'<div style="font-size:11px;color:'+color+'">Real: $'+real.toLocaleString()+'</div>'
+            +'<div style="font-size:11px;font-weight:700;color:'+(diff>=0?'var(--green)':'var(--red)')+'">Dif: '+(diff>=0?'+':'')+'$'+diff.toLocaleString()+'</div>'
+            +'</td>';
+        });
+        const avgDiff=Math.round((sumTeo-sumReal)/Math.max(provMeses.length,1));
+        html+='<td style="text-align:right;font-weight:700;color:'+(avgDiff>=0?'var(--green)':'var(--red)')+'"><div style="font-size:10px;color:var(--muted)">Prom dif</div>$'+avgDiff.toLocaleString()+'</td></tr>';
+        return html;
+      }
+
+      flujoEl.innerHTML='<div style="overflow-x:auto"><table class="ct">'
+        +'<thead><tr><th>Concepto</th>'+thM+'<th style="text-align:right">Prom. Dif</th></tr></thead>'
+        +'<tbody>'
+        +flujoRow('🔧 GastosOP (60% Prov)',p=>p*0.6,realGOP,'var(--blue)')
+        +flujoRow('⚡ GastosXtra (30% Prov)',p=>p*0.3,realGXT,'var(--amber)')
+        +'</tbody></table></div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">'
+          +'💡 <strong>Teo</strong> = % de Provisión reservado · <strong>Real</strong> = gasto real del Consolidado · <strong>Dif positiva</strong> = disponible · <strong>Dif negativa</strong> = excedido'
+        +'</div>';
     },300);
   }
 
