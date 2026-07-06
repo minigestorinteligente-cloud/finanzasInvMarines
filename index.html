@@ -766,7 +766,11 @@ function showCob(view){
 function renderCob(){
   // Use selected year or default to most recent year with data
   const allAvailYears=[...new Set(cobMeses.map(m=>m.split('-')[0]))].filter(y=>parseInt(y)>=2025).sort();
-  if(!cobMetaYear||!allAvailYears.includes(cobMetaYear)) cobMetaYear=allAvailYears[allAvailYears.length-1]||'2026';
+  // Default to current year, fall back to most recent available
+  const nowYear=String(new Date().getFullYear());
+  if(!cobMetaYear||!allAvailYears.includes(cobMetaYear)){
+    cobMetaYear=allAvailYears.includes(nowYear)?nowYear:allAvailYears[allAvailYears.length-1]||'2026';
+  }
   const activeYear=cobMetaYear;
   const tenants=getTenants(activeYear);
   const meses=getMeses(activeYear);
@@ -1094,16 +1098,32 @@ function renderCob(){
         +'<div id="flujo-container"><div style="color:var(--muted);font-size:12px;padding:1rem">Cargando datos del Consolidado...</div></div>'
       +'</div>';
 
+    // Period selector for flujo - stored in window
+    const now3=new Date();
+    const nowYM3=now3.getFullYear()+'-'+String(now3.getMonth()+1).padStart(2,'0');
+    const flujoStart=window.flujoStart||provMeses[0]||nowYM3;
+    const flujoEnd=window.flujoEnd||(provMeses.includes(nowYM3)?nowYM3:provMeses[provMeses.length-1]);
+    window.flujoStart=flujoStart; window.flujoEnd=flujoEnd;
+    const flujoMeses=provMeses.filter(m=>m>=flujoStart&&m<=flujoEnd);
+    const mesPeriodOpts=provMeses.map(m=>'<option value="'+m+'">'+mlf(m)+'</option>').join('');
+    const periodBar='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">'
+      +'<span style="font-size:11px;color:var(--muted)">Período:</span>'
+      +'<select class="cs" onchange="window.flujoStart=this.value;killCob();renderCob()">'+provMeses.map(m=>'<option value="'+m+'"'+(m===flujoStart?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
+      +'<span style="font-size:11px;color:var(--muted)">hasta</span>'
+      +'<select class="cs" onchange="window.flujoEnd=this.value;killCob();renderCob()">'+provMeses.map(m=>'<option value="'+m+'"'+(m===flujoEnd?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
+      +'</div>';
+
     // Use allRows (already loaded Consolidado) instead of re-fetching
     setTimeout(()=>{
       const flujoEl=document.getElementById('flujo-container');
       if(!flujoEl)return;
+      flujoEl.insertAdjacentHTML('beforebegin',periodBar);
       // Build real spending per month from allRows
       const realGOP={},realGXT={};
-      provMeses.forEach(m=>{realGOP[m]=0;realGXT[m]=0;});
+      flujoMeses.forEach(m=>{realGOP[m]=0;realGXT[m]=0;});
       allRows.forEach(r=>{
         const ym=parseYM(r[C.fecha]);
-        if(!ym||!provMeses.includes(ym))return;
+        if(!ym||!flujoMeses.includes(ym))return;
         if(isIng(r))return;
         const cat=(r[C.cat]||'').trim();
         const monto=getMonto(r);
@@ -1111,11 +1131,11 @@ function renderCob(){
         if(/xtra/i.test(cat))realGXT[ym]=(realGXT[ym]||0)+monto;
       });
 
-      const thM=provMeses.map(m=>'<th style="text-align:right">'+mlf(m)+'</th>').join('');
+      const thM=flujoMeses.map(m=>'<th style="text-align:right">'+mlf(m)+'</th>').join('');
       function flujoRow(label,teoricoFn,realMap,color){
         let html='<tr><td style="font-weight:500">'+label+'</td>';
         let sumTeo=0,sumReal=0;
-        provMeses.forEach(m=>{
+        flujoMeses.forEach(m=>{
           const provM=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.prov||0),0);
           const teo=Math.round(teoricoFn(provM));
           const real=Math.round(realMap[m]||0);
@@ -1123,7 +1143,7 @@ function renderCob(){
           sumTeo+=teo;sumReal+=real;
           html+='<td style="text-align:right">'
             +'<div style="font-size:11px;color:var(--muted)">Teo: $'+teo.toLocaleString()+'</div>'
-            +'<div style="font-size:11px;color:'+color+'">Real: $'+real.toLocaleString()+'</div>'
+            +'<div style="font-size:11px;color:var(--text)">Real: $'+real.toLocaleString()+'</div>'
             +'<div style="font-size:11px;font-weight:700;color:'+(diff>=0?'var(--green)':'var(--red)')+'">Dif: '+(diff>=0?'+':'')+'$'+diff.toLocaleString()+'</div>'
             +'</td>';
         });
