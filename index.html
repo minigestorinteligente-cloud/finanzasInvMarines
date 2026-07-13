@@ -1014,7 +1014,19 @@ function renderCob(){
     // Only show months with actual data, no future months
     const now2=new Date();
     const nowYM2=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
-    const provMeses=meses.filter(m=>m<=nowYM2&&shownInqs.some(i=>(tenants[i]||{})[m]?.monto>0||(tenants[i]||{})[m]?.comCob>0));
+    const allProvMeses=meses.filter(m=>m<=nowYM2&&shownInqs.some(i=>(tenants[i]||{})[m]?.monto>0||(tenants[i]||{})[m]?.comCob>0));
+
+    // Selector de período único — filtra Concepto, Distribución Teórica y Flujo de Caja a la vez
+    const provStart=(window.provStart&&allProvMeses.includes(window.provStart))?window.provStart:(allProvMeses[0]||nowYM2);
+    const provEnd=(window.provEnd&&allProvMeses.includes(window.provEnd))?window.provEnd:(allProvMeses[allProvMeses.length-1]||nowYM2);
+    window.provStart=provStart; window.provEnd=provEnd;
+    const provMeses=allProvMeses.filter(m=>m>=provStart&&m<=provEnd);
+    const provPeriodBar='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">'
+      +'<span style="font-size:11px;color:var(--muted)">Período:</span>'
+      +'<select class="cs" onchange="window.provStart=this.value;killCob();renderCob()">'+allProvMeses.map(m=>'<option value="'+m+'"'+(m===provStart?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
+      +'<span style="font-size:11px;color:var(--muted)">hasta</span>'
+      +'<select class="cs" onchange="window.provEnd=this.value;killCob();renderCob()">'+allProvMeses.map(m=>'<option value="'+m+'"'+(m===provEnd?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
+      +'</div>';
 
     function pCell(m,fn){const t=shownInqs.reduce((s,i)=>s+fn((tenants[i]||{})[m]||{}),0);return '<td style="text-align:right">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';}
     function pRow(label,fn,color){
@@ -1032,34 +1044,34 @@ function renderCob(){
     // ComTot = comSocios * NS
     const comTotCells=provMeses.map(m=>{
       const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.comSocios||0),0)*NS;
-      return '<td style="text-align:right;color:var(--accent);font-weight:600">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+      return '<td style="text-align:right;color:var(--text);font-weight:600">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
     }).join('');
     const comTotTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.comSocios||0),0),0)*NS;
 
     // Provision total
     const provTotCells=provMeses.map(m=>{
       const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.prov||0),0);
-      return '<td style="text-align:right;font-weight:700;color:var(--accent)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+      return '<td style="text-align:right;font-weight:700;color:var(--text)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
     }).join('');
     const provTotTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.prov||0),0),0);
 
     // Mesada c/u row
     const mesadaCells=provMeses.map(m=>{
       const t=shownInqs.reduce((s,i)=>s+((tenants[i]||{})[m]?.comSocios||0),0);
-      return '<td style="text-align:right;color:var(--green)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
+      return '<td style="text-align:right;color:var(--text)">'+(t>0?'$'+Math.round(t).toLocaleString():'—')+'</td>';
     }).join('');
     const mesadaTot=provMeses.reduce((s,m)=>s+shownInqs.reduce((ss,i)=>ss+((tenants[i]||{})[m]?.comSocios||0),0),0);
 
-    body='<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">'
+    body=provPeriodBar+'<div class="card" style="padding:0"><div class="tbl-wrap"><table class="ct">'
       +'<thead><tr><th>Concepto</th>'+thM2+'<th style="text-align:right">Total</th></tr></thead>'
       +'<tbody>'
       +'<tr><td style="color:var(--green);font-weight:600">💵 Cobrado del mes</td>'+cobCells+'<td style="text-align:right;font-weight:700;color:var(--green)">$'+Math.round(cobTot).toLocaleString()+'</td></tr>'
       +pRow('💼 Comisión Cobranzas',d=>d.comCob||0,'#a78bfa')
       +pRow('👤 Comisión Socios C/U',d=>d.comSocios||0,'var(--accent)')
-      +'<tr><td style="font-weight:600">👥 Comisión Total (x'+NS+' socios)</td>'+comTotCells+'<td style="text-align:right;font-weight:700;color:var(--accent)">$'+Math.round(comTotTot).toLocaleString()+'</td></tr>'
-      +'<tr><td style="font-weight:700">📦 Provisión Reserva</td>'+provTotCells+'<td style="text-align:right;font-weight:700;color:var(--accent)">$'+Math.round(provTotTot).toLocaleString()+'</td></tr>'
+      +'<tr><td style="font-weight:600">👥 Comisión Total (x'+NS+' socios)</td>'+comTotCells+'<td style="text-align:right;font-weight:700;color:var(--text)">$'+Math.round(comTotTot).toLocaleString()+'</td></tr>'
+      +'<tr><td style="font-weight:700">📦 Provisión Reserva</td>'+provTotCells+'<td style="text-align:right;font-weight:700;color:var(--text)">$'+Math.round(provTotTot).toLocaleString()+'</td></tr>'
       +'</tbody>'
-      +'<tfoot><tr><td>💰 Mesada estimada c/u</td>'+mesadaCells+'<td style="text-align:right;color:var(--green);font-weight:700">$'+Math.round(mesadaTot/provMeses.length||0).toLocaleString()+'</td></tr></tfoot>'
+      +'<tfoot><tr><td>💰 Mesada estimada c/u</td>'+mesadaCells+'<td style="text-align:right;color:var(--text);font-weight:700">$'+Math.round(mesadaTot/provMeses.length||0).toLocaleString()+'</td></tr></tfoot>'
       +'</table></div></div>'
 
       // ── DISTRIBUCIÓN TEÓRICA DE PROVISIÓN ──
@@ -1098,26 +1110,13 @@ function renderCob(){
         +'<div id="flujo-container"><div style="color:var(--muted);font-size:12px;padding:1rem">Cargando datos del Consolidado...</div></div>'
       +'</div>';
 
-    // Period selector for flujo - stored in window
-    const now3=new Date();
-    const nowYM3=now3.getFullYear()+'-'+String(now3.getMonth()+1).padStart(2,'0');
-    const flujoStart=window.flujoStart||provMeses[0]||nowYM3;
-    const flujoEnd=window.flujoEnd||(provMeses.includes(nowYM3)?nowYM3:provMeses[provMeses.length-1]);
-    window.flujoStart=flujoStart; window.flujoEnd=flujoEnd;
-    const flujoMeses=provMeses.filter(m=>m>=flujoStart&&m<=flujoEnd);
-    const mesPeriodOpts=provMeses.map(m=>'<option value="'+m+'">'+mlf(m)+'</option>').join('');
-    const periodBar='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">'
-      +'<span style="font-size:11px;color:var(--muted)">Período:</span>'
-      +'<select class="cs" onchange="window.flujoStart=this.value;killCob();renderCob()">'+provMeses.map(m=>'<option value="'+m+'"'+(m===flujoStart?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
-      +'<span style="font-size:11px;color:var(--muted)">hasta</span>'
-      +'<select class="cs" onchange="window.flujoEnd=this.value;killCob();renderCob()">'+provMeses.map(m=>'<option value="'+m+'"'+(m===flujoEnd?' selected':'')+'>'+mlf(m)+'</option>').join('')+'</select>'
-      +'</div>';
+    // El período ya está filtrado arriba por provPeriodBar (window.provStart/provEnd) — mismo provMeses para las 3 secciones
+    const flujoMeses=provMeses;
 
     // Use allRows (already loaded Consolidado) instead of re-fetching
     setTimeout(()=>{
       const flujoEl=document.getElementById('flujo-container');
       if(!flujoEl)return;
-      flujoEl.insertAdjacentHTML('beforebegin',periodBar);
       // Build real spending per month from allRows
       const realGOP={},realGXT={};
       flujoMeses.forEach(m=>{realGOP[m]=0;realGXT[m]=0;});
