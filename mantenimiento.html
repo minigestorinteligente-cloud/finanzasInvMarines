@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mantenimiento — Inversiones Marines</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Mismo sistema visual que el dashboard de Finanzas (tema oscuro, Inter). Plano a la izquierda, ficha a la derecha; en teléfono, plano arriba. */
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3348;--text:#e8eaf0;--muted:#7b82a0;--accent:#4f8ef7;--accent-bg:rgba(79,142,247,.12);
+  --st-rep:#4f8ef7;--st-p1:#f05454;--st-p2:#f5a623;--st-exe:#a07ff0;--st-ok:#34c87a;--ring:#0f1117;
+  --unit:#9aa6c8;--unit-fill:rgba(79,142,247,.10);--unit-vac:rgba(150,160,190,.16);--unit-sel:rgba(79,142,247,.30);color-scheme:dark}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+button,select,input,textarea{font:inherit;color:inherit}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;gap:14px;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:20}
+.back{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500}
+.back:hover{color:var(--text)}
+.logo{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.logo i{width:7px;height:7px;border-radius:50%;background:var(--st-ok)}
+.sync{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right}
+.btn{border:1px solid var(--border);background:var(--surface2);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.link{border:0;background:none;padding:0;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.row:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{padding:12px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-rows:auto 1fr;gap:12px;height:calc(100% - 52px);min-height:560px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:6px 11px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:12px;min-height:0}
+.main.nomap{grid-template-columns:minmax(0,1fr)}
+.mapbox{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:420px;touch-action:none}
+svg.map{width:100%;height:100%;display:block;cursor:grab;user-select:none}
+svg.map.panning{cursor:grabbing}
+.drawing svg.map{cursor:crosshair}
+.plan.lineart{filter:invert(.92) hue-rotate(180deg) brightness(.9)}
+.u{fill:var(--unit-fill);stroke:var(--unit);stroke-width:2.4;cursor:pointer}
+.u.vac{fill:var(--unit-vac);stroke-dasharray:8 6}
+.u:hover{fill:var(--unit-sel)}
+.u.sel{fill:var(--unit-sel);stroke:var(--accent);stroke-width:4.5}
+.ulab{font-weight:700;fill:#fff;paint-order:stroke;stroke:#0f1117;stroke-width:5px;pointer-events:none}
+.geo{cursor:pointer}
+.geo.line{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.geo.area{fill-opacity:.3}
+.geo.done{opacity:.55}
+.mk circle{stroke:var(--ring);stroke-width:3}
+.badge circle{stroke:var(--ring);stroke-width:2.5}
+.badge text{font-weight:700;fill:#fff;pointer-events:none}
+.draft{fill:var(--accent);fill-opacity:.2;stroke:var(--accent);stroke-dasharray:8 6}
+.draftpt{fill:var(--surface);stroke:var(--accent);stroke-width:3}
+.handle{fill:var(--surface);stroke:var(--accent);stroke-width:3;cursor:move}
+.zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:18px;font-weight:600}
+.comunbtn{position:absolute;left:10px;top:10px}
+.hint{position:absolute;left:10px;top:54px;background:var(--accent);color:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:500;max-width:calc(100% - 70px)}
+.legend{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px 12px;background:rgba(26,29,39,.92);border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:12px;color:var(--muted);max-width:calc(100% - 20px)}
+.legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.legend i,.pill i,.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:auto;min-height:0}
+.pbody{padding:16px 16px 22px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+h2{font-size:21px;font-weight:700;line-height:1.2;margin-top:3px;text-wrap:balance}
+h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
+.kv dt{color:var(--muted)}
+.kv dd{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface2);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px 3px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);white-space:nowrap;border:1px solid transparent}
+button.pill{cursor:pointer}button.pill:hover{border-color:var(--border);color:var(--text)}
+.pill.warn{background:rgba(240,84,84,.12);color:var(--st-p1)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.list{display:flex;flex-direction:column;border-top:1px solid var(--border)}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:10px 2px;border:0;border-bottom:1px solid var(--border);background:none;text-align:left;cursor:pointer;width:100%}
+.row:hover{background:var(--surface2)}
+.row.static{cursor:default}.row.static:hover{background:none}
+.row .t{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.row .m{font-size:12px;color:var(--muted);grid-column:2/4}
+.row .v{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.rbar{height:5px;border-radius:3px;background:var(--surface2);grid-column:2/4;overflow:hidden}
+.rbar b{display:block;height:100%;background:var(--accent);border-radius:3px}
+.code{font-weight:700;font-size:13px;min-width:62px}
+.prio{font-weight:700;font-size:12px;min-width:30px;text-align:center;border-radius:6px;padding:2px 0;color:#fff}
+.note{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:9px;padding:9px 11px}
+.ask{border:1px solid var(--st-rep);background:var(--accent-bg);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+details.menores summary{cursor:pointer;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:4px 0}
+form{display:flex;flex-direction:column;gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:500}
+select,input,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px}
+textarea{min-height:70px;resize:vertical}
+.sel-inline{font-size:12px;padding:3px 6px;margin-top:4px;max-width:100%}
+.msg{font-size:12.5px;color:var(--st-p1)}
+.gate{max-width:420px;margin:12vh auto 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.gate h1{font-size:19px}
+.loading{grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;min-height:300px;text-align:center;padding:16px}
+@media(max-width:900px){.wrap{height:auto}.main{grid-template-columns:1fr}.mapbox{height:60vh;min-height:360px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="index.html">← Finanzas</a>
+  <div class="logo"><i></i>Mantenimiento</div>
+  <span class="sync" id="sync"></span>
+</header>
+
+<div id="gate" class="gate" hidden>
+  <h1>Conectar con el Control de Finanzas</h1>
+  <p class="note">Escribe la clave que pusiste en el programa de Apps Script (Mantenimiento.gs). Se guarda solo en este navegador.</p>
+  <form id="fgate"><label for="clave">Clave<input id="clave" type="password" autocomplete="current-password" required></label>
+  <div class="actions"><button class="btn primary" type="submit">Conectar</button></div><div class="msg" id="gmsg"></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Complejo" id="cx"></div>
+    <div class="seg" role="group" aria-label="Mostrar">
+      <button data-f="todo" aria-pressed="true">Todo</button><button data-f="pend" aria-pressed="false">Por hacer</button><button data-f="exe" aria-pressed="false">En ejecución</button><button data-f="hist" aria-pressed="false">Historial</button>
+    </div>
+    <div class="seg" role="group" aria-label="Modo"><button data-m="ver" aria-pressed="true">Ver</button><button data-m="adj" aria-pressed="false">Ajustar plano</button></div>
+  </div>
+  <div class="main" id="main">
+    <div class="mapbox" id="mapbox">
+      <svg class="map" id="map" preserveAspectRatio="xMidYMid meet" aria-label="Plano del complejo">
+        <image id="planimg" class="plan" x="0" y="0"/>
+        <g id="units"></g><g id="geos"></g><g id="labels"></g><g id="badges"></g><g id="draft"></g><g id="handles"></g>
+      </svg>
+      <button class="btn comunbtn" id="comunbtn">Áreas comunes</button>
+      <div class="hint" id="hint" hidden></div>
+      <div class="zoom"><button id="zin" aria-label="Acercar">+</button><button id="zout" aria-label="Alejar">−</button><button id="zfit" aria-label="Ver todo el complejo">⤢</button></div>
+      <div class="legend"><span><i style="background:var(--st-rep)"></i>Aviso por evaluar</span><span><i style="background:var(--st-p1)"></i>Por hacer · P1</span><span><i style="background:var(--st-p2)"></i>Por hacer · P2-3</span><span><i style="background:var(--st-exe)"></i>En ejecución</span><span><i style="background:var(--st-ok)"></i>Terminada</span></div>
+    </div>
+    <aside class="panel" aria-live="polite"><div class="pbody" id="pbody"></div></aside>
+  </div>
+</div>
+
+<script>
+// ===================== Configuración =====================
+const API="https://script.google.com/macros/s/AKfycbw6vqIQgq9NcC5XzcEbN4SEqeL9ExRCy2c4SrBb_zBYbUqtBegYGDU3PRrps5idLQsw7g/exec";
+const BASE="mantenimiento/";
+const COMPLEJOS=[{k:"limoncito",n:"Limoncito",comun:"CL-COMUN",dueno:"cc. limoncito"},{k:"el_negrito",n:"El Negrito",comun:"EN-COMUN",dueno:"el negrito"},{k:"parcela7",n:"Parcela 7",comun:"P7-COMUN",dueno:"ctro. manufacturero"},{k:"edf_exa",n:"Edf Exa",comun:"EXA-COMUN",dueno:"edif. exa"}];
+const TIPOS_MANT=["obras","materiales","mantenimiento"];
+const PARTES=["Techo","Canales","Impermeabilización","Tanquillas","Baño","Plomería","Electricidad","Áreas verdes","Seguridad","Herrería","Albañilería","Pintura","Aire acondicionado","General"];
+const NS="http://www.w3.org/2000/svg";
+
+// ===================== Utilidades =====================
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/,/g,"#").replace(".",",").replace(/#/g,".");
+const usd=n=>"$"+fmt(n);
+const f1=n=>n.toLocaleString("es-ES",{maximumFractionDigits:1});
+const TODAY=new Date().toISOString().slice(0,10);
+const addDays=(s,n)=>{const d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const daysSince=s=>s?Math.round((new Date(TODAY)-new Date(s))/864e5):null;
+const fdate=s=>{if(!s)return"—";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`};
+const norm=s=>String(s??"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+function num(v){ // "-$ 1.234,56" · "$1.500" · "154,10" · "1,234.56" · "-150"
+  const raw=String(v??"");let s=raw.replace(/[^0-9,.\-]/g,"");if(!s.replace(/-/g,""))return 0;
+  const neg=s.includes("-")||/\(.*\)/.test(raw);s=s.replace(/-/g,"");
+  const lc=s.lastIndexOf(","),ld=s.lastIndexOf(".");
+  if(lc>=0&&ld>=0){s=lc>ld?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"")}
+  else if(lc>=0){const parts=s.split(",");s=(parts.length===2&&parts[1].length!==3)?parts.join("."):parts.join("")}
+  else if(ld>=0){const parts=s.split(".");s=(parts.length===2&&parts[1].length!==3)?s:parts.join("")}
+  const n=parseFloat(s)||0;return neg?-n:n;
+}
+const MES={ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,oct:10,nov:11,dic:12,jan:1,apr:4,aug:8,dec:12};
+function pdate(v){
+  const s=String(v??"").trim();if(!s)return null;let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return`${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  if((m=s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/))){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;let d=a,mo=b;if(a<=12&&b>12){mo=a;d=b}if(mo>12||d>31)return null;return`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
+  if((m=s.match(/^(\d{1,2})[-\s]([a-zA-Z]{3})[a-z]*\.?[-\s](\d{2,4})/))){const mo=MES[m[2].toLowerCase()];if(!mo)return null;let y=+m[3];if(y<100)y+=2000;return`${y}-${String(mo).padStart(2,"0")}-${m[1].padStart(2,"0")}`}
+  return null;
+}
+function hash(s){let h=5381;for(const c of s)h=((h<<5)+h+c.charCodeAt(0))|0;return(h>>>0).toString(36)}
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+let CLAVE=null;try{CLAVE=localStorage.getItem("mant_clave")}catch(e){}
+const sync=$("#sync");
+
+// ===================== Estado =====================
+const S={cx:"limoncito",filter:"todo",mode:"ver",sel:null,item:null,list:null,form:null,draw:null,
+  avisos:[],obraEst:{},geom:{},asig:{},perims:{}};
+let G=null; // datos cargados: {units, lines, obras, poly, sinUbicar}
+try{const c=localStorage.getItem("mant_cx");if(c)S.cx=c}catch(e){}
+
+// ===================== Carga =====================
+async function api(params){
+  const u=API+"?"+new URLSearchParams({clave:CLAVE,...params});
+  const r=await fetch(u);return r.json();
+}
+async function save(id,fila){
+  sync.textContent="Guardando…";
+  try{const r=await fetch(API,{method:"POST",body:JSON.stringify({clave:CLAVE,accion:"guardar",id,fila})});const j=await r.json();
+    sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo guardar ("+(j.error||"error")+")";return j.ok}
+  catch(e){sync.textContent="No se pudo guardar: sin conexión";return false}
+}
+async function borrar(id){
+  sync.textContent="Guardando…";
+  try{const r=await fetch(API,{method:"POST",body:JSON.stringify({clave:CLAVE,accion:"borrar",id})});const j=await r.json();sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
+  catch(e){sync.textContent="No se pudo borrar: sin conexión"}
+}
+async function boot(){
+  if(!CLAVE){$("#gate").hidden=false;return}
+  $("#app").hidden=false;$("#main").innerHTML='<div class="loading" id="ld">Leyendo el Control de Finanzas… (puede tardar unos segundos)</div>';
+  let res,assets;
+  try{
+    [res,assets]=await Promise.all([
+      window.__MOCK__?Promise.resolve(window.__MOCK__):api({hojas:"Consolidado,CtasporPagar,TablaArrendamientos,Mantenimiento_App"}),
+      Promise.all(["poligonos.json","obras_semilla.json","equivalencias.json"].map(f=>fetch(BASE+f).then(r=>{if(!r.ok)throw new Error(f);return r.json()})))
+    ]);
+  }catch(e){$("#ld").textContent="No se pudieron leer los datos. Revisa tu conexión y recarga la página.";return}
+  if(!res.ok){if(res.error==="clave"){try{localStorage.removeItem("mant_clave")}catch(e){}CLAVE=null;$("#app").hidden=true;$("#gate").hidden=false;$("#gmsg").textContent="La clave no coincide con la del programa. Intenta de nuevo.";return}
+    $("#ld").textContent="El Sheet respondió con un error: "+(res.error||"desconocido");return}
+  G=buildModel(res.datos,assets[0],assets[1],assets[2]);
+  readApp(res.datos.Mantenimiento_App||[]);
+  for(const k in G.seedAsig)if(!(k in S.asig))S.asig[k]=G.seedAsig[k];
+  restoreMain();
+  sync.textContent="Datos al "+new Date().toLocaleString("es-VE",{dateStyle:"short",timeStyle:"short"});
+  renderCx();setComplex(S.cx);
+}
+$("#fgate").addEventListener("submit",e=>{e.preventDefault();CLAVE=$("#clave").value.trim();try{localStorage.setItem("mant_clave",CLAVE)}catch(err){}$("#gate").hidden=true;boot()});
+
+let MAIN_HTML=null;
+function restoreMain(){$("#main").innerHTML=MAIN_HTML;wireMap()}
+
+// ===================== Modelo a partir del Sheet =====================
+function buildModel(D,POLY,SEM,EQ){
+  const eqMap={};for(const k in EQ.inmueble_ref)eqMap[norm(k)]=EQ.inmueble_ref[k];
+  const duenoMap={};for(const k in EQ.dueno_inmueble_a_comun)duenoMap[norm(k)]=EQ.dueno_inmueble_a_comun[k];
+  // Locales (TablaArrendamientos)
+  const units=[];const T=D.TablaArrendamientos||[];
+  for(let i=2;i<T.length;i++){const r=T[i];const code=String(r[0]||"").trim();if(!code||/total/i.test(r[4]||""))continue;
+    if(code==="CL41")continue;
+    const loc=norm(r[3]);const cx=loc.includes("limoncito")?"limoncito":loc.includes("negrito")?"el_negrito":loc.includes("manufacturero")?"parcela7":loc.includes("exa")?"edf_exa":null;if(!cx)continue;
+    const arr=String(r[4]||"");const vac=/desocupad/i.test(arr);let inq=arr.includes("_")?arr.slice(arr.indexOf("_")+1):arr;inq=inq.replace(/^Galpon\d_/i,"").trim();
+    units.push({code,cx,nombre:String(r[2]||"").trim(),inq:vac?"":inq,estado:vac?"Desocupado":"Ocupado",m2:num(r[8]),canon:num(r[9]),objetivo:num(r[12]),vence:pdate(r[7])});
+    eqMap[norm(code)]=code;
+  }
+  for(const c of COMPLEJOS)units.push({code:c.comun,cx:c.k,nombre:"Áreas comunes",inq:"",estado:"Común",m2:0,canon:0,objetivo:0,vence:null,comun:true});
+  const ub={};units.forEach(u=>ub[u.code]=u);
+  const unitOf=(ref,dueno)=>{const r=norm(ref);if(r){if(eqMap[r])return eqMap[r];return"SIN-UBICAR"}const d=norm(dueno);if(d&&duenoMap[d])return duenoMap[d];return"SIN-UBICAR"};
+  // Obras: CtasporPagar + semilla
+  const obras=[];const C=D.CtasporPagar||[];
+  for(let i=1;i<C.length;i++){const r=C[i];const id=String(r[0]||"").trim();if(!id)continue;const tipo=norm(r[4]);
+    if(!["obra","mantenimiento","obra y materiales"].includes(tipo)||!String(r[3]||"").trim())continue;
+    const aj=SEM.ajustes_cxp[id]||{};const u=aj.unidad||unitOf(r[3],r[2]);
+    obras.push({id,cxp:id,nombre:aj.nombre||String(r[7]||"").trim()||id,units:[u],parte:aj.parte||"General",ini:aj.ini||pdate(r[1])||TODAY,fin:aj.fin||null,quien:String(r[6]||"").trim(),presupuesto:num(r[8]),pend:Math.max(0,num(r[10])),nota:aj.nota||null});
+  }
+  for(const o of SEM.obras_sin_cxp)obras.push({...o,units:o.unidades,pend:0});
+  // Pagos de mantenimiento (Consolidado)
+  const lines=[];const sinU=[];const K=D.Consolidado||[];const seenId={};const cxpIds=new Set(obras.map(o=>o.cxp).filter(Boolean));
+  for(let i=1;i<K.length;i++){const r=K[i];if(!r||!r[0]&&!r[16])continue;
+    const ano=+String(r[1]||"").trim();if(ano&&ano<2026)continue;
+    const io=norm(r[3]);if(io!=="egreso"&&io!=="ingreso")continue;
+    const cxp=String(r[20]||"").trim();const cat=norm(r[6]),tipo=norm(r[5]);
+    const isMant=(cat==="gastosxtra"&&TIPOS_MANT.includes(tipo))||(cxp&&cxpIds.has(cxp));if(!isMant)continue;
+    const f=pdate(r[0]);if(!f&&!ano)continue;
+    const monto=Math.abs(num(r[16]));if(!monto)continue;
+    const usdv=io==="egreso"?monto:-monto; // los reversos (Ingreso) restan
+    let u=unitOf(r[10],r[9]);
+    if(u==="SIN-UBICAR"&&cxp){const o=obras.find(o=>o.cxp===cxp);if(o)u=o.units[0]} // pago de una partida sin Inmueble Ref: va al local de la partida
+    const banco=String(r[4]||"").trim(),nmov=String(r[18]||"").trim();
+    let id=nmov?`${banco}-${nmov}`:"h"+hash([r[0],r[16],r[8],banco].join("|"));if(seenId[id]){seenId[id]++;id+="-"+seenId[id]}else seenId[id]=1;
+    const l={id,f:f||(ano+"-01-01"),u,tipo:String(r[5]||""),c:String(r[8]||"").trim(),b:String(r[11]||"").trim(),usd:usdv,cxp:cxp||null,banco};
+    if(u==="SIN-UBICAR")sinU.push(l);else lines.push(l);
+  }
+  return{units,ub,lines,obras,poly:POLY,sinU,seedAsig:SEM.asignaciones_semilla||{}};
+}
+function readApp(rows){
+  const H=rows[0]||[];const ix=n=>H.indexOf(n);
+  const g=(r,n)=>{const i=ix(n);return i>=0?String(r[i]??""):""};
+  S.avisos=[];S.obraEst={};S.geom={};S.asig={};S.perims={};
+  for(let i=1;i<rows.length;i++){const r=rows[i];const id=g(r,"ID").trim();if(!id)continue;const tipo=norm(g(r,"Tipo"));
+    let geo=null;try{const t=g(r,"Ubicación");if(t)geo=JSON.parse(t)}catch(e){}
+    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[]});if(geo)S.geom[id]=geo}
+    else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo)S.geom[id]=geo}
+    else if(tipo==="asignacion"){S.asig[id]=g(r,"Obra vinculada")}
+    else if(tipo==="perimetro"){if(geo&&geo.pts)S.perims[id]=geo.pts.map(q=>[q.x,q.y])}
+  }
+}
+// Fila completa de una obra en Mantenimiento_App (el script reemplaza la fila entera)
+function obraRow(o){const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":S.geom[o.id]?JSON.stringify(S.geom[o.id]):""}}
+function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":S.geom[a.id]?JSON.stringify(S.geom[a.id]):""}}
+
+// ===================== Reglas =====================
+function obraState(o){const e=S.obraEst[o.id];if(e&&e.reabierta)return{estado:"En ejecución",fin:null};if(e&&e.fin)return{estado:"Terminada",fin:e.fin};return o.fin?{estado:"Terminada",fin:o.fin}:{estado:"En ejecución",fin:null}}
+function model(){
+  const cxUnits=new Set(G.units.filter(u=>u.cx===S.cx).map(u=>u.code));
+  const obs=G.obras.filter(o=>o.units.some(u=>cxUnits.has(u))).map(o=>({...o,...obraState(o)}));
+  const allObs=G.obras.map(o=>({...o,...obraState(o)}));
+  const asg={};
+  for(const l of G.lines){if(!cxUnits.has(l.u))continue;
+    let to=S.asig[l.id]||null;
+    if(to&&to!=="menor"&&!allObs.find(o=>o.id===to))to=null;
+    if(!to&&l.cxp){const o=allObs.find(o=>o.cxp===l.cxp);if(o)to=o.id}
+    if(!to){const c=allObs.filter(o=>o.units.includes(l.u)&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>a.ini<b.ini?-1:1);if(c.length)to=c[0].id}
+    asg[l.id]=to||"menor";
+  }
+  const lines=G.lines.filter(l=>cxUnits.has(l.u));
+  for(const o of obs){o.lines=lines.filter(l=>asg[l.id]===o.id);o.costo=o.lines.reduce((a,l)=>a+l.usd,0)}
+  const menores={};for(const l of lines)if(asg[l.id]==="menor")(menores[l.u]=menores[l.u]||[]).push(l);
+  const avisos=S.avisos.filter(a=>a.estado!=="resuelto"&&cxUnits.has(a.u));
+  return{obs,menores,avisos,asg,cxUnits};
+}
+const avisoColor=a=>a.prio==1?"var(--st-p1)":a.prio?"var(--st-p2)":"var(--st-rep)";
+const obraColor=o=>o.estado==="Terminada"?"var(--st-ok)":"var(--st-exe)";
+const geoKindFor=p=>p==="Canales"?"linea":(p==="Techo"||p==="Impermeabilización")?"area":"punto";
+function unitInvest(code,M){
+  let inv=0;for(const o of M.obs){if(!o.units.includes(code))continue;const r=o.reparto&&o.reparto[code]!=null?o.reparto[code]:1/o.units.length;inv+=o.costo*r}
+  inv+=(M.menores[code]||[]).reduce((a,l)=>a+l.usd,0);
+  const u=G.ub[code];const base=u?(u.canon||u.objetivo||0):0;
+  return{inv,meses:base&&inv?inv/base:null};
+}
+const unitLabel=u=>u.comun?"Áreas comunes":(u.inq||"Desocupado");
+
+// ===================== Plano =====================
+let CX=null,VB=null,FULL=null;
+function cxPoly(){return CX&&CX.locales?CX.locales:{}}
+const polyUnit=k=>k==="CL41"?"CL4":k;
+function pts(k){return S.perims[S.cx+":"+k]||cxPoly()[k]}
+function centroid(p){let a=0,x=0,y=0;for(let i=0;i<p.length;i++){const[x0,y0]=p[i],[x1,y1]=p[(i+1)%p.length];const c=x0*y1-x1*y0;a+=c;x+=(x0+x1)*c;y+=(y0+y1)*c}if(Math.abs(a)<1e-6){p.forEach(q=>{x+=q[0];y+=q[1]});return[x/p.length,y/p.length]}return[x/(3*a),y/(3*a)]}
+function unitBox(c){let xs=[],ys=[];Object.keys(cxPoly()).filter(k=>polyUnit(k)===c&&cxPoly()[k]).forEach(k=>pts(k).forEach(q=>{xs.push(q[0]);ys.push(q[1])}));if(!xs.length)return null;return[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]}
+function unitCenter(c){const b=unitBox(c);if(b)return[(b[0]+b[2])/2,(b[1]+b[3])/2];return CX&&CX.ancho?[CX.ancho/2,CX.alto/2]:[0,0]}
+const svg=()=>$("#map");
+function setVB(){svg().setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`)}
+function zoom(f,cx,cy){if(cx==null){cx=VB.x+VB.w/2;cy=VB.y+VB.h/2}const nw=Math.min(FULL.w*1.3,Math.max(FULL.w*.15,VB.w*f));const k=nw/VB.w;VB={x:cx-(cx-VB.x)*k,y:cy-(cy-VB.y)*k,w:nw,h:VB.h*k};setVB()}
+function zoomTo(c){const b=unitBox(c);if(!b)return;const pad=FULL.w*.07;const w=Math.max(b[2]-b[0]+2*pad,FULL.w*.3),h=Math.max(b[3]-b[1]+2*pad,FULL.w*.3);VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};setVB()}
+function toSvg(ev){const p=svg().createSVGPoint();p.x=ev.clientX;p.y=ev.clientY;return p.matrixTransform(svg().getScreenCTM().inverse())}
+const SZ=()=>FULL?Math.max(FULL.w,FULL.h)/1400:1; // escala de trazos y textos según el tamaño de la imagen
+
+function wireMap(){
+  $("#zin").onclick=()=>zoom(.75);$("#zout").onclick=()=>zoom(1.33);$("#zfit").onclick=()=>{VB={...FULL};setVB()};
+  $("#comunbtn").onclick=()=>unitClick(COMPLEJOS.find(c=>c.k===S.cx).comun);
+  const m=svg();
+  m.addEventListener("wheel",e=>{e.preventDefault();const p=toSvg(e);zoom(e.deltaY>0?1.12:.89,p.x,p.y)},{passive:false});
+  let pan=null;
+  m.addEventListener("pointerdown",e=>{if(e.target.closest(".handle"))return;pan={sx:e.clientX,sy:e.clientY,vx:VB.x,vy:VB.y,moved:false}});
+  window.addEventListener("pointermove",e=>{if(!pan)return;const r=m.getBoundingClientRect();const k=Math.max(VB.w/r.width,VB.h/r.height);const dx=(e.clientX-pan.sx)*k,dy=(e.clientY-pan.sy)*k;if(Math.abs(dx)+Math.abs(dy)>5*k){pan.moved=true;m.classList.add("panning")}if(pan.moved){VB.x=pan.vx-dx;VB.y=pan.vy-dy;setVB()}});
+  window.addEventListener("pointerup",()=>{if(pan&&pan.moved)m.addEventListener("click",ev=>ev.stopPropagation(),{capture:true,once:true});pan=null;m.classList.remove("panning")});
+  m.addEventListener("click",e=>{if(!S.draw)return;const p=toSvg(e);S.draw.pts.push([Math.round(p.x),Math.round(p.y)]);if(S.draw.tipo==="punto")return finishDraw();drawDraft();renderPanel(model())});
+}
+function drawUnits(){
+  const g=$("#units"),gl=$("#labels");g.innerHTML="";gl.innerHTML="";const z=SZ();
+  for(const k in cxPoly()){const P=pts(k);if(!P)continue;const code=polyUnit(k),u=G.ub[code];
+    const p=el("polygon",{points:P.map(q=>q.join(",")).join(" "),class:"u"+(u&&u.estado==="Desocupado"?" vac":"")+(S.sel===code?" sel":""),"data-u":code,tabindex:0,"stroke-width":2.4*z},g);
+    el("title",{},p).textContent=code+(u?" · "+unitLabel(u):"");
+    p.addEventListener("click",()=>unitClick(code));p.addEventListener("keydown",e=>{if(e.key==="Enter")unitClick(code)});
+    if(k==="CL41")continue;const[cx,cy]=centroid(P);const t=el("text",{class:"ulab",x:cx,y:cy,"text-anchor":"middle","font-size":21*z,"stroke-width":5*z},gl);t.textContent=code;
+  }
+}
+function visible(kind,o){const f=S.filter;if(kind==="aviso")return f==="todo"||f==="pend";if(o.estado==="Terminada")return f==="hist"||(f==="todo"&&!!S.sel);return f==="todo"||f==="exe"}
+function drawGeoms(M){
+  const g=$("#geos");g.innerHTML="";const z=SZ();
+  const items=[...M.obs.map(o=>({kind:"obra",o,id:o.id,c:obraColor(o),done:o.estado==="Terminada",units:o.units})),...M.avisos.map(a=>({kind:"aviso",o:a,id:a.id,c:avisoColor(a),done:false,units:[a.u]}))];
+  for(const it of items){if(!visible(it.kind,it.o))continue;if(S.sel&&!it.units.includes(S.sel)&&S.filter==="todo")continue;
+    const gm=S.geom[it.id];if(!gm||!gm.pts||!gm.pts.length)continue;const P=gm.pts.map(q=>[q.x,q.y]);const sel=S.item===it.id;let node;
+    if(gm.tipo==="linea"&&P.length>1)node=el("polyline",{class:"geo line"+(it.done?" done":""),points:P.map(q=>q.join(",")).join(" "),stroke:sel?"#fff":it.c,"stroke-width":(it.done?6:9)*z},g);
+    else if(gm.tipo==="area"&&P.length>2)node=el("polygon",{class:"geo area"+(it.done?" done":""),points:P.map(q=>q.join(",")).join(" "),fill:it.c,stroke:sel?"#fff":it.c,"stroke-width":3*z},g);
+    else{node=el("g",{class:"geo mk"+(it.done?" done":""),transform:`translate(${P[0][0]},${P[0][1]})`},g);el("circle",{r:(sel?14:11)*z,fill:it.c,"stroke-width":3*z,stroke:sel?"#fff":"var(--ring)"},node)}
+    el("title",{},node).textContent=it.kind==="aviso"?"Aviso: "+it.o.descripcion:it.o.nombre;
+    node.addEventListener("click",e=>{e.stopPropagation();if(S.draw)return;openItem(it.id)});
+  }
+}
+function drawBadges(M){
+  const g=$("#badges");g.innerHTML="";if(S.sel||S.filter==="hist")return;const z=SZ();const byU={};
+  const rk=c=>c==="var(--st-p1)"?0:c==="var(--st-p2)"?1:c==="var(--st-rep)"?2:3;
+  const add=(u,c)=>{const b=byU[u]=byU[u]||{n:0,w:9,c};b.n++;if(rk(c)<b.w){b.w=rk(c);b.c=c}};
+  M.avisos.forEach(a=>add(a.u,avisoColor(a)));M.obs.filter(o=>o.estado!=="Terminada").forEach(o=>add(o.units[0],"var(--st-exe)"));
+  for(const u in byU){if(!unitBox(u))continue;const[cx,cy]=unitCenter(u);const b=byU[u];
+    const n=el("g",{class:"badge",transform:`translate(${cx+28*z},${cy-30*z})`},g);el("circle",{r:14*z,fill:b.c,"stroke-width":2.5*z},n);
+    const t=el("text",{"text-anchor":"middle",y:5*z,"font-size":15*z},n);t.textContent=b.n;n.style.cursor="pointer";n.addEventListener("click",()=>unitClick(u))}
+}
+function drawDraft(){const g=$("#draft");g.innerHTML="";if(!S.draw)return;const P=S.draw.pts,z=SZ();
+  if(S.draw.tipo==="area"&&P.length>2)el("polygon",{class:"draft",points:P.map(q=>q.join(",")).join(" "),"stroke-width":4*z},g);
+  else if(P.length>1)el("polyline",{class:"draft",fill:"none",points:P.map(q=>q.join(",")).join(" "),"stroke-width":4*z},g);
+  P.forEach(q=>el("circle",{class:"draftpt",cx:q[0],cy:q[1],r:7*z},g))}
+function drawHandles(){const g=$("#handles");g.innerHTML="";if(S.mode!=="adj"||!S.sel)return;const z=SZ();
+  Object.keys(cxPoly()).filter(k=>polyUnit(k)===S.sel&&cxPoly()[k]).forEach(k=>pts(k).forEach((q,i)=>{const h=el("circle",{class:"handle",cx:q[0],cy:q[1],r:9*z},g);h.addEventListener("pointerdown",ev=>handleDown(ev,k,i,h))}))}
+function handleDown(ev,k,i,h){ev.stopPropagation();h.setPointerCapture(ev.pointerId);const p0=pts(k).map(q=>q.slice());let moved=false;
+  const mv=e=>{const p=toSvg(e);p0[i]=[Math.round(p.x),Math.round(p.y)];moved=true;S.perims[S.cx+":"+k]=p0;h.setAttribute("cx",p0[i][0]);h.setAttribute("cy",p0[i][1]);drawUnits()};
+  const up=()=>{h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);if(moved){save("per:"+S.cx+":"+k,{Tipo:"Perímetro",Local:polyUnit(k),"Ubicación":JSON.stringify({tipo:"area",pts:p0.map(q=>({x:q[0],y:q[1]}))})});drawAll()}};
+  h.addEventListener("pointermove",mv);h.addEventListener("pointerup",up)}
+function drawAll(){const M=model();if(CX&&CX.imagen){drawUnits();drawGeoms(M);drawBadges(M);drawDraft();drawHandles()}renderPanel(M)}
+
+// ===================== Navegación =====================
+function renderCx(){$("#cx").innerHTML=COMPLEJOS.map(c=>`<button data-cx="${c.k}" aria-pressed="${c.k===S.cx}">${c.n}</button>`).join("");
+  $("#cx").querySelectorAll("button").forEach(b=>b.onclick=()=>setComplex(b.dataset.cx))}
+function setComplex(k){S.cx=k;S.sel=null;S.item=null;S.list=null;S.form=null;if(S.draw)cancelDraw(true);try{localStorage.setItem("mant_cx",k)}catch(e){}
+  $("#cx").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.cx===k));
+  CX=G.poly[k]||{};const hasMap=!!CX.imagen;$("#mapbox").hidden=!hasMap;$("#main").classList.toggle("nomap",!hasMap);
+  if(hasMap){const img=$("#planimg");img.setAttribute("href",CX.imagen.startsWith("planos/")?BASE+CX.imagen:CX.imagen);img.setAttribute("width",CX.ancho);img.setAttribute("height",CX.alto);img.classList.toggle("lineart",k==="limoncito");
+    FULL={x:0,y:0,w:CX.ancho,h:CX.alto};VB={...FULL};setVB()}
+  drawAll()}
+function unitClick(c){if(S.draw)return;S.sel=c;S.item=null;S.list=null;S.form=null;if(unitBox(c))zoomTo(c);drawAll()}
+function openItem(id){S.item=id;S.list=null;S.form=null;const o=G.obras.find(o=>o.id===id),a=S.avisos.find(a=>a.id===id);const u=o?o.units[0]:a?a.u:null;if(u&&S.sel!==u){S.sel=u;if(unitBox(u))zoomTo(u)}drawAll()}
+function home(){S.sel=null;S.item=null;S.list=null;S.form=null;if(FULL){VB={...FULL};setVB()}drawAll()}
+function setFilter(f){S.filter=f;document.querySelectorAll("[data-f]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f))}
+function openList(k){setFilter(k);S.list=k;S.item=null;S.form=null;S.sel=null;if(FULL){VB={...FULL};setVB()}drawAll()}
+function setMode(m){S.mode=m;document.querySelectorAll("[data-m]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===m));const h=$("#hint");if(h){h.hidden=m!=="adj";h.textContent="Toca un local y arrastra sus esquinas para corregir el perímetro."}drawAll()}
+function startDraw(id,tipo){S.draw={id,tipo,pts:[]};$("#app").classList.add("drawing");const h=$("#hint");h.hidden=false;
+  h.textContent=tipo==="punto"?"Toca el plano donde está el trabajo.":tipo==="linea"?"Toca a lo largo de la canal, punto por punto. Luego «Guardar ubicación».":"Toca las esquinas del área. Luego «Guardar ubicación».";renderPanel(model())}
+async function finishDraw(){const d=S.draw;if(!d)return;const need=d.tipo==="punto"?1:d.tipo==="linea"?2:3;if(d.pts.length<need)return;
+  S.geom[d.id]={tipo:d.tipo,pts:d.pts.map(q=>({x:q[0],y:q[1]}))};cancelDraw(true);drawAll();
+  const o=G.obras.find(o=>o.id===d.id);if(o)await save(o.id,obraRow(o));else{const a=S.avisos.find(a=>a.id===d.id);if(a)await save(a.id,avisoRow(a))}}
+function cancelDraw(keep){S.draw=null;$("#app").classList.remove("drawing");const h=$("#hint");if(h){h.hidden=S.mode!=="adj";h.textContent="Toca un local y arrastra sus esquinas para corregir el perímetro."}if(!keep)drawAll()}
+
+// ===================== Panel =====================
+function vence(u){if(!u||!u.vence)return"";const d=daysSince(u.vence);if(d>0)return`<span class="pill warn">Contrato vencido</span>`;if(d>-60)return`<span class="pill warn">Vence en ${-d} días</span>`;return""}
+const rowObra=o=>`<button class="row" data-open="${esc(o.id)}"><i class="dot" style="background:${obraColor(o)}"></i><span class="t">${esc(o.nombre)}</span><span class="v">${usd(o.costo)}</span><span class="m">${esc(o.units.join(" + "))} · ${o.estado}${o.cxp?" · "+esc(o.cxp):""}${S.geom[o.id]||!CX.imagen?"":" · sin ubicar"}</span></button>`;
+const rowAviso=a=>{const d=daysSince(a.fecha);return`<button class="row" data-open="${esc(a.id)}"><span class="prio" style="background:${avisoColor(a)}">${a.prio?"P"+a.prio:"?"}</span><span class="t">${esc(a.descripcion)}</span><span class="v">${a.est?usd(a.est):""}</span><span class="m">${esc(a.u)} · ${esc(a.parte)} · ${d===0?"hoy":"hace "+d+" días"}${a.prio?"":" · por evaluar"}</span></button>`};
+const sortAvisos=arr=>arr.slice().sort((a,b)=>((a.prio||9)-(b.prio||9))||((a.fecha||"")<(b.fecha||"")?-1:1));
+function askBlocks(M,unit){const out=[];
+  for(const o of M.obs){if(o.estado==="Terminada"||(unit&&!o.units.includes(unit)))continue;
+    for(const a of M.avisos){if(!o.units.includes(a.u)||(a.noObras||[]).includes(o.id)||(a.fecha&&o.ini<a.fecha))continue;
+      out.push(`<div class="ask"><div>¿La obra <b>${esc(o.nombre)}</b> resuelve el aviso <b>“${esc(a.descripcion)}”</b>?</div><div class="actions"><button class="btn primary" data-link="${esc(a.id)}|${esc(o.id)}">Sí, es la misma</button><button class="btn" data-nolink="${esc(a.id)}|${esc(o.id)}">No</button></div></div>`)}}
+  return out.join("")}
+function lineRow(l,M,units){const opts=M.obs.filter(o=>o.units.some(u=>units.includes(u)||u===l.u));const cur=M.asg[l.id];
+  return`<div class="row static"><span class="code" style="min-width:0;font-weight:500;color:var(--muted);font-size:12px">${fdate(l.f)}</span><span class="t">${esc(l.c||l.tipo)}</span><span class="v">${usd(l.usd)}</span><span class="m">${esc(l.b)} · ${esc(l.banco)} · ${esc(l.tipo)}${l.cxp?" · "+esc(l.cxp):""}<br><select class="sel-inline" data-move="${esc(l.id)}" aria-label="Asignar a obra"><option value="menor" ${cur==="menor"?"selected":""}>Gasto menor del local</option>${opts.map(o=>`<option value="${esc(o.id)}" ${cur===o.id?"selected":""}>${esc(o.nombre)}</option>`).join("")}</select></span></div>`}
+function renderPanel(M){
+  const pb=$("#pbody");if(!pb)return;let h="";const cxObj=COMPLEJOS.find(c=>c.k===S.cx);
+  if(S.draw){const n=S.draw.pts.length,need=S.draw.tipo==="linea"?2:3;
+    h=`<div><div class="eyebrow">Ubicar en el plano</div><h2>${S.draw.tipo==="punto"?"Toca el punto":S.draw.tipo==="linea"?"Traza la línea":"Dibuja el área"}</h2></div>
+    <div class="seg">${["punto","linea","area"].map(t=>`<button data-dtipo="${t}" aria-pressed="${S.draw.tipo===t}">${t==="punto"?"Punto":t==="linea"?"Línea (canal)":"Área (techo)"}</button>`).join("")}</div>
+    <div class="note">${n} punto(s). Usa + y − para acercarte.</div>
+    <div class="actions">${S.draw.tipo!=="punto"?`<button class="btn primary" data-finish ${n<need?"disabled":""}>Guardar ubicación</button><button class="btn" data-undo ${n?"":"disabled"}>Deshacer punto</button>`:""}<button class="btn" data-cancel>Cancelar</button></div>`}
+  else if(S.form){h=formHTML()}
+  else if(S.item){const o=M.obs.find(o=>o.id===S.item),a=S.avisos.find(a=>a.id===S.item);
+    if(o){h=`<div><button class="btn link" data-unit="${esc(o.units[0])}">← ${esc(o.units[0])}</button></div>
+      <div><div class="eyebrow">Obra · ${esc(o.parte)}${o.cxp?" · "+esc(o.cxp):" · sin partida"}</div><h2>${esc(o.nombre)}</h2></div>
+      <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span></div>
+      <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd><dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Presupuesto partida</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
+      ${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}
+      <div class="actions">${o.estado==="Terminada"?`<button class="btn" data-reopen="${esc(o.id)}">Reabrir</button>`:`<button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button>`}${CX.imagen?`<button class="btn" data-locate="${esc(o.id)}" data-kind="${geoKindFor(o.parte)}">${S.geom[o.id]?"Cambiar ubicación":"Ubicar en el plano"}</button>`:""}</div>
+      <h3>Pagos del banco (${o.lines.length})</h3><div class="list">${o.lines.map(l=>lineRow(l,M,o.units)).join("")||'<div class="note">Aún no hay pagos.</div>'}</div>`}
+    else if(a){h=`<div><button class="btn link" data-unit="${esc(a.u)}">← ${esc(a.u)}</button></div>
+      <div><div class="eyebrow">Aviso · ${esc(a.parte)}</div><h2>${esc(a.descripcion)}</h2></div>
+      <div class="actions"><span class="pill"><i style="background:${avisoColor(a)}"></i>${a.prio?"Prioridad "+a.prio:"Por evaluar"}</span></div>
+      <dl class="kv"><dt>Local</dt><dd>${esc(a.u)}</dd><dt>Fecha del aviso</dt><dd>${fdate(a.fecha)}</dd><dt>Antigüedad</dt><dd>${daysSince(a.fecha)} días</dd>${a.est?`<dt>Costo estimado</dt><dd>${usd(a.est)}</dd>`:""}</dl>
+      <label for="ap">Prioridad<select id="ap" data-prioset="${esc(a.id)}"><option value="">Por evaluar</option>${[1,2,3].map(p=>`<option value="${p}" ${a.prio==p?"selected":""}>${p}${p===1?" · urgente":""}</option>`).join("")}</select></label>
+      <div class="actions">${CX.imagen?`<button class="btn" data-locate="${esc(a.id)}" data-kind="${geoKindFor(a.parte)}">${S.geom[a.id]?"Cambiar ubicación":"Ubicar en el plano"}</button>`:""}<button class="btn" data-delaviso="${esc(a.id)}">Borrar aviso</button></div>`}
+    else{S.item=null;return renderPanel(M)}}
+  else if(S.sel){const c=S.sel,u=G.ub[c],st=unitInvest(c,M);const obs=M.obs.filter(o=>o.units.includes(c));const av=sortAvisos(M.avisos.filter(a=>a.u===c));const men=M.menores[c]||[];
+    h=`<div><button class="btn link" data-home>← ${esc(cxObj.n)}</button></div>
+    <div><div class="eyebrow">${esc(u?u.nombre:"")}</div><h2>${esc(c)} · ${esc(u?unitLabel(u):"")}</h2></div>
+    ${u&&!u.comun?`<div class="actions">${vence(u)}${u.estado==="Desocupado"?'<span class="pill">Desocupado</span>':""}</div>
+    <dl class="kv"><dt>Superficie</dt><dd>${fmt(u.m2)} m²</dd><dt>Canon vigente</dt><dd>${u.canon?usd(u.canon):"—"}</dd><dt>Canon objetivo</dt><dd>${u.objetivo?usd(u.objetivo):"—"}</dd><dt>Vence contrato</dt><dd>${fdate(u.vence)}</dd>${c==="CL4"?"<dt>Incluye</dt><dd>Local 4-1 y 4-2</dd>":""}</dl>`:""}
+    <div class="big"><div class="stat"><b>${usd(st.inv)}</b><span>Invertido 2026</span></div><div class="stat"><b>${st.meses!=null?f1(st.meses):"—"}</b><span>meses de alquiler${u&&!u.canon&&u.objetivo?" (canon objetivo)":""}</span></div></div>
+    ${askBlocks(M,c)}
+    <div class="actions"><button class="btn primary" data-newaviso="${esc(c)}">Registrar aviso</button>${S.mode==="adj"&&unitBox(c)?`<button class="btn" data-reset="${esc(c)}">Restaurar perímetro</button>`:""}</div>
+    <h3>Por hacer (${av.length})</h3><div class="list">${av.map(rowAviso).join("")||'<div class="note">Sin avisos abiertos.</div>'}</div>
+    <h3>Obras (${obs.length})</h3><div class="list">${obs.map(rowObra).join("")||'<div class="note">Sin obras registradas.</div>'}</div>
+    ${men.length?`<details class="menores"><summary>Gastos menores · ${usd(men.reduce((a,l)=>a+l.usd,0))}</summary><div class="list">${men.map(l=>lineRow(l,M,[c])).join("")}</div></details>`:""}`}
+  else if(S.list){const k=S.list;let rows="",title="",sub="";
+    if(k==="pend"){const av=sortAvisos(M.avisos);title=`Por hacer (${av.length})`;sub="Por prioridad; dentro de cada una, el aviso más viejo primero.";rows=av.map(rowAviso).join("")||'<div class="note">No hay avisos abiertos. Registra uno desde la ficha de un local.</div>'}
+    if(k==="exe"){const ob=M.obs.filter(o=>o.estado!=="Terminada");title=`En ejecución (${ob.length})`;sub="Se abren solas al crear una partida en Cuentas por Pagar.";rows=ob.map(rowObra).join("")||'<div class="note">Nada en ejecución.</div>'}
+    if(k==="hist"){const ob=M.obs.filter(o=>o.estado==="Terminada").sort((a,b)=>a.fin<b.fin?1:-1);title=`Terminadas (${ob.length})`;sub="Más recientes primero.";rows=ob.map(rowObra).join("")}
+    h=`<div><button class="btn link" data-home>← Resumen</button></div><div><div class="eyebrow">${esc(cxObj.n)}</div><h2>${title}</h2></div><div class="note">${sub}</div>${k!=="hist"?askBlocks(M,null):""}<div class="list">${rows}</div>`}
+  else{const cu=G.units.filter(u=>u.cx===S.cx);const rank=cu.map(u=>({u,...unitInvest(u.code,M)})).filter(r=>r.inv).sort((a,b)=>b.inv-a.inv);const inv=rank.reduce((a,r)=>a+r.inv,0);
+    const pend=M.obs.reduce((a,o)=>a+(o.pend||0),0);const max=Math.max(1,...rank.map(r=>r.inv));
+    const nP=M.avisos.length,nE=M.obs.filter(o=>o.estado!=="Terminada").length,nT=M.obs.filter(o=>o.estado==="Terminada").length;
+    const locs=cu.filter(u=>!u.comun),vac=locs.filter(u=>u.estado==="Desocupado").length;
+    const sinU=G.sinU.length?`<div class="note">${G.sinU.length} pago(s) de mantenimiento en el Consolidado no tienen Inmueble Ref ni Dueño reconocible y no aparecen en ningún complejo. Revísalos en el Sheet: ${G.sinU.slice(0,4).map(l=>esc(l.banco+" "+fdate(l.f)+" "+usd(l.usd))).join(" · ")}${G.sinU.length>4?" …":""}</div>`:"";
+    h=`<div><div class="eyebrow">${esc(cxObj.n)} · 2026</div><h2>${locs.length} locales · ${vac} desocupados</h2></div>
+    <div class="big"><div class="stat"><b>${usd(inv)}</b><span>Invertido en mantenimiento</span></div><div class="stat"><b>${usd(pend)}</b><span>Saldo por pagar en obras</span></div></div>
+    <div class="actions"><button class="pill" data-list="pend"><i style="background:var(--st-p1)"></i>${nP} por hacer</button><button class="pill" data-list="exe"><i style="background:var(--st-exe)"></i>${nE} en ejecución</button><button class="pill" data-list="hist"><i style="background:var(--st-ok)"></i>${nT} terminadas</button></div>
+    ${askBlocks(M,null)}
+    <h3>Locales</h3>
+    <div class="list">${cu.map(u=>({u,...unitInvest(u.code,M)})).sort((a,b)=>b.inv-a.inv).map(r=>`<button class="row" data-unit="${esc(r.u.code)}"><span class="code">${esc(r.u.code)}</span><span class="t">${esc(unitLabel(r.u))}</span><span class="v">${r.inv?usd(r.inv):"—"}</span><span class="rbar"><b style="width:${(r.inv/max*100).toFixed(1)}%"></b></span>${r.meses!=null?`<span class="m">${f1(r.meses)} meses de alquiler</span>`:""}</button>`).join("")}</div>
+    ${sinU}<div class="note">Obras y costos salen del Consolidado y de Cuentas por Pagar. Aquí solo registras avisos, ubicas las obras y las marcas terminadas.</div>`}
+  pb.innerHTML=h;
+}
+function formHTML(){const cu=G.units.filter(u=>u.cx===S.cx);
+  return`<div><button class="btn link" data-unit="${esc(S.form)}">← Volver</button></div><div><div class="eyebrow">Nuevo aviso</div><h2>¿Qué reportó el inquilino?</h2></div>
+  <form id="fav"><label for="av-u">Local<select id="av-u">${cu.map(u=>`<option value="${esc(u.code)}" ${u.code===S.form?"selected":""}>${esc(u.code)} · ${esc(unitLabel(u))}</option>`).join("")}</select></label>
+  <label for="av-p">Parte<select id="av-p">${PARTES.map(p=>`<option>${p}</option>`).join("")}</select></label>
+  <label for="av-d">Descripción<textarea id="av-d" placeholder="Ej: gotera en el baño del fondo"></textarea></label>
+  <label for="av-f">Fecha del aviso<input id="av-f" type="date" value="${TODAY}"></label>
+  <label for="av-pr">Prioridad<select id="av-pr"><option value="">Por evaluar</option><option value="1">1 · urgente</option><option value="2">2</option><option value="3">3</option></select></label>
+  <label for="av-e">Costo estimado (opcional, USD)<input id="av-e" type="number" min="0" step="1" inputmode="decimal"></label>
+  <div class="actions"><button class="btn primary" type="submit">Guardar aviso</button></div><div class="msg" id="av-msg"></div></form>
+  <div class="note">Después de guardarlo puedes ubicarlo en el plano.</div>`}
+
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("#pbody button");if(!b)return;const d=b.dataset;
+  if(d.open)return openItem(d.open);if(d.unit)return unitClick(d.unit);if("home" in d)return home();if(d.list)return openList(d.list);
+  if(d.newaviso){S.form=d.newaviso;S.item=null;return renderPanel(model())}
+  if(d.locate){S.item=d.locate;return startDraw(d.locate,d.kind)}
+  if(d.dtipo){return startDraw(S.draw.id,d.dtipo)}
+  if("finish" in d)return finishDraw();if("undo" in d){S.draw.pts.pop();drawDraft();return renderPanel(model())}if("cancel" in d)return cancelDraw();
+  if(d.finishobra){const o=G.obras.find(o=>o.id===d.finishobra);S.obraEst[o.id]={fin:TODAY};drawAll();return save(o.id,obraRow(o))}
+  if(d.reopen){const o=G.obras.find(o=>o.id===d.reopen);S.obraEst[o.id]={reabierta:true};drawAll();return save(o.id,obraRow(o))}
+  if(d.reset){for(const k of Object.keys(cxPoly()).filter(k=>polyUnit(k)===d.reset)){const id=S.cx+":"+k;if(S.perims[id]){delete S.perims[id];await borrar("per:"+id)}}return drawAll()}
+  if(d.delaviso){S.avisos=S.avisos.filter(a=>a.id!==d.delaviso);delete S.geom[d.delaviso];S.item=null;drawAll();return borrar(d.delaviso)}
+  if(d.link||d.nolink){const[aid,oid]=(d.link||d.nolink).split("|");const a=S.avisos.find(a=>a.id===aid);if(!a)return;
+    if(d.link){a.estado="resuelto";a.obra=oid;const o=G.obras.find(o=>o.id===oid);if(S.geom[aid]&&!S.geom[oid]&&o){S.geom[oid]=S.geom[aid];save(o.id,obraRow(o))}}
+    else a.noObras=[...(a.noObras||[]),oid];drawAll();return save(a.id,avisoRow(a))}
+});
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.dataset&&t.dataset.move){S.asig[t.dataset.move]=t.value;drawAll();return save(t.dataset.move,{Tipo:"Asignación","Obra vinculada":t.value})}
+  if(t.dataset&&t.dataset.prioset){const a=S.avisos.find(a=>a.id===t.dataset.prioset);if(!a)return;a.prio=t.value?Number(t.value):null;drawAll();return save(a.id,avisoRow(a))}
+});
+document.addEventListener("submit",async e=>{if(e.target.id!=="fav")return;e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe qué reportó el inquilino.";return}
+  const a={id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,fecha:$("#av-f").value||TODAY,prio:$("#av-pr").value?Number($("#av-pr").value):null,estado:"abierto",est:$("#av-e").value?Number($("#av-e").value):null,noObras:[]};
+  const ok=await save(a.id,avisoRow(a));if(!ok){msg.textContent="No se pudo guardar el aviso. Revisa la conexión e intenta de nuevo.";return}
+  S.avisos.push(a);S.form=null;S.sel=a.u;S.item=a.id;drawAll()});
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f;if(f==="todo"){setFilter("todo");return home()}openList(f)});
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+MAIN_HTML=$("#main").innerHTML;
+boot();
+</script>
+</body>
+</html>

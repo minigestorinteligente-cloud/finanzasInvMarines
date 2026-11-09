@@ -1,0 +1,133 @@
+{
+ "obras_sin_cxp": [
+  {
+   "id": "O-CL2-TECHO",
+   "nombre": "Techo Galpón 2-1 y 2-2 (partida $1.600)",
+   "unidades": [
+    "CL2",
+    "CL22"
+   ],
+   "reparto": {
+    "CL2": 0.5,
+    "CL22": 0.5
+   },
+   "parte": "Techo",
+   "ini": "2026-01-23",
+   "fin": "2026-04-11",
+   "quien": "Rafael Baptista",
+   "presupuesto": 1600,
+   "cxp": null,
+   "nota": "30 láminas Bley ($23 c/u); quedaron 3 en inventario."
+  },
+  {
+   "id": "O-CL31-TANQUE",
+   "nombre": "Instalación de tanque de agua 700 L",
+   "unidades": [
+    "CL31"
+   ],
+   "parte": "Plomería",
+   "ini": "2026-03-11",
+   "fin": "2026-03-11",
+   "quien": null,
+   "presupuesto": null,
+   "cxp": null,
+   "nota": "Tanque comprado en Dfasil 2020."
+  },
+  {
+   "id": "O-CL31-BLOQUES",
+   "nombre": "Hilera de bloques del techo (Partida CC Limoncito)",
+   "unidades": [
+    "CL31"
+   ],
+   "parte": "Techo",
+   "ini": "2026-05-12",
+   "fin": "2026-06-19",
+   "quien": "Rafael Baptista",
+   "presupuesto": null,
+   "cxp": null,
+   "nota": "Agrupada a partir de comentarios del banco."
+  },
+  {
+   "id": "O-EN2-CANALES",
+   "nombre": "Canales y bajantes Decomiranda (partida $1.150)",
+   "unidades": [
+    "EN2"
+   ],
+   "parte": "Canales",
+   "ini": "2026-05-28",
+   "fin": "2026-07-04",
+   "quien": "Rafael Baptista",
+   "presupuesto": 1150,
+   "cxp": null,
+   "nota": "Incluye 7 láminas Motasa y doblado de canales."
+  },
+  {
+   "id": "O-EN2-TANQUILLA-FEB",
+   "nombre": "Limpieza de tanquilla",
+   "unidades": [
+    "EN2"
+   ],
+   "parte": "Tanquillas",
+   "ini": "2026-02-06",
+   "fin": "2026-02-06",
+   "quien": "Rafael Baptista",
+   "presupuesto": null,
+   "cxp": null,
+   "nota": null
+  },
+  {
+   "id": "O-EN2-TANQUILLAS-OCT",
+   "nombre": "Achique y destape de tanquillas (máquina K1500)",
+   "unidades": [
+    "EN2"
+   ],
+   "parte": "Tanquillas",
+   "ini": "2026-10-21",
+   "fin": "2026-10-21",
+   "quien": "LE Group",
+   "presupuesto": null,
+   "cxp": null,
+   "nota": null
+  }
+ ],
+ "ajustes_cxp": {
+  "CXP-0001": {
+   "ini": "2026-06-16",
+   "fin": "2026-09-08",
+   "nombre": "Impermeabilización techo Decomiranda (tramo 1)",
+   "parte": "Impermeabilización",
+   "nota": "Faltan otros tramos por planificar."
+  },
+  "CXP-0011": {
+   "fin": "2026-10-01",
+   "parte": "Techo"
+  },
+  "CXP-0012": {
+   "fin": "2026-10-05",
+   "parte": "Áreas verdes",
+   "unidad": "P7-COMUN"
+  },
+  "CXP-0013": {
+   "fin": "2026-10-21",
+   "parte": "Canales"
+  },
+  "CXP-0015": {
+   "fin": "2026-10-30",
+   "parte": "Techo"
+  },
+  "CXP-0016": {
+   "parte": "Canales"
+  },
+  "CXP-0002": {
+   "parte": "General"
+  }
+ },
+ "asignaciones_semilla": {
+  "Mercantil-359": "CXP-0001",
+  "Mercantil-361": "CXP-0001",
+  "Mercantil-533": "CXP-0001",
+  "Mercantil-537": "CXP-0001",
+  "Mercantil-363": "O-CL31-BLOQUES"
+ },
+ "nota_asignaciones": "Pagos históricos que caen en dos obras a la vez: se fija a cuál van. Clave = BANCO-nº de movimiento (columna S del Consolidado). Una asignación hecha en la app (Mantenimiento_App) tiene prioridad."
+}
