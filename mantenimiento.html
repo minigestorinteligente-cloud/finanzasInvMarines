@@ -190,20 +190,27 @@ let G=null; // datos cargados: {units, lines, obras, poly, sinUbicar}
 try{const c=localStorage.getItem("mant_cx");if(c)S.cx=c}catch(e){}
 
 // ===================== Carga =====================
-async function api(params){
-  const u=API+"?"+new URLSearchParams({clave:CLAVE,...params});
-  const r=await fetch(u);return r.json();
-}
+// JSONP: el navegador carga la respuesta como <script>, así no aplica el bloqueo CORS de Google.
+let JSONP_N=0;
+function jsonp(params,timeoutMs){return new Promise((resolve,reject)=>{
+  const cb="__mant_cb"+(++JSONP_N)+"_"+Date.now();const sc=document.createElement("script");let done=false;
+  const t=setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error("tiempo agotado"))},timeoutMs||90000);
+  function cleanup(){clearTimeout(t);try{delete window[cb]}catch(e){window[cb]=undefined}sc.remove()}
+  window[cb]=d=>{if(done)return;done=true;cleanup();resolve(d)};
+  sc.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error("sin respuesta del Sheet"))};
+  sc.src=API+"?"+new URLSearchParams({clave:CLAVE,callback:cb,...params});document.head.appendChild(sc);
+})}
+const api=params=>jsonp(params,120000);
 async function save(id,fila){
   sync.textContent="Guardando…";
-  try{const r=await fetch(API,{method:"POST",body:JSON.stringify({clave:CLAVE,accion:"guardar",id,fila})});const j=await r.json();
+  try{const j=await jsonp({accion:"guardar",id,fila:JSON.stringify(fila)},30000);
     sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo guardar ("+(j.error||"error")+")";return j.ok}
-  catch(e){sync.textContent="No se pudo guardar: sin conexión";return false}
+  catch(e){sync.textContent="No se pudo guardar: "+e.message;return false}
 }
 async function borrar(id){
   sync.textContent="Guardando…";
-  try{const r=await fetch(API,{method:"POST",body:JSON.stringify({clave:CLAVE,accion:"borrar",id})});const j=await r.json();sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
-  catch(e){sync.textContent="No se pudo borrar: sin conexión"}
+  try{const j=await jsonp({accion:"borrar",id},30000);sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
+  catch(e){sync.textContent="No se pudo borrar: "+e.message}
 }
 async function boot(){
   if(!CLAVE){$("#gate").hidden=false;return}
@@ -214,7 +221,7 @@ async function boot(){
       window.__MOCK__?Promise.resolve(window.__MOCK__):api({hojas:"Consolidado,CtasporPagar,TablaArrendamientos,Mantenimiento_App"}),
       Promise.all(["poligonos.json","obras_semilla.json","equivalencias.json"].map(f=>fetch(BASE+f).then(r=>{if(!r.ok)throw new Error(f);return r.json()})))
     ]);
-  }catch(e){$("#ld").textContent="No se pudieron leer los datos. Revisa tu conexión y recarga la página.";return}
+  }catch(e){$("#ld").textContent="No se pudieron leer los datos ("+e.message+"). Si acabas de actualizar el programa de Apps Script, revisa que implementaste una versión nueva. Luego recarga la página.";return}
   if(!res.ok){if(res.error==="clave"){try{localStorage.removeItem("mant_clave")}catch(e){}CLAVE=null;$("#app").hidden=true;$("#gate").hidden=false;$("#gmsg").textContent="La clave no coincide con la del programa. Intenta de nuevo.";return}
     $("#ld").textContent="El Sheet respondió con un error: "+(res.error||"desconocido");return}
   G=buildModel(res.datos,assets[0],assets[1],assets[2]);
