@@ -344,8 +344,8 @@ function readApp(rows){
   S.avisos=[];S.obraEst={};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];const id=g(r,"ID").trim();if(!id)continue;const tipo=norm(g(r,"Tipo"));
     let geo=null;try{const t=g(r,"Ubicación");if(t)geo=JSON.parse(t)}catch(e){}
-    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[]});if(geo)S.geom[id]=geo}
-    else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo)S.geom[id]=geo}
+    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[]});if(geo)S.geom[id]=toParts(geo)}
+    else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo)S.geom[id]=toParts(geo)}
     else if(tipo==="asignacion"){S.asig[id]=g(r,"Obra vinculada")}
     else if(tipo==="perimetro"){if(geo&&geo.pts)S.perims[id]=geo.pts.map(q=>[q.x,q.y])}
     else if(tipo==="programado"){const cfg=geo||{};S.progs.push({id,u:g(r,"Local"),parte:g(r,"Parte")||"General",desc:g(r,"Descripción"),ultima:pdate(g(r,"Fecha"))||TODAY,cada:Number(cfg.cada_meses)||3,avisar:cfg.avisar_dias!=null&&cfg.avisar_dias!==""?Number(cfg.avisar_dias):15,est:num(g(r,"Costo estimado"))||null})}
@@ -353,8 +353,12 @@ function readApp(rows){
   }
 }
 // Fila completa de una obra en Mantenimiento_App (el script reemplaza la fila entera)
-function obraRow(o){const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":S.geom[o.id]?JSON.stringify(S.geom[o.id]):""}}
-function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":S.geom[a.id]?JSON.stringify(S.geom[a.id]):""}}
+// Ubicaciones: una obra o aviso puede tener varias (puntos, líneas y áreas). Una sola se guarda como antes {tipo,pts}; varias como {partes:[...]}
+function toParts(g){const a=g&&g.partes?g.partes:(g&&g.pts?[g]:[]);return a.filter(x=>x&&x.pts&&x.pts.length)}
+function geoStr(id){const a=S.geom[id]||[];return a.length?JSON.stringify(a.length===1?a[0]:{partes:a}):""}
+const hasGeo=id=>!!(S.geom[id]&&S.geom[id].length);
+function obraRow(o){const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":geoStr(o.id)}}
+function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":geoStr(a.id)}}
 // Mantenimiento programado: la frecuencia y el aviso se guardan en la columna Ubicación como {"cada_meses":4,"avisar_dias":15}
 function progRow(p){return{Tipo:"Programado",Local:p.u,Parte:p.parte,"Descripción":p.desc,Fecha:p.ultima,Estado:"activo","Costo estimado":p.est||"","Ubicación":JSON.stringify({cada_meses:p.cada,avisar_dias:p.avisar})}}
 
@@ -374,7 +378,8 @@ function model(){
     let to=S.asig[l.id]||null;
     if(to&&to!=="menor"&&!allObs.find(o=>o.id===to))to=null;
     if(!to&&l.cxp){const o=allObs.find(o=>o.cxp===l.cxp);if(o)to=o.id}
-    if(!to){const c=allObs.filter(o=>o.units.includes(l.u)&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>a.ini<b.ini?-1:1);if(c.length)to=c[0].id}
+    if(!to){// trabajo de un solo día en la misma fecha del pago: ese gana; si no, la obra que empezó primero
+    const dia=o=>o.ini===o.fin&&o.ini===l.f?0:1;const c=allObs.filter(o=>o.units.includes(l.u)&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>dia(a)-dia(b)||(a.ini<b.ini?-1:1));if(c.length)to=c[0].id}
     asg[l.id]=to||"menor";
   }
   const lines=G.lines.filter(l=>cxUnits.has(l.u));
@@ -454,12 +459,13 @@ function drawGeoms(M){
   const g=$("#geos");g.innerHTML="";const z=SZ();
   const items=[...M.obs.map(o=>({kind:"obra",o,id:o.id,c:obraColor(o),done:o.estado==="Terminada",units:o.units})),...M.avisos.map(a=>({kind:"aviso",o:a,id:a.id,c:avisoColor(a),done:false,units:[a.u]}))];
   for(const it of items){if(!visible(it.kind,it.o))continue;if(S.sel&&!it.units.includes(S.sel)&&S.filter==="todo")continue;
-    const gm=S.geom[it.id];if(!gm||!gm.pts||!gm.pts.length)continue;const P=gm.pts.map(q=>[q.x,q.y]);const sel=S.item===it.id;let node;
+    const sel=S.item===it.id;
+    for(const gm of (S.geom[it.id]||[])){const P=gm.pts.map(q=>[q.x,q.y]);let node;
     if(gm.tipo==="linea"&&P.length>1)node=el("polyline",{class:"geo line"+(it.done?" done":""),points:P.map(q=>q.join(",")).join(" "),stroke:sel?"#fff":it.c,"stroke-width":(it.done?6:9)*z},g);
     else if(gm.tipo==="area"&&P.length>2)node=el("polygon",{class:"geo area"+(it.done?" done":""),points:P.map(q=>q.join(",")).join(" "),fill:it.c,stroke:sel?"#fff":it.c,"stroke-width":3*z},g);
     else{node=el("g",{class:"geo mk"+(it.done?" done":""),transform:`translate(${P[0][0]},${P[0][1]})`},g);el("circle",{r:(sel?14:11)*z,fill:it.c,"stroke-width":3*z,stroke:sel?"#fff":"var(--ring)"},node)}
     el("title",{},node).textContent=it.kind==="aviso"?"Aviso: "+it.o.descripcion:it.o.nombre;
-    node.addEventListener("click",e=>{e.stopPropagation();if(S.draw)return;openItem(it.id)});
+    node.addEventListener("click",e=>{e.stopPropagation();if(S.draw)return;openItem(it.id)});}
   }
 }
 function drawBadges(M){
@@ -490,10 +496,10 @@ function miniSVG(k,M){const P=G.poly[k];if(!P||!P.imagen)return"";const z=Math.m
   for(const key in loc){const q=pp(key);if(!q||key==="CL41")continue;const[cx,cy]=centroid(q);s+=`<text class="ulab" x="${cx}" y="${cy}" text-anchor="middle" font-size="${28*z}" stroke-width="${6*z}">${esc(key)}</text>`}
   const inK=u=>cxOf(u)===k;
   const items=[...M.obs.filter(o=>inK(o.units[0])).map(o=>({kind:"obra",o,id:o.id,c:obraColor(o),done:o.estado==="Terminada"})),...M.avisos.filter(a=>inK(a.u)).map(a=>({kind:"aviso",o:a,id:a.id,c:avisoColor(a),done:false}))];
-  for(const it of items){if(!visible(it.kind,it.o)||(it.done&&S.filter!=="hist"))continue;const gm=S.geom[it.id];if(!gm||!gm.pts||!gm.pts.length)continue;const Q=gm.pts.map(q=>q.x+","+q.y);const ttl=`<title>${esc(it.kind==="aviso"?"Aviso: "+it.o.descripcion:it.o.nombre)}</title>`;
+  for(const it of items){if(!visible(it.kind,it.o)||(it.done&&S.filter!=="hist"))continue;for(const gm of (S.geom[it.id]||[])){const Q=gm.pts.map(q=>q.x+","+q.y);const ttl=`<title>${esc(it.kind==="aviso"?"Aviso: "+it.o.descripcion:it.o.nombre)}</title>`;
     if(gm.tipo==="linea"&&Q.length>1)s+=`<polyline class="geo line${it.done?" done":""}" points="${Q.join(" ")}" stroke="${it.c}" stroke-width="${10*z}" data-mi="${esc(it.id)}">${ttl}</polyline>`;
     else if(gm.tipo==="area"&&Q.length>2)s+=`<polygon class="geo area${it.done?" done":""}" points="${Q.join(" ")}" fill="${it.c}" stroke="${it.c}" stroke-width="${3*z}" data-mi="${esc(it.id)}">${ttl}</polygon>`;
-    else s+=`<circle class="geo" cx="${gm.pts[0].x}" cy="${gm.pts[0].y}" r="${14*z}" fill="${it.c}" stroke="#0f1117" stroke-width="${3*z}" data-mi="${esc(it.id)}">${ttl}</circle>`}
+    else s+=`<circle class="geo" cx="${gm.pts[0].x}" cy="${gm.pts[0].y}" r="${14*z}" fill="${it.c}" stroke="#0f1117" stroke-width="${3*z}" data-mi="${esc(it.id)}">${ttl}</circle>`}}
   const bd=badgeData(M);
   for(const u in bd){if(!inK(u)||!box[u])continue;const b=box[u],x=(b[0]+b[2])/2+34*z,y=(b[1]+b[3])/2-36*z;
     s+=`<g class="badge" data-mu="${k}|${esc(u)}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="${19*z}" fill="${bd[u].c}" stroke-width="${3*z}"/><text x="${x}" y="${y+7*z}" text-anchor="middle" font-size="${20*z}">${bd[u].n}</text></g>`}
@@ -528,9 +534,15 @@ function openList(k){setFilter(k);S.list=k;S.item=null;S.form=null;S.sel=null;if
 function setMode(m){S.mode=m;document.querySelectorAll("[data-m]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===m));const h=$("#hint");if(h){h.hidden=m!=="adj";h.textContent="Toca un local y arrastra sus esquinas para corregir el perímetro."}drawAll()}
 function startDraw(id,tipo){S.draw={id,tipo,pts:[]};$("#app").classList.add("drawing");const h=$("#hint");h.hidden=false;
   h.textContent=tipo==="punto"?"Toca el plano donde está el trabajo.":tipo==="linea"?"Toca a lo largo de la canal, punto por punto. Luego «Guardar ubicación».":"Toca las esquinas del área. Luego «Guardar ubicación».";renderPanel(model())}
+async function saveGeoOwner(id){const o=G.obras.find(o=>o.id===id);if(o)return save(o.id,obraRow(o));const a=S.avisos.find(a=>a.id===id);if(a)return save(a.id,avisoRow(a))}
+// Bloque de ubicaciones en la ficha: lista + agregar punto / línea / área
+function geoBlock(id,parte){if(!CX.imagen)return"";const L=S.geom[id]||[];const nom={punto:"Punto",linea:"Línea",area:"Área"};
+  return`<div class="card"><h3>Dónde se trabajó · ${L.length}</h3>${L.length?`<div class="list">${L.map((g,i)=>`<div class="row static"><i class="dot" style="background:var(--accent)"></i><span class="t">${i+1}. ${nom[g.tipo]||"Punto"}</span><span class="v"><button class="btn link" data-delgeo="${esc(id)}|${i}" style="color:var(--muted);font-weight:500">Quitar</button></span></div>`).join("")}</div>`:'<div class="hint2">Aún no está ubicado en el plano.</div>'}
+  <div class="hint2">Puedes marcar varias zonas de la misma obra (ej: varias partes del techo).</div>
+  <div class="actions"><button class="btn" data-locate="${esc(id)}" data-kind="punto">+ Punto</button><button class="btn" data-locate="${esc(id)}" data-kind="linea">+ Línea</button><button class="btn" data-locate="${esc(id)}" data-kind="area">+ Área</button></div></div>`}
 async function finishDraw(){const d=S.draw;if(!d)return;const need=d.tipo==="punto"?1:d.tipo==="linea"?2:3;if(d.pts.length<need)return;
-  S.geom[d.id]={tipo:d.tipo,pts:d.pts.map(q=>({x:q[0],y:q[1]}))};cancelDraw(true);drawAll();
-  const o=G.obras.find(o=>o.id===d.id);if(o)await save(o.id,obraRow(o));else{const a=S.avisos.find(a=>a.id===d.id);if(a)await save(a.id,avisoRow(a))}}
+  S.geom[d.id]=[...(S.geom[d.id]||[]),{tipo:d.tipo,pts:d.pts.map(q=>({x:q[0],y:q[1]}))}];cancelDraw(true);drawAll();
+  await saveGeoOwner(d.id)}
 function cancelDraw(keep){S.draw=null;$("#app").classList.remove("drawing");const h=$("#hint");if(h){h.hidden=S.mode!=="adj";h.textContent="Toca un local y arrastra sus esquinas para corregir el perímetro."}if(!keep)drawAll()}
 
 // ===================== Panel: bloques de la guía =====================
@@ -603,7 +615,8 @@ function renderPanel(M){
       <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span></div>
       <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Presupuesto partida</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
       ${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}
-      <div class="actions">${o.estado==="Terminada"?`<button class="btn" data-reopen="${esc(o.id)}">Reabrir</button>`:`<button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button>`}${CX.imagen?`<button class="btn" data-locate="${esc(o.id)}" data-kind="${geoKindFor(o.parte)}">${S.geom[o.id]?"Cambiar ubicación":"Ubicar en el plano"}</button>`:""}</div>
+      ${o.estado==="Terminada"?`<div class="actions"><button class="btn" data-reopen="${esc(o.id)}">Reabrir</button></div>`:`<div class="card"><h3>¿Ya terminó?</h3><label for="of-f">Fecha en que terminó<input id="of-f" type="date" value="${TODAY}" min="${o.ini}" max="${TODAY}"></label><div class="actions"><button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button></div></div>`}
+      ${geoBlock(o.id,o.parte)}
       <details class="layer"><summary>Pagos del banco · ${o.lines.length}</summary><div class="list">${o.lines.map(l=>lineRow(l,M,o.units)).join("")||'<div class="note">Aún no hay pagos.</div>'}</div></details>`}
     else if(a){const lst=ready(a);h=`<div><button class="btn link" data-unit="${esc(a.u)}">← ${esc(a.u)}</button></div>
       <div><div class="eyebrow">Aviso · ${esc(a.parte)}</div><h2>${esc(a.descripcion)}</h2></div>
@@ -612,7 +625,7 @@ function renderPanel(M){
       <div class="card"><h3>Evaluar</h3>${lst?"":'<div class="hint2">Con prioridad y costo estimado pasa a «Por hacer» y entra en el cálculo de caja.</div>'}
       <label for="ap">Prioridad<select id="ap" data-prioset="${esc(a.id)}"><option value="">Sin definir</option>${[1,2,3].map(p=>`<option value="${p}" ${a.prio==p?"selected":""}>${p}${p===1?" · urgente":p===3?" · puede esperar":""}</option>`).join("")}</select></label>
       <label for="ae">Costo estimado (USD)<input id="ae" type="number" min="0" step="1" inputmode="decimal" data-estset="${esc(a.id)}" value="${a.est||""}" placeholder="Ej: 350"></label></div>
-      <div class="actions">${CX.imagen?`<button class="btn" data-locate="${esc(a.id)}" data-kind="${geoKindFor(a.parte)}">${S.geom[a.id]?"Cambiar ubicación":"Ubicar en el plano"}</button>`:""}<button class="btn" data-delaviso="${esc(a.id)}">Borrar aviso</button></div>`}
+      ${geoBlock(a.id,a.parte)}<div class="actions"><button class="btn" data-delaviso="${esc(a.id)}">Borrar aviso</button></div>`}
     else if(p){const toca=p.dias<=p.avisar;const lg=S.progLog.filter(l=>l.prog===p.id).sort((x,y)=>(x.fecha||"")<(y.fecha||"")?1:-1);
       h=`<div><button class="btn link" data-unit="${esc(p.u)}">← ${esc(p.u)}</button></div>
       <div><div class="eyebrow">Mantenimiento programado · ${esc(p.parte)}</div><h2>${esc(p.desc)}</h2></div>
@@ -691,11 +704,12 @@ document.addEventListener("click",async e=>{
   if(d.newaviso!=null){S.form={k:"aviso",u:d.newaviso||S.sel||null};S.item=null;return renderPanel(model())}
   if(d.newprog!=null){S.form={k:"prog",u:d.newprog||S.sel||null};S.item=null;return renderPanel(model())}
   if(d.editprog){S.form={k:"prog",id:d.editprog};return renderPanel(model())}
+  if(d.delgeo){const[id,i]=d.delgeo.split("|");const L=(S.geom[id]||[]).slice();L.splice(Number(i),1);if(L.length)S.geom[id]=L;else delete S.geom[id];drawAll();return saveGeoOwner(id)}
   if(d.locate){S.item=d.locate;return startDraw(d.locate,d.kind)}
   if(d.dtipo){return startDraw(S.draw.id,d.dtipo)}
   if("finish" in d)return finishDraw();if("undo" in d){S.draw.pts.pop();drawDraft();return renderPanel(model())}if("cancel" in d)return cancelDraw();
   if("simall" in d||"simnone" in d||"simp1" in d){const M=model();for(const x of M.hacer){if("simall" in d)S.simOff.delete(x.id);else if("simnone" in d)S.simOff.add(x.id);else{x.prio==1?S.simOff.delete(x.id):S.simOff.add(x.id)}}return renderPanel(M)}
-  if(d.finishobra){const o=G.obras.find(o=>o.id===d.finishobra);S.obraEst[o.id]={fin:TODAY};drawAll();return save(o.id,obraRow(o))}
+  if(d.finishobra){const o=G.obras.find(o=>o.id===d.finishobra);const ff=($("#of-f")||{}).value||TODAY;S.obraEst[o.id]={fin:ff<o.ini?o.ini:ff};drawAll();return save(o.id,obraRow(o))}
   if(d.reopen){const o=G.obras.find(o=>o.id===d.reopen);S.obraEst[o.id]={reabierta:true};drawAll();return save(o.id,obraRow(o))}
   if(d.reset){for(const k of Object.keys(cxPoly()).filter(k=>polyUnit(k)===d.reset)){const id=S.cx+":"+k;if(S.perims[id]){delete S.perims[id];await borrar("per:"+id)}}return drawAll()}
   if(d.delaviso){if(!confirm("¿Borrar este aviso?"))return;S.avisos=S.avisos.filter(a=>a.id!==d.delaviso);delete S.geom[d.delaviso];S.item=null;drawAll();return borrar(d.delaviso)}
@@ -704,7 +718,7 @@ document.addEventListener("click",async e=>{
     await save(p.id,progRow(p));return save(lid,{Tipo:"Programado hecho",Local:p.u,Parte:p.parte,"Descripción":p.desc,"Obra vinculada":p.id,"Fecha terminada":f})}
   if(d.delprog){if(!confirm("¿Borrar este mantenimiento programado? Las veces ya hechas quedan en el historial."))return;S.progs=S.progs.filter(p=>p.id!==d.delprog);S.item=null;drawAll();return borrar(d.delprog)}
   if(d.link||d.nolink){const[aid,oid]=(d.link||d.nolink).split("|");const a=S.avisos.find(a=>a.id===aid);if(!a)return;
-    if(d.link){a.estado="resuelto";a.obra=oid;const o=G.obras.find(o=>o.id===oid);if(S.geom[aid]&&!S.geom[oid]&&o){S.geom[oid]=S.geom[aid];save(o.id,obraRow(o))}}
+    if(d.link){a.estado="resuelto";a.obra=oid;const o=G.obras.find(o=>o.id===oid);if(hasGeo(aid)&&!hasGeo(oid)&&o){S.geom[oid]=S.geom[aid].slice();save(o.id,obraRow(o))}}
     else a.noObras=[...(a.noObras||[]),oid];drawAll();return save(a.id,avisoRow(a))}
 });
 document.addEventListener("change",e=>{const t=e.target;if(!t.dataset)return;
