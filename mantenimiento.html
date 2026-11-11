@@ -200,16 +200,30 @@ function jsonp(params,timeoutMs){return new Promise((resolve,reject)=>{
   sc.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error("sin respuesta del Sheet"))};
   sc.src=API+"?"+new URLSearchParams({clave:CLAVE,callback:cb,...params});document.head.appendChild(sc);
 })}
-const api=params=>jsonp(params,120000);
+// Conexión: primero fetch SIN cookies (evita el problema de varias cuentas de Google en el navegador); si falla, JSONP
+async function llamar(params,timeoutMs){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),timeoutMs);
+  try{
+    const r=await fetch(API+"?"+new URLSearchParams({clave:CLAVE,...params}),{credentials:"omit",redirect:"follow",cache:"no-store",signal:ctl.signal});
+    const txt=await r.text();clearTimeout(t);
+    try{return JSON.parse(txt)}catch(e){throw new Error("respuesta no válida del Sheet")}
+  }catch(e){
+    clearTimeout(t);
+    if(e.name==="AbortError")throw new Error("tiempo agotado");
+    console.warn("fetch falló, probando JSONP:",e);
+    return jsonp(params,timeoutMs);
+  }
+}
+const api=params=>llamar(params,180000);
 async function save(id,fila){
   sync.textContent="Guardando…";
-  try{const j=await jsonp({accion:"guardar",id,fila:JSON.stringify(fila)},30000);
+  try{const j=await llamar({accion:"guardar",id,fila:JSON.stringify(fila)},60000);
     sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo guardar ("+(j.error||"error")+")";return j.ok}
   catch(e){sync.textContent="No se pudo guardar: "+e.message;return false}
 }
 async function borrar(id){
   sync.textContent="Guardando…";
-  try{const j=await jsonp({accion:"borrar",id},30000);sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
+  try{const j=await llamar({accion:"borrar",id},60000);sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
   catch(e){sync.textContent="No se pudo borrar: "+e.message}
 }
 async function boot(){
