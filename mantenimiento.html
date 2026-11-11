@@ -141,6 +141,15 @@ details.layer .list{border-top-color:rgba(255,255,255,.06)}
 .mcard .go{font-size:12px;color:var(--accent);font-weight:600;margin-left:4px}
 .mcard svg{width:100%;height:auto;max-height:64vh;display:block;cursor:pointer}
 .nomapnote{padding:26px 12px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;border-top:1px solid var(--border)}
+.row .t,.hrow .t{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card.alerts{border-color:rgba(240,84,84,.45);background:rgba(240,84,84,.06)}
+.bud{display:flex;flex-direction:column;gap:5px}.bud .bar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden}.bud .bar b{display:block;height:100%;border-radius:4px}
+.bud .ln{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted)}.bud .ln b{color:var(--text);font-variant-numeric:tabular-nums}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:90px;margin-top:4px}
+.months div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px;font-size:10px;color:var(--muted)}
+.months i{display:block;width:100%;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.months i.hi{background:var(--st-p2)}.months i.fut{background:var(--surface)}
+.ghandle{fill:#fff;stroke:var(--accent);cursor:move}
 @media(max-width:900px){.wrap{height:auto}.main{grid-template-columns:1fr}.mapbox{height:60vh;min-height:360px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -229,7 +238,8 @@ const sync=$("#sync");
 
 // ===================== Estado =====================
 const S={cx:"todos",filter:"todo",mode:"ver",sel:null,item:null,list:null,form:null,draw:null,
-  avisos:[],obraEst:{},geom:{},asig:{},perims:{},progs:[],progLog:[],simOff:new Set(),det:{}};
+  avisos:[],obraEst:{},geom:{},asig:{},perims:{},progs:[],progLog:[],simOff:new Set(),det:{},geoEdit:null,cfg:{}};
+const CFG_DEF={tope_meses:3,estancada_dias:60,aviso_dias:15,p1_dias:7};S.cfg={...CFG_DEF};
 const LEGEND=`<span><i style="background:var(--st-rep)"></i>Por revisar</span><span><i style="background:var(--st-p1)"></i>Por hacer · P1</span><span><i style="background:var(--st-p2)"></i>Por hacer · P2-3</span><span><i style="background:var(--st-exe)"></i>En ejecución</span><span><i style="background:var(--st-ok)"></i>Terminada</span>`;
 let G=null; // datos cargados: {units, lines, obras, poly, sinUbicar}
 try{const c=localStorage.getItem("mant_cx");if(c)S.cx=c}catch(e){}
@@ -341,7 +351,7 @@ function buildModel(D,POLY,SEM,EQ){
 function readApp(rows){
   const H=rows[0]||[];const ix=n=>H.indexOf(n);
   const g=(r,n)=>{const i=ix(n);return i>=0?String(r[i]??""):""};
-  S.avisos=[];S.obraEst={};S.obraEd={};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
+  S.avisos=[];S.obraEst={};S.obraEd={};S.cfg={...CFG_DEF};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];const id=g(r,"ID").trim();if(!id)continue;const tipo=norm(g(r,"Tipo"));
     let geo=null;try{const t=g(r,"Ubicación");if(t)geo=JSON.parse(t)}catch(e){}
     if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[],nota:geo&&geo.ed&&geo.ed.nota||""});if(geo)S.geom[id]=toParts(geo)}
@@ -349,6 +359,7 @@ function readApp(rows){
     else if(tipo==="asignacion"){S.asig[id]=g(r,"Obra vinculada")}
     else if(tipo==="perimetro"){if(geo&&geo.pts)S.perims[id]=geo.pts.map(q=>[q.x,q.y])}
     else if(tipo==="programado"){const cfg=geo||{};S.progs.push({id,u:g(r,"Local"),parte:g(r,"Parte")||"General",desc:g(r,"Descripción"),ultima:pdate(g(r,"Fecha"))||TODAY,cada:Number(cfg.cada_meses)||3,avisar:cfg.avisar_dias!=null&&cfg.avisar_dias!==""?Number(cfg.avisar_dias):15,est:num(g(r,"Costo estimado"))||null,nota:cfg.nota||""})}
+    else if(tipo==="config"){if(geo)for(const k in CFG_DEF)if(geo[k]!=null&&geo[k]!=="")S.cfg[k]=Number(geo[k])}
     else if(tipo==="programado hecho"){S.progLog.push({id,u:g(r,"Local"),parte:g(r,"Parte"),desc:g(r,"Descripción"),prog:g(r,"Obra vinculada"),fecha:pdate(g(r,"Fecha terminada"))})}
   }
 }
@@ -358,7 +369,7 @@ function toParts(g){const a=g&&g.partes?g.partes:(g&&g.pts?[g]:[]);return a.filt
 function geoStr(id,ed){const a=S.geom[id]||[];if(!a.length&&!ed)return"";if(a.length===1&&!ed)return JSON.stringify(a[0]);return JSON.stringify(ed?{partes:a,ed}:{partes:a})}
 // Cambios hechos en la app a una obra (título, local, parte, inicio, nota). Lo que no se cambió sigue saliendo del Sheet.
 function obraEff(o){const e=S.obraEd&&S.obraEd[o.id];if(!e)return o;const units=e.units&&e.units.length?e.units:o.units;
-  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
+  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,ptot:e.ptot!=null&&e.ptot!==""?Number(e.ptot):(o.ptot||null),reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
 const rawObra=id=>G.obras.find(o=>o.id===id);
 const eObra=id=>{const o=rawObra(id);return o?obraEff(o):null};
 const hasGeo=id=>!!(S.geom[id]&&S.geom[id].length);
@@ -374,14 +385,14 @@ const meses=n=>n==1?"1 mes":n+" meses";
 const cxName=()=>S.cx==="todos"?"Todos los terrenos":(COMPLEJOS.find(c=>c.k===S.cx)||{}).n||"";
 const cxOf=u=>(G.ub[u]||{}).cx;
 function obraState(o){const e=S.obraEst[o.id];if(e&&e.reabierta)return{estado:"En ejecución",fin:null};if(e&&e.fin)return{estado:"Terminada",fin:e.fin};return o.fin?{estado:"Terminada",fin:o.fin}:{estado:"En ejecución",fin:null}}
-function model(){
-  const cxUnits=new Set(G.units.filter(u=>S.cx==="todos"||u.cx===S.cx).map(u=>u.code));
+function model(cxk){cxk=cxk||S.cx;
+  const cxUnits=new Set(G.units.filter(u=>cxk==="todos"||u.cx===cxk).map(u=>u.code));
   const allObs=G.obras.map(o=>({...obraEff(o),...obraState(o)}));
   const obs=allObs.filter(o=>o.units.some(u=>cxUnits.has(u)));
   const asg={};
   for(const l of G.lines){if(!cxUnits.has(l.u))continue;
     let to=S.asig[l.id]||null;
-    if(to&&to!=="menor"&&!allObs.find(o=>o.id===to))to=null;
+    if(to&&to!=="menor"&&to!=="excluido"&&!allObs.find(o=>o.id===to))to=null;
     if(!to&&l.cxp){const o=allObs.find(o=>o.cxp===l.cxp);if(o)to=o.id}
     if(!to){// trabajo de un solo día en la misma fecha del pago: ese gana; si no, la obra que empezó primero
     const dia=o=>o.ini===o.fin&&o.ini===l.f?0:1;const c=allObs.filter(o=>(o.units.includes(l.u)||(o.origUnits||[]).includes(l.u))&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>dia(a)-dia(b)||(a.ini<b.ini?-1:1));if(c.length)to=c[0].id}
@@ -390,6 +401,7 @@ function model(){
   const lines=G.lines.filter(l=>cxUnits.has(l.u));
   for(const o of obs){o.lines=lines.filter(l=>asg[l.id]===o.id);o.costo=o.lines.reduce((a,l)=>a+l.usd,0)}
   const menores={};for(const l of lines)if(asg[l.id]==="menor")(menores[l.u]=menores[l.u]||[]).push(l);
+  const excl=lines.filter(l=>asg[l.id]==="excluido");
   const avisos=S.avisos.filter(a=>a.estado!=="resuelto"&&cxUnits.has(a.u));
   const rev=sortAvisos(avisos.filter(a=>!ready(a)));
   const progs=S.progs.filter(p=>cxUnits.has(p.u)).map(p=>{const due=addMonths(p.ultima,p.cada);return{...p,due,dias:-daysSince(due)}}).sort((a,b)=>a.due<b.due?-1:1);
@@ -399,7 +411,7 @@ function model(){
   const exe=obs.filter(o=>o.estado!=="Terminada");
   const term=obs.filter(o=>o.estado==="Terminada").sort((a,b)=>a.fin<b.fin?1:-1);
   const log=S.progLog.filter(l=>cxUnits.has(l.u));
-  return{obs,menores,avisos,asg,cxUnits,rev,hacer,exe,term,progs,progDue,log};
+  return{obs,menores,avisos,asg,cxUnits,rev,hacer,exe,term,progs,progDue,log,excl,lines};
 }
 const prioColor=p=>p==1?"var(--st-p1)":p?"var(--st-p2)":"var(--st-rep)";
 const avisoColor=a=>ready(a)?prioColor(a.prio):"var(--st-rep)";
@@ -483,8 +495,14 @@ function drawDraft(){const g=$("#draft");g.innerHTML="";if(!S.draw)return;const 
   if(S.draw.tipo==="area"&&P.length>2)el("polygon",{class:"draft",points:P.map(q=>q.join(",")).join(" "),"stroke-width":4*z},g);
   else if(P.length>1)el("polyline",{class:"draft",fill:"none",points:P.map(q=>q.join(",")).join(" "),"stroke-width":4*z},g);
   P.forEach(q=>el("circle",{class:"draftpt",cx:q[0],cy:q[1],r:7*z},g))}
-function drawHandles(){const g=$("#handles");g.innerHTML="";if(S.mode!=="adj"||!S.sel)return;const z=SZ();
+function drawHandles(){const g=$("#handles");g.innerHTML="";
+  if(S.geoEdit){const ge=S.geoEdit,part=(S.geom[ge.id]||[])[ge.i];if(part){const z=SZ();part.pts.forEach((q,j)=>{const h=el("circle",{class:"ghandle",cx:q.x,cy:q.y,r:11*z,"stroke-width":3*z},g);h.addEventListener("pointerdown",ev=>geoHandleDown(ev,ge.id,ge.i,j,h))})}return}if(S.mode!=="adj"||!S.sel)return;const z=SZ();
   Object.keys(cxPoly()).filter(k=>polyUnit(k)===S.sel&&cxPoly()[k]).forEach(k=>pts(k).forEach((q,i)=>{const h=el("circle",{class:"handle",cx:q[0],cy:q[1],r:9*z},g);h.addEventListener("pointerdown",ev=>handleDown(ev,k,i,h))}))}
+// Arrastrar un vértice de una ubicación ya marcada
+function geoHandleDown(ev,id,pi,j,h){ev.stopPropagation();h.setPointerCapture(ev.pointerId);let moved=false;
+  const mv=e=>{const p=toSvg(e);const q=S.geom[id][pi].pts[j];q.x=Math.round(p.x);q.y=Math.round(p.y);moved=true;h.setAttribute("cx",q.x);h.setAttribute("cy",q.y);drawGeoms(model())};
+  const up=()=>{h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);if(moved)saveGeoOwner(id)};
+  h.addEventListener("pointermove",mv);h.addEventListener("pointerup",up)}
 function handleDown(ev,k,i,h){ev.stopPropagation();h.setPointerCapture(ev.pointerId);const p0=pts(k).map(q=>q.slice());let moved=false;
   const mv=e=>{const p=toSvg(e);p0[i]=[Math.round(p.x),Math.round(p.y)];moved=true;S.perims[S.cx+":"+k]=p0;h.setAttribute("cx",p0[i][0]);h.setAttribute("cy",p0[i][1]);drawUnits()};
   const up=()=>{h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);if(moved){save("per:"+S.cx+":"+k,{Tipo:"Perímetro",Local:polyUnit(k),"Ubicación":JSON.stringify({tipo:"area",pts:p0.map(q=>({x:q[0],y:q[1]}))})});drawAll()}};
@@ -532,8 +550,8 @@ function setComplex(k){if(!CX_TABS.find(c=>c.k===k))k="todos";S.cx=k;S.sel=null;
 function unitClick(c){if(S.draw)return;if(S.cx==="todos"||cxOf(c)!==S.cx){const k=cxOf(c);if(k)setComplex(k)}S.sel=c;S.item=null;S.list=null;S.form=null;if(FULL&&unitBox(c))zoomTo(c);drawAll()}
 function unitOfItem(id){const o=eObra(id);if(o)return o.units[0];const a=S.avisos.find(a=>a.id===id);if(a)return a.u;const p=S.progs.find(p=>p.id===id);return p?p.u:null}
 function goItem(id){const u=unitOfItem(id);const k=u&&cxOf(u);if(k&&(S.cx==="todos"||S.cx!==k))setComplex(k);openItem(id)}
-function openItem(id){S.item=id;S.list=null;S.form=null;const u=unitOfItem(id);if(u&&S.sel!==u){S.sel=u;if(FULL&&unitBox(u))zoomTo(u)}drawAll()}
-function home(){S.sel=null;S.item=null;S.list=null;S.form=null;if(FULL){VB={...FULL};setVB()}drawAll()}
+function openItem(id){if(S.geoEdit&&S.geoEdit.id!==id)S.geoEdit=null;S.item=id;S.list=null;S.form=null;const u=unitOfItem(id);if(u&&S.sel!==u){S.sel=u;if(FULL&&unitBox(u))zoomTo(u)}drawAll()}
+function home(){S.geoEdit=null;S.sel=null;S.item=null;S.list=null;S.form=null;if(FULL){VB={...FULL};setVB()}drawAll()}
 function setFilter(f){S.filter=f;document.querySelectorAll("[data-f]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f))}
 function openList(k){setFilter(k);S.list=k;S.item=null;S.form=null;S.sel=null;if(FULL){VB={...FULL};setVB()}drawAll()}
 function setMode(m){S.mode=m;document.querySelectorAll("[data-m]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===m));const h=$("#hint");if(h){h.hidden=m!=="adj";h.textContent="Toca un local y arrastra sus esquinas para corregir el perímetro."}drawAll()}
@@ -542,7 +560,7 @@ function startDraw(id,tipo){S.draw={id,tipo,pts:[]};$("#app").classList.add("dra
 async function saveGeoOwner(id){const o=G.obras.find(o=>o.id===id);if(o)return save(o.id,obraRow(o));const a=S.avisos.find(a=>a.id===id);if(a)return save(a.id,avisoRow(a))}
 // Bloque de ubicaciones en la ficha: lista + agregar punto / línea / área
 function geoBlock(id,parte){if(!CX.imagen)return"";const L=S.geom[id]||[];const nom={punto:"Punto",linea:"Línea",area:"Área"};
-  return`<div class="card"><h3>Dónde se trabajó · ${L.length}</h3>${L.length?`<div class="list">${L.map((g,i)=>`<div class="row static"><i class="dot" style="background:var(--accent)"></i><span class="t">${i+1}. ${nom[g.tipo]||"Punto"}</span><span class="v"><button class="btn link" data-delgeo="${esc(id)}|${i}" style="color:var(--muted);font-weight:500">Quitar</button></span></div>`).join("")}</div>`:'<div class="hint2">Aún no está ubicado en el plano.</div>'}
+  return`<div class="card"><h3>Dónde se trabajó · ${L.length}</h3>${L.length?`<div class="list">${L.map((g,i)=>`<div class="row static"><i class="dot" style="background:var(--accent)"></i><span class="t">${i+1}. ${nom[g.tipo]||"Punto"}</span><span class="v">${S.geoEdit&&S.geoEdit.id===id&&S.geoEdit.i===i?`<button class="btn primary" data-geodone>Listo</button>`:`<button class="btn link" data-movegeo="${esc(id)}|${i}">Mover</button> · <button class="btn link" data-delgeo="${esc(id)}|${i}" style="color:var(--muted);font-weight:500">Quitar</button>`}</span></div>`).join("")}</div>`:'<div class="hint2">Aún no está ubicado en el plano.</div>'}
   <div class="hint2">Puedes marcar varias zonas de la misma obra (ej: varias partes del techo).</div>
   <div class="actions"><button class="btn" data-locate="${esc(id)}" data-kind="punto">+ Punto</button><button class="btn" data-locate="${esc(id)}" data-kind="linea">+ Línea</button><button class="btn" data-locate="${esc(id)}" data-kind="area">+ Área</button></div></div>`}
 async function finishDraw(){const d=S.draw;if(!d)return;const need=d.tipo==="punto"?1:d.tipo==="linea"?2:3;if(d.pts.length<need)return;
@@ -576,7 +594,7 @@ function secHacer(hacer,exe,empty){
   <div class="list">${hacer.map(rowHacer).join("")}</div>
   <div class="actions" style="gap:6px"><span class="hint2">Marcar:</span><button class="pill" data-simall>Todas</button><button class="pill" data-simp1>Solo prioridad 1</button><button class="pill" data-simnone>Ninguna</button></div>
   <div class="sim"><div class="ln"><span>Lo marcado (${sel.length} de ${hacer.length})</span><b>${usd(st)}</b></div>
-  <div class="ln"><span>Saldo por pagar de obras en ejecución</span><b>${usd(comp)}</b></div>
+  <div class="ln"><span>Saldo por pagar de obras (Cuentas por Pagar)</span><b>${usd(comp)}</b></div>
   <div class="ln sum"><span>Necesitarías en caja</span><span class="tot">${usd(st+comp)}</span></div>
   ${sinE?`<div class="warnline">${sinE} marcada(s) sin costo estimado: el total real será mayor.</div>`:""}</div>`:'<div class="note">No hay nada listo por hacer.</div>'}</div>`}
 
@@ -598,12 +616,51 @@ function chips(M){return`<div class="actions"><button class="pill" data-list="re
 const FLOW=`<div class="flow"><span><i style="background:var(--st-rep)"></i>Aviso / por revisar</span>→<span><i style="background:var(--st-p1)"></i>Por hacer</span>→<span><i style="background:var(--st-exe)"></i>En ejecución</span>→<span><i style="background:var(--st-ok)"></i>Terminada</span></div>`;
 
 function lineRow(l,M,units){const opts=M.obs.filter(o=>o.units.some(u=>units.includes(u)||u===l.u));const cur=M.asg[l.id];
-  return`<div class="row static"><span class="code" style="min-width:0;font-weight:500;color:var(--muted);font-size:12px">${fdate(l.f)}</span><span class="t">${esc(l.c||l.tipo)}</span><span class="v">${usd(l.usd)}</span><span class="m">${esc(l.b)} · ${esc(l.banco)} · ${esc(l.tipo)}${l.cxp?" · "+esc(l.cxp):""}<br><select class="sel-inline" data-move="${esc(l.id)}" aria-label="Asignar a obra"><option value="menor" ${cur==="menor"?"selected":""}>Gasto menor del local</option>${opts.map(o=>`<option value="${esc(o.id)}" ${cur===o.id?"selected":""}>${esc(o.nombre)}</option>`).join("")}</select></span></div>`}
+  return`<div class="row static"><span class="code" style="min-width:0;font-weight:500;color:var(--muted);font-size:12px">${fdate(l.f)}</span><span class="t">${esc(l.c||l.tipo)}</span><span class="v">${usd(l.usd)}</span><span class="m">${esc(l.b)} · ${esc(l.banco)} · ${esc(l.tipo)}${l.cxp?" · "+esc(l.cxp):""}<br><select class="sel-inline" data-move="${esc(l.id)}" aria-label="Asignar a obra"><option value="menor" ${cur==="menor"?"selected":""}>Gasto menor del local</option>${opts.map(o=>`<option value="${esc(o.id)}" ${cur===o.id?"selected":""}>${esc(o.nombre)}</option>`).join("")}<option value="excluido" ${cur==="excluido"?"selected":""}>Excluir: no es mantenimiento</option></select></span></div>`}
 function askBlocks(M,unit){const out=[];
   for(const o of M.obs){if(o.estado==="Terminada"||(unit&&!o.units.includes(unit)))continue;
     for(const a of M.avisos){if(!o.units.includes(a.u)||(a.noObras||[]).includes(o.id)||(a.fecha&&o.ini<a.fecha))continue;
       out.push(`<div class="ask"><div>¿La obra <b>${esc(o.nombre)}</b> resuelve el aviso <b>“${esc(a.descripcion)}”</b>?</div><div class="actions"><button class="btn primary" data-link="${esc(a.id)}|${esc(o.id)}">Sí, es la misma</button><button class="btn" data-nolink="${esc(a.id)}|${esc(o.id)}">No</button></div></div>`)}}
   return out.join("")}
+
+// ===================== Alertas e indicadores =====================
+function budBlock(o){if(!o.ptot)return o.estado!=="Terminada"?'<div class="hint2">Sin presupuesto total. Ponlo con «Editar» para que te avise si se pasa.</div>':"";
+  const r=o.costo/o.ptot;const c=r>1?"var(--st-p1)":r>=.8?"var(--st-p2)":"var(--st-ok)";
+  return`<div class="bud"><div class="ln"><span>Gastado vs presupuesto</span><b>${usd(o.costo)} de ${usd(o.ptot)} · ${Math.round(r*100)}%</b></div><div class="bar"><b style="width:${Math.min(100,r*100).toFixed(1)}%;background:${c}"></b></div>${r>1?`<div class="warnline" style="color:var(--st-p1)">Sobrecosto de ${usd(o.costo-o.ptot)}</div>`:""}</div>`}
+function dupGroups(M){const g={};for(const a of M.avisos){const k=a.u+"|"+norm(a.descripcion);(g[k]=g[k]||[]).push(a)}
+  return Object.entries(g).filter(([k,v])=>v.length>1).map(([key,items])=>({key,items:items.sort((a,b)=>a.id<b.id?-1:1)}))}
+function alertList(M,unit){const C=S.cfg,out=[];const inU=u=>!unit||u===unit;
+  for(const o of M.obs){if(!o.units.some(inU)||!o.ptot)continue;const r=o.costo/o.ptot;
+    if(r>1&&(o.estado!=="Terminada"||daysSince(o.fin)<=60))out.push({n:0,open:o.id,t:`Sobrecosto: ${o.nombre}`,m:`${o.units.join(" + ")} · gastado ${usd(o.costo)} de ${usd(o.ptot)} (+${usd(o.costo-o.ptot)})`});
+    else if(r>=.8&&o.estado!=="Terminada")out.push({n:1,open:o.id,t:`Va en ${Math.round(r*100)}% del presupuesto: ${o.nombre}`,m:`${o.units.join(" + ")} · quedan ${usd(o.ptot-o.costo)}`})}
+  for(const u of G.units){if(u.comun||!M.cxUnits.has(u.code)||!inU(u.code))continue;const st=unitInvest(u.code,M);
+    if(st.meses!=null&&st.meses>C.tope_meses)out.push({n:0,unit:u.code,t:`${u.code} pasó el tope de inversión`,m:`${usd(st.inv)} invertidos = ${f1(st.meses)} meses de alquiler (tope ${f1(C.tope_meses)})`})}
+  for(const o of M.exe){if(!o.units.some(inU))continue;const last=o.lines.reduce((a,l)=>l.f>a?l.f:a,"");
+    if(daysSince(o.ini)>C.estancada_dias&&(!last||daysSince(last)>30))out.push({n:1,open:o.id,t:`Obra estancada: ${o.nombre}`,m:`lleva ${daysSince(o.ini)} días · ${last?"último pago hace "+daysSince(last)+" días":"sin pagos"}`})}
+  for(const a of M.rev){if(!inU(a.u))continue;const d=daysSince(a.fecha);if(d>C.aviso_dias)out.push({n:1,open:a.id,t:`Sin evaluar hace ${d} días: ${a.descripcion}`,m:`${a.u} · falta prioridad o costo`})}
+  for(const x of M.hacer){if(!inU(x.u))continue;if(x.kind==="aviso"&&x.prio==1){const d=daysSince(x.o.fecha);if(d>C.p1_dias)out.push({n:0,open:x.id,t:`Prioridad 1 esperando hace ${d} días: ${x.o.descripcion}`,m:`${x.u} · ${x.est?usd(x.est):"sin costo"}`})}
+    if(x.kind==="prog"&&x.o.dias<0)out.push({n:0,open:x.id,t:`Mantenimiento atrasado ${-x.o.dias} días: ${x.o.desc}`,m:`${x.u} · tocaba el ${fdate(x.o.due)}`})}
+  for(const g of dupGroups(M)){if(!inU(g.items[0].u))continue;out.push({n:1,dup:g.key,t:`Aviso repetido ${g.items.length} veces: ${g.items[0].descripcion}`,m:`${g.items[0].u} · toca aquí para dejar uno solo`})}
+  return out.sort((a,b)=>a.n-b.n)}
+function alertsBlock(M,unit){const L=alertList(M,unit);if(!L.length)return"";
+  return`<div class="card alerts"><div class="sec-h"><h3><i class="dot" style="background:var(--st-p1)"></i> Alertas · ${L.length}</h3></div><div class="list">${L.map(a=>`<button class="row" ${a.open?`data-open="${esc(a.open)}"`:a.unit?`data-unit="${esc(a.unit)}"`:`data-dupdel="${esc(a.dup)}"`}><i class="dot" style="background:${a.n?"var(--st-p2)":"var(--st-p1)"}"></i><span class="t">${esc(a.t)}</span><span class="v"></span><span class="m">${esc(a.m)}</span></button>`).join("")}</div></div>`}
+const MESES_C=["E","F","M","A","M","J","J","A","S","O","N","D"],MESES_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function indicators(M){const y=TODAY.slice(0,4),cm=+TODAY.slice(5,7);const by=Array(12).fill(0);
+  for(const l of M.lines){if(M.asg[l.id]==="excluido"||!l.f.startsWith(y))continue;by[+l.f.slice(5,7)-1]+=l.usd}
+  const mx=Math.max(1,...by);const avg=by.slice(0,cm).reduce((a,b)=>a+b,0)/Math.max(1,cm);const hi=by.indexOf(Math.max(...by));
+  const bars=by.map((v,i)=>`<div title="${MESES_L[i]}: ${usd(v)}"><i class="${i>=cm?"fut":i===hi?"hi":""}" style="height:${(v/mx*100).toFixed(1)}%"></i>${MESES_C[i]}</div>`).join("");
+  const per=COMPLEJOS.map(c=>{const Mc=model(c.k);const us=G.units.filter(u=>u.cx===c.k);const inv=us.reduce((a,u)=>a+unitInvest(u.code,Mc).inv,0);const m2=us.filter(u=>!u.comun).reduce((a,u)=>a+(u.m2||0),0);return{c,inv,m2,v:m2?inv/m2:0}});
+  const pmx=Math.max(0.01,...per.map(p=>p.v));
+  return`<details class="layer" data-det="kpi" ${det("kpi",true)?"open":""}><summary>Indicadores ${y}</summary>
+  <h3 style="margin-top:4px">Gasto de mantenimiento por mes</h3><div class="months">${bars}</div>
+  <div class="hint2" style="margin-top:6px">Promedio ${usd(avg)} por mes · el más alto fue ${MESES_L[hi]} (${usd(by[hi])})</div>
+  <h3 style="margin-top:12px">Costo por m² en el año</h3><div class="list">${per.map(p=>`<button class="row" data-cx="${p.c.k}"><span class="code">${esc(p.c.n)}</span><span class="t"></span><span class="v">${p.m2?"$"+fmt(p.v)+"/m²":"—"}</span><span class="rbar"><b style="width:${(p.v/pmx*100).toFixed(1)}%"></b></span><span class="m">${usd(p.inv)} en ${fmt(p.m2)} m²</span></button>`).join("")}</div></details>`}
+function cfgFormHTML(){const C=S.cfg;return`<div><button class="btn link" data-home>← Volver</button></div><div><div class="eyebrow">Ajustes</div><h2>Topes de las alertas</h2></div>
+  <form id="fcfg"><label for="cf-t">Tope de inversión por local (meses de alquiler en el año)<input id="cf-t" type="number" min="0.5" step="0.5" value="${C.tope_meses}"></label>
+  <label for="cf-e">Obra estancada: más de estos días abierta y sin pagos en los últimos 30<input id="cf-e" type="number" min="7" step="1" value="${C.estancada_dias}"></label>
+  <label for="cf-a">Aviso olvidado: días sin evaluar<input id="cf-a" type="number" min="1" step="1" value="${C.aviso_dias}"></label>
+  <label for="cf-p">Prioridad 1 sin ejecutar: días<input id="cf-p" type="number" min="1" step="1" value="${C.p1_dias}"></label>
+  <div class="actions"><button class="btn primary" type="submit">Guardar</button></div><div class="msg" id="cf-msg"></div></form>`}
 
 // ===================== Panel =====================
 function renderPanel(M){
@@ -613,13 +670,13 @@ function renderPanel(M){
     <div class="seg">${["punto","linea","area"].map(t=>`<button data-dtipo="${t}" aria-pressed="${S.draw.tipo===t}">${t==="punto"?"Punto":t==="linea"?"Línea (canal)":"Área (techo)"}</button>`).join("")}</div>
     <div class="note">${n} punto(s). Usa + y − para acercarte.</div>
     <div class="actions">${S.draw.tipo!=="punto"?`<button class="btn primary" data-finish ${n<need?"disabled":""}>Guardar ubicación</button><button class="btn" data-undo ${n?"":"disabled"}>Deshacer punto</button>`:""}<button class="btn" data-cancel>Cancelar</button></div>`}
-  else if(S.form){h=S.form.k==="prog"?progFormHTML():S.form.k==="obra"?obraFormHTML():formHTML()}
+  else if(S.form){h=S.form.k==="prog"?progFormHTML():S.form.k==="obra"?obraFormHTML():S.form.k==="cfg"?cfgFormHTML():formHTML()}
   else if(S.item){const o=M.obs.find(o=>o.id===S.item),a=S.avisos.find(a=>a.id===S.item),p=M.progs.find(p=>p.id===S.item);
     if(o){h=`<div><button class="btn link" data-unit="${esc(o.units[0])}">← ${esc(o.units[0])}</button></div>
       <div><div class="eyebrow">Obra · ${esc(o.parte)}${o.cxp?" · "+esc(o.cxp):" · sin partida"}</div><h2>${esc(o.nombre)}</h2></div>
       <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span></div>
-      <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Presupuesto partida</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
-      ${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}<div class="actions"><button class="btn" data-editobra="${esc(o.id)}">✎ Editar título, local o nota</button>${o.editada?'<span class="hint2">Editada en la app</span>':""}</div>
+      <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Partida CxP</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
+      ${budBlock(o)}${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}<div class="actions"><button class="btn" data-editobra="${esc(o.id)}">✎ Editar (título, local, presupuesto, nota)</button>${o.editada?'<span class="hint2">Editada en la app</span>':""}</div>
       ${o.estado==="Terminada"?`<div class="actions"><button class="btn" data-reopen="${esc(o.id)}">Reabrir</button></div>`:`<div class="card"><h3>¿Ya terminó?</h3><label for="of-f">Fecha en que terminó<input id="of-f" type="date" value="${TODAY}" min="${o.ini}" max="${TODAY}"></label><div class="actions"><button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button></div></div>`}
       ${geoBlock(o.id,o.parte)}
       <details class="layer"><summary>Pagos del banco · ${o.lines.length}</summary><div class="list">${o.lines.map(l=>lineRow(l,M,o.units)).join("")||'<div class="note">Aún no hay pagos.</div>'}</div></details>`}
@@ -649,32 +706,35 @@ function renderPanel(M){
     ${u&&!u.comun?`<div class="actions">${vence(u)}${u.estado==="Desocupado"?'<span class="pill">Desocupado</span>':""}</div>
     <dl class="kv"><dt>Superficie</dt><dd>${fmt(u.m2)} m²</dd><dt>Canon vigente</dt><dd>${u.canon?usd(u.canon):"—"}</dd><dt>Canon objetivo</dt><dd>${u.objetivo?usd(u.objetivo):"—"}</dd><dt>Vence contrato</dt><dd>${fdate(u.vence)}</dd>${c==="CL4"?"<dt>Incluye</dt><dd>Local 4-1 y 4-2</dd>":""}</dl>`:""}
     <div class="big"><div class="stat"><b>${usd(st.inv)}</b><span>Invertido 2026</span></div><div class="stat"><b>${st.meses!=null?f1(st.meses):"—"}</b><span>meses de alquiler${u&&!u.canon&&u.objetivo?" (canon objetivo)":""}</span></div></div>
-    ${askBlocks(M,c)}
+    ${alertsBlock(M,c)}${askBlocks(M,c)}
     <div class="actions"><button class="btn primary" data-newaviso="${esc(c)}">Registrar aviso</button><button class="btn" data-newprog="${esc(c)}">Programar mantenimiento</button>${S.mode==="adj"&&unitBox(c)?`<button class="btn" data-reset="${esc(c)}">Restaurar perímetro</button>`:""}</div>
-    ${secRev(rev)}${secHacer(hac,exe)}${secExe(exe)}
+    ${secRev(rev)}${secHacer(hac,M.obs.filter(o=>o.units.includes(c)&&o.pend>0))}${secExe(exe)}
     ${!rev.length&&!hac.length&&!exe.length?'<div class="note">Nada pendiente en este local.</div>':""}
     ${secProgs(pr,c)}
     ${men.length?`<details class="layer"><summary>Gastos menores · ${usd(men.reduce((a,l)=>a+l.usd,0))}</summary><div class="list">${men.map(l=>lineRow(l,M,[c])).join("")}</div></details>`:""}
+    ${M.excl.filter(l=>l.u===c).length?`<details class="layer"><summary>Pagos excluidos · ${M.excl.filter(l=>l.u===c).length}</summary><div class="hint2">No cuentan como mantenimiento. Cambia el selector para devolverlos.</div><div class="list">${M.excl.filter(l=>l.u===c).map(l=>lineRow(l,M,[c])).join("")}</div></details>`:""}
     ${secHist(M,c)}`}
   else if(S.list){const k=S.list;const T={rev:"Por revisar o presupuestar",pend:"Por hacer",exe:"En ejecución",hist:"Historial"};
-    const body=k==="rev"?secRev(M.rev,true):k==="pend"?secHacer(M.hacer,M.exe,true):k==="exe"?secExe(M.exe,true):secHist(M,null,true);
+    const body=k==="rev"?secRev(M.rev,true):k==="pend"?secHacer(M.hacer,M.obs.filter(o=>o.pend>0),true):k==="exe"?secExe(M.exe,true):secHist(M,null,true);
     h=`<div><button class="btn link" data-home>← Resumen</button></div><div><div class="eyebrow">${esc(cxName())}</div><h2>${T[k]}</h2></div>${k!=="hist"?askBlocks(M,null):""}${body}`}
   else{const todos=S.cx==="todos";const cu=G.units.filter(u=>M.cxUnits.has(u.code));
     const rank=cu.map(u=>({u,...unitInvest(u.code,M)}));const inv=rank.reduce((a,r)=>a+r.inv,0);const max=Math.max(1,...rank.map(r=>r.inv));
-    const pend=M.exe.reduce((a,o)=>a+(o.pend||0),0);const locs=cu.filter(u=>!u.comun),vac=locs.filter(u=>u.estado==="Desocupado").length;
+    const pend=M.obs.reduce((a,o)=>a+(o.pend||0),0);const locs=cu.filter(u=>!u.comun),vac=locs.filter(u=>u.estado==="Desocupado").length;
     const sinU=G.sinU.length?`<div class="note">${G.sinU.length} pago(s) de mantenimiento en el Consolidado no tienen Inmueble Ref ni Dueño reconocible y no aparecen en ningún complejo. Revísalos en el Sheet: ${G.sinU.slice(0,4).map(l=>esc(l.banco+" "+fdate(l.f)+" "+usd(l.usd))).join(" · ")}${G.sinU.length>4?" …":""}</div>`:"";
     const locList=todos?COMPLEJOS.map(c=>{const r=rank.filter(x=>x.u.cx===c.k);const v=r.reduce((a,x)=>a+x.inv,0);return`<button class="row" data-cx="${c.k}"><span class="code">${esc(c.n)}</span><span class="t"></span><span class="v">${usd(v)}</span><span class="rbar"><b style="width:${(v/Math.max(1,inv)*100).toFixed(1)}%"></b></span><span class="m">${r.filter(x=>!x.u.comun).length} locales</span></button>`}).join("")
       :rank.sort((a,b)=>b.inv-a.inv).map(r=>`<button class="row" data-unit="${esc(r.u.code)}"><span class="code">${esc(r.u.code)}</span><span class="t">${esc(unitLabel(r.u))}</span><span class="v">${r.inv?usd(r.inv):"—"}</span><span class="rbar"><b style="width:${(r.inv/max*100).toFixed(1)}%"></b></span>${r.meses!=null?`<span class="m">${f1(r.meses)} meses de alquiler</span>`:""}</button>`).join("");
     h=`<div><div class="eyebrow">${esc(cxName())} · 2026</div><h2>${locs.length} locales · ${vac} desocupados</h2></div>
     <div class="big"><div class="stat"><b>${usd(inv)}</b><span>Invertido en mantenimiento</span></div><div class="stat"><b>${usd(pend)}</b><span>Saldo por pagar en obras</span></div></div>
-    ${chips(M)}${FLOW}
+    ${alertsBlock(M)}${chips(M)}${FLOW}
     ${askBlocks(M,null)}
-    ${secRev(M.rev)}${secHacer(M.hacer,M.exe)}${secExe(M.exe)}
+    ${secRev(M.rev)}${secHacer(M.hacer,M.obs.filter(o=>o.pend>0))}${secExe(M.exe)}
     ${!M.rev.length&&!M.hacer.length&&!M.exe.length?'<div class="note">Todo al día: nada por revisar, por hacer ni en ejecución.</div>':""}
     <div class="actions"><button class="btn primary" data-newaviso="">Registrar aviso</button></div>
     ${secProgs(M.progs,null)}
     <details class="layer" data-det="locs" ${det("locs",false)?"open":""}><summary>Inversión por ${todos?"terreno":"local"} · ${usd(inv)}</summary><div class="list">${locList}</div></details>
+    ${indicators(M)}
     ${secHist(M,null)}
+    <div class="actions"><button class="btn" data-cfg>⚙ Ajustar topes de alertas</button></div>
     ${sinU}<div class="note">Obras y costos salen del Consolidado y de Cuentas por Pagar. Aquí solo registras avisos, programas mantenimientos, ubicas las obras y las marcas terminadas.</div>`}
   pb.innerHTML=h;
 }
@@ -700,6 +760,7 @@ function obraFormHTML(){const raw=rawObra(S.form.id);const o=obraEff(raw);const 
   <label for="ob-u">Local<select id="ob-u">${unitOptions(o.units[0],true)}</select></label>
   <label for="ob-u2">Compartida con (opcional, el costo se reparte a partes iguales)<select id="ob-u2"><option value="">— Ninguno —</option>${unitOptions(o.units[1]||"",true)}</select></label>
   <label for="ob-p">Parte<select id="ob-p">${part.map(x=>`<option ${o.parte===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+  <label for="ob-b">Presupuesto total de la obra (USD, materiales + mano de obra)<input id="ob-b" type="number" min="0" step="1" inputmode="decimal" value="${o.ptot||""}" placeholder="${o.presupuesto?"Partida CxP: "+o.presupuesto:"Ej: 1500"}"></label>
   <label for="ob-i">Fecha de inicio<input id="ob-i" type="date" value="${o.ini}"></label>
   <label for="ob-t">Nota / descripción<textarea id="ob-t" placeholder="Qué se hizo, detalles, observaciones…">${esc(o.nota||"")}</textarea></label>
   <div class="actions"><button class="btn primary" type="submit">Guardar</button>${ed?`<button class="btn" type="button" data-resetobra="${esc(o.id)}">Volver a los datos del Sheet</button>`:""}</div><div class="msg" id="ob-msg"></div></form>
@@ -721,11 +782,16 @@ document.addEventListener("click",async e=>{
   if(d.open)return goItem(d.open);if(d.unit)return unitClick(d.unit);if("home" in d)return home();if(d.list)return openList(d.list);if(d.cx)return setComplex(d.cx);
   if(d.newaviso!=null){S.form={k:"aviso",u:d.newaviso||S.sel||null};S.item=null;return renderPanel(model())}
   if(d.newprog!=null){S.form={k:"prog",u:d.newprog||S.sel||null};S.item=null;return renderPanel(model())}
+  if(d.dupdel){const g=dupGroups(model()).find(x=>x.key===d.dupdel);if(!g)return;if(!confirm(`Se borrarán ${g.items.length-1} aviso(s) repetido(s) y queda uno. ¿Seguir?`))return;
+    const extra=g.items.slice(1);for(const a of extra){S.avisos=S.avisos.filter(x=>x.id!==a.id);delete S.geom[a.id]}drawAll();for(const a of extra)await borrar(a.id);return}
+  if("cfg" in d){S.form={k:"cfg"};S.item=null;return renderPanel(model())}
   if(d.editobra){S.form={k:"obra",id:d.editobra};return renderPanel(model())}
   if(d.editaviso){S.form={k:"aviso",id:d.editaviso};return renderPanel(model())}
   if(d.resetobra){delete S.obraEd[d.resetobra];const o=rawObra(d.resetobra);S.form=null;S.item=o.id;S.sel=null;drawAll();await save(o.id,obraRow(o));return goItem(o.id)}
   if(d.editprog){S.form={k:"prog",id:d.editprog};return renderPanel(model())}
-  if(d.delgeo){const[id,i]=d.delgeo.split("|");const L=(S.geom[id]||[]).slice();L.splice(Number(i),1);if(L.length)S.geom[id]=L;else delete S.geom[id];drawAll();return saveGeoOwner(id)}
+  if(d.movegeo){const[id,i]=d.movegeo.split("|");S.geoEdit={id,i:Number(i)};const hn=$("#hint");if(hn){hn.hidden=false;hn.textContent="Arrastra los puntos blancos. Luego «Listo»."}return drawAll()}
+  if("geodone" in d){S.geoEdit=null;const hn=$("#hint");if(hn)hn.hidden=S.mode!=="adj";return drawAll()}
+  if(d.delgeo){S.geoEdit=null;const[id,i]=d.delgeo.split("|");const L=(S.geom[id]||[]).slice();L.splice(Number(i),1);if(L.length)S.geom[id]=L;else delete S.geom[id];drawAll();return saveGeoOwner(id)}
   if(d.locate){S.item=d.locate;return startDraw(d.locate,d.kind)}
   if(d.dtipo){return startDraw(S.draw.id,d.dtipo)}
   if("finish" in d)return finishDraw();if("undo" in d){S.draw.pts.pop();drawDraft();return renderPanel(model())}if("cancel" in d)return cancelDraw();
@@ -749,7 +815,13 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.dataset)return;
   if(t.dataset.estset){const a=S.avisos.find(a=>a.id===t.dataset.estset);if(!a)return;const v=Number(t.value);a.est=t.value&&v>0?v:null;drawAll();return save(a.id,avisoRow(a))}
 });
 document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.det)S.det[t.dataset.det]=t.open},true);
-document.addEventListener("submit",async e=>{
+// Evita guardar dos veces si se toca «Guardar» varias veces mientras el Sheet responde
+document.addEventListener("submit",async e=>{const f=e.target;if(f.id==="fgate")return;if(f.dataset.busy){e.preventDefault();return}
+  const btn=f.querySelector('[type=submit]');f.dataset.busy="1";if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent="Guardando…"}
+  try{await submitBody(e)}finally{if(document.body.contains(f)){delete f.dataset.busy;if(btn){btn.disabled=false;btn.textContent=btn.dataset.t}}}});
+async function submitBody(e){
+  if(e.target.id==="fcfg"){e.preventDefault();const c={tope_meses:Number($("#cf-t").value)||3,estancada_dias:Number($("#cf-e").value)||60,aviso_dias:Number($("#cf-a").value)||15,p1_dias:Number($("#cf-p").value)||7};
+    const ok=await save("config",{Tipo:"Config","Descripción":"Topes de alertas","Ubicación":JSON.stringify(c)});if(!ok){$("#cf-msg").textContent="No se pudo guardar.";return}S.cfg=c;S.form=null;home()}
   if(e.target.id==="fav"){e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe un título.";return}
     const old=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;
     const a={...(old||{estado:"abierto",noObras:[]}),id:old?old.id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,nota:$("#av-n").value.trim(),fecha:$("#av-f").value||TODAY,prio:$("#av-pr").value?Number($("#av-pr").value):null,est:$("#av-e").value?Number($("#av-e").value):null};
@@ -757,7 +829,7 @@ document.addEventListener("submit",async e=>{
     S.avisos=S.avisos.filter(x=>x.id!==a.id);S.avisos.push(a);S.form=null;goItem(a.id)}
   if(e.target.id==="fobra"){e.preventDefault();const msg=$("#ob-msg");const id=S.form.id;const raw=rawObra(id);const n=$("#ob-n").value.trim();if(!n){msg.textContent="El título no puede quedar vacío.";return}
     const u1=$("#ob-u").value,u2=$("#ob-u2").value;const units=[u1,...(u2&&u2!==u1?[u2]:[])];
-    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim()};
+    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim(),ptot:$("#ob-b").value?Number($("#ob-b").value):""};
     const ok=await save(id,obraRow(raw));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.form=null;S.sel=null;goItem(id)}
   if(e.target.id==="fprog"){e.preventDefault();const msg=$("#pg-msg");const desc=$("#pg-d").value.trim();if(!desc){msg.textContent="Escribe la tarea.";return}
@@ -765,7 +837,8 @@ document.addEventListener("submit",async e=>{
     const p={id:old?old.id:"pr"+Date.now().toString(36),u:$("#pg-u").value,parte:$("#pg-p").value,desc,cada:Number($("#pg-c").value)||3,ultima:$("#pg-l").value||TODAY,avisar:Math.max(0,Number($("#pg-a").value)||0),est:$("#pg-e").value?Number($("#pg-e").value):null,nota:$("#pg-n").value.trim()};
     const ok=await save(p.id,progRow(p));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.progs=S.progs.filter(x=>x.id!==p.id);S.progs.push(p);S.form=null;goItem(p.id)}
-});
+
+}
 document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f;if(f==="todo"){setFilter("todo");return home()}openList(f)});
 document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 $("#legend").innerHTML=LEGEND;
