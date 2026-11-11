@@ -341,26 +341,31 @@ function buildModel(D,POLY,SEM,EQ){
 function readApp(rows){
   const H=rows[0]||[];const ix=n=>H.indexOf(n);
   const g=(r,n)=>{const i=ix(n);return i>=0?String(r[i]??""):""};
-  S.avisos=[];S.obraEst={};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
+  S.avisos=[];S.obraEst={};S.obraEd={};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];const id=g(r,"ID").trim();if(!id)continue;const tipo=norm(g(r,"Tipo"));
     let geo=null;try{const t=g(r,"Ubicación");if(t)geo=JSON.parse(t)}catch(e){}
-    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[]});if(geo)S.geom[id]=toParts(geo)}
-    else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo)S.geom[id]=toParts(geo)}
+    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[],nota:geo&&geo.ed&&geo.ed.nota||""});if(geo)S.geom[id]=toParts(geo)}
+    else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo){S.geom[id]=toParts(geo);if(geo.ed)S.obraEd[id]=geo.ed}}
     else if(tipo==="asignacion"){S.asig[id]=g(r,"Obra vinculada")}
     else if(tipo==="perimetro"){if(geo&&geo.pts)S.perims[id]=geo.pts.map(q=>[q.x,q.y])}
-    else if(tipo==="programado"){const cfg=geo||{};S.progs.push({id,u:g(r,"Local"),parte:g(r,"Parte")||"General",desc:g(r,"Descripción"),ultima:pdate(g(r,"Fecha"))||TODAY,cada:Number(cfg.cada_meses)||3,avisar:cfg.avisar_dias!=null&&cfg.avisar_dias!==""?Number(cfg.avisar_dias):15,est:num(g(r,"Costo estimado"))||null})}
+    else if(tipo==="programado"){const cfg=geo||{};S.progs.push({id,u:g(r,"Local"),parte:g(r,"Parte")||"General",desc:g(r,"Descripción"),ultima:pdate(g(r,"Fecha"))||TODAY,cada:Number(cfg.cada_meses)||3,avisar:cfg.avisar_dias!=null&&cfg.avisar_dias!==""?Number(cfg.avisar_dias):15,est:num(g(r,"Costo estimado"))||null,nota:cfg.nota||""})}
     else if(tipo==="programado hecho"){S.progLog.push({id,u:g(r,"Local"),parte:g(r,"Parte"),desc:g(r,"Descripción"),prog:g(r,"Obra vinculada"),fecha:pdate(g(r,"Fecha terminada"))})}
   }
 }
 // Fila completa de una obra en Mantenimiento_App (el script reemplaza la fila entera)
 // Ubicaciones: una obra o aviso puede tener varias (puntos, líneas y áreas). Una sola se guarda como antes {tipo,pts}; varias como {partes:[...]}
 function toParts(g){const a=g&&g.partes?g.partes:(g&&g.pts?[g]:[]);return a.filter(x=>x&&x.pts&&x.pts.length)}
-function geoStr(id){const a=S.geom[id]||[];return a.length?JSON.stringify(a.length===1?a[0]:{partes:a}):""}
+function geoStr(id,ed){const a=S.geom[id]||[];if(!a.length&&!ed)return"";if(a.length===1&&!ed)return JSON.stringify(a[0]);return JSON.stringify(ed?{partes:a,ed}:{partes:a})}
+// Cambios hechos en la app a una obra (título, local, parte, inicio, nota). Lo que no se cambió sigue saliendo del Sheet.
+function obraEff(o){const e=S.obraEd&&S.obraEd[o.id];if(!e)return o;const units=e.units&&e.units.length?e.units:o.units;
+  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
+const rawObra=id=>G.obras.find(o=>o.id===id);
+const eObra=id=>{const o=rawObra(id);return o?obraEff(o):null};
 const hasGeo=id=>!!(S.geom[id]&&S.geom[id].length);
-function obraRow(o){const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":geoStr(o.id)}}
-function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":geoStr(a.id)}}
+function obraRow(o0){const o=obraEff(rawObra(o0.id)||o0);const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":geoStr(o.id,S.obraEd[o.id]||null)}}
+function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":geoStr(a.id,a.nota?{nota:a.nota}:null)}}
 // Mantenimiento programado: la frecuencia y el aviso se guardan en la columna Ubicación como {"cada_meses":4,"avisar_dias":15}
-function progRow(p){return{Tipo:"Programado",Local:p.u,Parte:p.parte,"Descripción":p.desc,Fecha:p.ultima,Estado:"activo","Costo estimado":p.est||"","Ubicación":JSON.stringify({cada_meses:p.cada,avisar_dias:p.avisar})}}
+function progRow(p){return{Tipo:"Programado",Local:p.u,Parte:p.parte,"Descripción":p.desc,Fecha:p.ultima,Estado:"activo","Costo estimado":p.est||"","Ubicación":JSON.stringify({cada_meses:p.cada,avisar_dias:p.avisar,nota:p.nota||""})}}
 
 // ===================== Reglas =====================
 // Un aviso está "listo" (pasa a Por hacer) cuando tiene prioridad y costo estimado. Si le falta algo, está "Por revisar".
@@ -371,15 +376,15 @@ const cxOf=u=>(G.ub[u]||{}).cx;
 function obraState(o){const e=S.obraEst[o.id];if(e&&e.reabierta)return{estado:"En ejecución",fin:null};if(e&&e.fin)return{estado:"Terminada",fin:e.fin};return o.fin?{estado:"Terminada",fin:o.fin}:{estado:"En ejecución",fin:null}}
 function model(){
   const cxUnits=new Set(G.units.filter(u=>S.cx==="todos"||u.cx===S.cx).map(u=>u.code));
-  const obs=G.obras.filter(o=>o.units.some(u=>cxUnits.has(u))).map(o=>({...o,...obraState(o)}));
-  const allObs=G.obras.map(o=>({...o,...obraState(o)}));
+  const allObs=G.obras.map(o=>({...obraEff(o),...obraState(o)}));
+  const obs=allObs.filter(o=>o.units.some(u=>cxUnits.has(u)));
   const asg={};
   for(const l of G.lines){if(!cxUnits.has(l.u))continue;
     let to=S.asig[l.id]||null;
     if(to&&to!=="menor"&&!allObs.find(o=>o.id===to))to=null;
     if(!to&&l.cxp){const o=allObs.find(o=>o.cxp===l.cxp);if(o)to=o.id}
     if(!to){// trabajo de un solo día en la misma fecha del pago: ese gana; si no, la obra que empezó primero
-    const dia=o=>o.ini===o.fin&&o.ini===l.f?0:1;const c=allObs.filter(o=>o.units.includes(l.u)&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>dia(a)-dia(b)||(a.ini<b.ini?-1:1));if(c.length)to=c[0].id}
+    const dia=o=>o.ini===o.fin&&o.ini===l.f?0:1;const c=allObs.filter(o=>(o.units.includes(l.u)||(o.origUnits||[]).includes(l.u))&&l.f>=addDays(o.ini,-30)&&l.f<=(o.fin||TODAY)).sort((a,b)=>dia(a)-dia(b)||(a.ini<b.ini?-1:1));if(c.length)to=c[0].id}
     asg[l.id]=to||"menor";
   }
   const lines=G.lines.filter(l=>cxUnits.has(l.u));
@@ -444,7 +449,7 @@ function wireMap(){
   m.addEventListener("pointerdown",e=>{if(e.target.closest(".handle"))return;pan={sx:e.clientX,sy:e.clientY,vx:VB.x,vy:VB.y,moved:false}});
   window.addEventListener("pointermove",e=>{if(!pan)return;const r=m.getBoundingClientRect();const k=Math.max(VB.w/r.width,VB.h/r.height);const dx=(e.clientX-pan.sx)*k,dy=(e.clientY-pan.sy)*k;if(Math.abs(dx)+Math.abs(dy)>5*k){pan.moved=true;m.classList.add("panning")}if(pan.moved){VB.x=pan.vx-dx;VB.y=pan.vy-dy;setVB()}});
   window.addEventListener("pointerup",()=>{if(pan&&pan.moved)m.addEventListener("click",ev=>ev.stopPropagation(),{capture:true,once:true});pan=null;m.classList.remove("panning")});
-  m.addEventListener("click",e=>{if(!S.draw)return;const p=toSvg(e);S.draw.pts.push([Math.round(p.x),Math.round(p.y)]);if(S.draw.tipo==="punto")return finishDraw();drawDraft();renderPanel(model())});
+  m.addEventListener("click",e=>{if(!S.draw)return;const p=toSvg(e);const q=[Math.round(p.x),Math.round(p.y)],L=S.draw.pts[S.draw.pts.length-1];if(L&&Math.abs(L[0]-q[0])+Math.abs(L[1]-q[1])<3)return;S.draw.pts.push(q);if(S.draw.tipo==="punto")return finishDraw();drawDraft();renderPanel(model())});
 }
 function drawUnits(){
   const g=$("#units"),gl=$("#labels");g.innerHTML="";gl.innerHTML="";const z=SZ();
@@ -525,7 +530,7 @@ function setComplex(k){if(!CX_TABS.find(c=>c.k===k))k="todos";S.cx=k;S.sel=null;
     FULL={x:0,y:0,w:CX.ancho,h:CX.alto};VB={...FULL};setVB()}else FULL=null;
   drawAll()}
 function unitClick(c){if(S.draw)return;if(S.cx==="todos"||cxOf(c)!==S.cx){const k=cxOf(c);if(k)setComplex(k)}S.sel=c;S.item=null;S.list=null;S.form=null;if(FULL&&unitBox(c))zoomTo(c);drawAll()}
-function unitOfItem(id){const o=G.obras.find(o=>o.id===id);if(o)return o.units[0];const a=S.avisos.find(a=>a.id===id);if(a)return a.u;const p=S.progs.find(p=>p.id===id);return p?p.u:null}
+function unitOfItem(id){const o=eObra(id);if(o)return o.units[0];const a=S.avisos.find(a=>a.id===id);if(a)return a.u;const p=S.progs.find(p=>p.id===id);return p?p.u:null}
 function goItem(id){const u=unitOfItem(id);const k=u&&cxOf(u);if(k&&(S.cx==="todos"||S.cx!==k))setComplex(k);openItem(id)}
 function openItem(id){S.item=id;S.list=null;S.form=null;const u=unitOfItem(id);if(u&&S.sel!==u){S.sel=u;if(FULL&&unitBox(u))zoomTo(u)}drawAll()}
 function home(){S.sel=null;S.item=null;S.list=null;S.form=null;if(FULL){VB={...FULL};setVB()}drawAll()}
@@ -608,27 +613,27 @@ function renderPanel(M){
     <div class="seg">${["punto","linea","area"].map(t=>`<button data-dtipo="${t}" aria-pressed="${S.draw.tipo===t}">${t==="punto"?"Punto":t==="linea"?"Línea (canal)":"Área (techo)"}</button>`).join("")}</div>
     <div class="note">${n} punto(s). Usa + y − para acercarte.</div>
     <div class="actions">${S.draw.tipo!=="punto"?`<button class="btn primary" data-finish ${n<need?"disabled":""}>Guardar ubicación</button><button class="btn" data-undo ${n?"":"disabled"}>Deshacer punto</button>`:""}<button class="btn" data-cancel>Cancelar</button></div>`}
-  else if(S.form){h=S.form.k==="prog"?progFormHTML():formHTML()}
+  else if(S.form){h=S.form.k==="prog"?progFormHTML():S.form.k==="obra"?obraFormHTML():formHTML()}
   else if(S.item){const o=M.obs.find(o=>o.id===S.item),a=S.avisos.find(a=>a.id===S.item),p=M.progs.find(p=>p.id===S.item);
     if(o){h=`<div><button class="btn link" data-unit="${esc(o.units[0])}">← ${esc(o.units[0])}</button></div>
       <div><div class="eyebrow">Obra · ${esc(o.parte)}${o.cxp?" · "+esc(o.cxp):" · sin partida"}</div><h2>${esc(o.nombre)}</h2></div>
       <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span></div>
       <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Presupuesto partida</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
-      ${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}
+      ${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}<div class="actions"><button class="btn" data-editobra="${esc(o.id)}">✎ Editar título, local o nota</button>${o.editada?'<span class="hint2">Editada en la app</span>':""}</div>
       ${o.estado==="Terminada"?`<div class="actions"><button class="btn" data-reopen="${esc(o.id)}">Reabrir</button></div>`:`<div class="card"><h3>¿Ya terminó?</h3><label for="of-f">Fecha en que terminó<input id="of-f" type="date" value="${TODAY}" min="${o.ini}" max="${TODAY}"></label><div class="actions"><button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button></div></div>`}
       ${geoBlock(o.id,o.parte)}
       <details class="layer"><summary>Pagos del banco · ${o.lines.length}</summary><div class="list">${o.lines.map(l=>lineRow(l,M,o.units)).join("")||'<div class="note">Aún no hay pagos.</div>'}</div></details>`}
     else if(a){const lst=ready(a);h=`<div><button class="btn link" data-unit="${esc(a.u)}">← ${esc(a.u)}</button></div>
-      <div><div class="eyebrow">Aviso · ${esc(a.parte)}</div><h2>${esc(a.descripcion)}</h2></div>
+      <div><div class="eyebrow">Aviso · ${esc(a.parte)}</div><h2>${esc(a.descripcion)}</h2></div>${a.nota?`<div class="note">${esc(a.nota)}</div>`:""}
       <div class="actions"><span class="pill"><i style="background:${avisoColor(a)}"></i>${lst?"Por hacer · prioridad "+a.prio:"Por revisar"}</span></div>
       <dl class="kv"><dt>Local</dt><dd>${esc(a.u)}</dd><dt>Fecha del aviso</dt><dd>${fdate(a.fecha)}</dd><dt>Antigüedad</dt><dd>${daysSince(a.fecha)} días</dd></dl>
       <div class="card"><h3>Evaluar</h3>${lst?"":'<div class="hint2">Con prioridad y costo estimado pasa a «Por hacer» y entra en el cálculo de caja.</div>'}
       <label for="ap">Prioridad<select id="ap" data-prioset="${esc(a.id)}"><option value="">Sin definir</option>${[1,2,3].map(p=>`<option value="${p}" ${a.prio==p?"selected":""}>${p}${p===1?" · urgente":p===3?" · puede esperar":""}</option>`).join("")}</select></label>
       <label for="ae">Costo estimado (USD)<input id="ae" type="number" min="0" step="1" inputmode="decimal" data-estset="${esc(a.id)}" value="${a.est||""}" placeholder="Ej: 350"></label></div>
-      ${geoBlock(a.id,a.parte)}<div class="actions"><button class="btn" data-delaviso="${esc(a.id)}">Borrar aviso</button></div>`}
+      ${geoBlock(a.id,a.parte)}<div class="actions"><button class="btn" data-editaviso="${esc(a.id)}">✎ Editar</button><button class="btn" data-delaviso="${esc(a.id)}">Borrar aviso</button></div>`}
     else if(p){const toca=p.dias<=p.avisar;const lg=S.progLog.filter(l=>l.prog===p.id).sort((x,y)=>(x.fecha||"")<(y.fecha||"")?1:-1);
       h=`<div><button class="btn link" data-unit="${esc(p.u)}">← ${esc(p.u)}</button></div>
-      <div><div class="eyebrow">Mantenimiento programado · ${esc(p.parte)}</div><h2>${esc(p.desc)}</h2></div>
+      <div><div class="eyebrow">Mantenimiento programado · ${esc(p.parte)}</div><h2>${esc(p.desc)}</h2></div>${p.nota?`<div class="note">${esc(p.nota)}</div>`:""}
       <div class="actions"><span class="pill${p.dias<0?" warn":""}"><i style="background:${p.dias<0?"var(--st-p1)":toca?"var(--st-p2)":"var(--st-ok)"}"></i>${p.dias<0?"Atrasado "+(-p.dias)+" días":toca?(p.dias===0?"Toca hoy":"Toca en "+p.dias+" días"):"Al día"}</span></div>
       <dl class="kv"><dt>Local</dt><dd>${esc(p.u)}</dd><dt>Se hace cada</dt><dd>${meses(p.cada)}</dd><dt>Última vez</dt><dd>${fdate(p.ultima)}</dd><dt>Próxima</dt><dd>${fdate(p.due)}</dd><dt>Aviso</dt><dd>${p.avisar} días antes</dd><dt>Costo estimado</dt><dd>${p.est?usd(p.est):"—"}</dd></dl>
       <div class="card"><h3>¿Ya se hizo?</h3><label for="ph-f">Fecha en que se hizo<input id="ph-f" type="date" value="${TODAY}" max="${TODAY}"></label>
@@ -673,20 +678,32 @@ function renderPanel(M){
     ${sinU}<div class="note">Obras y costos salen del Consolidado y de Cuentas por Pagar. Aquí solo registras avisos, programas mantenimientos, ubicas las obras y las marcas terminadas.</div>`}
   pb.innerHTML=h;
 }
-function unitOptions(sel){const opt=u=>`<option value="${esc(u.code)}" ${u.code===sel?"selected":""}>${esc(u.code)} · ${esc(unitLabel(u))}</option>`;
-  if(S.cx!=="todos")return G.units.filter(u=>u.cx===S.cx).map(opt).join("");
+function unitOptions(sel,all){const opt=u=>`<option value="${esc(u.code)}" ${u.code===sel?"selected":""}>${esc(u.code)} · ${esc(unitLabel(u))}</option>`;
+  if(S.cx!=="todos"&&!all)return G.units.filter(u=>u.cx===S.cx).map(opt).join("");
   return COMPLEJOS.map(c=>`<optgroup label="${esc(c.n)}">${G.units.filter(u=>u.cx===c.k).map(opt).join("")}</optgroup>`).join("")}
 const backBtn=u=>u?`<button class="btn link" data-unit="${esc(u)}">← Volver</button>`:`<button class="btn link" data-home>← Volver</button>`;
-function formHTML(){const u=S.form.u;
-  return`<div>${backBtn(u)}</div><div><div class="eyebrow">Nuevo aviso</div><h2>¿Qué reportaron?</h2></div>
-  <form id="fav"><label for="av-u">Local<select id="av-u">${unitOptions(u)}</select></label>
-  <label for="av-p">Parte<select id="av-p">${PARTES.map(p=>`<option>${p}</option>`).join("")}</select></label>
-  <label for="av-d">Descripción<textarea id="av-d" placeholder="Ej: gotera en el baño del fondo"></textarea></label>
-  <label for="av-f">Fecha del aviso<input id="av-f" type="date" value="${TODAY}"></label>
-  <label for="av-pr">Prioridad (si ya la sabes)<select id="av-pr"><option value="">Sin definir</option><option value="1">1 · urgente</option><option value="2">2</option><option value="3">3 · puede esperar</option></select></label>
-  <label for="av-e">Costo estimado (si ya lo sabes, USD)<input id="av-e" type="number" min="0" step="1" inputmode="decimal"></label>
-  <div class="actions"><button class="btn primary" type="submit">Guardar aviso</button></div><div class="msg" id="av-msg"></div></form>
-  <div class="note">Sin prioridad o sin costo queda en «Por revisar». Después de guardarlo puedes ubicarlo en el plano.</div>`}
+function formHTML(){const a=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;const u=a?a.u:S.form.u;
+  return`<div>${a?`<button class="btn link" data-open="${esc(a.id)}">← Volver</button>`:backBtn(u)}</div><div><div class="eyebrow">${a?"Editar aviso":"Nuevo aviso"}</div><h2>${a?"Corrige lo que necesites":"¿Qué reportaron?"}</h2></div>
+  <form id="fav"><label for="av-d">Título<input id="av-d" type="text" value="${esc(a?a.descripcion:"")}" placeholder="Ej: Gotera en el baño del fondo"></label>
+  <label for="av-u">Local<select id="av-u">${unitOptions(u,!!a)}</select></label>
+  <label for="av-p">Parte<select id="av-p">${PARTES.map(p=>`<option ${a&&a.parte===p?"selected":""}>${p}</option>`).join("")}</select></label>
+  <label for="av-n">Nota / descripción (opcional)<textarea id="av-n" placeholder="Detalles, quién avisó, medidas…">${esc(a?a.nota||"":"")}</textarea></label>
+  <label for="av-f">Fecha del aviso<input id="av-f" type="date" value="${a?a.fecha:TODAY}"></label>
+  <label for="av-pr">Prioridad${a?"":" (si ya la sabes)"}<select id="av-pr"><option value="">Sin definir</option>${[1,2,3].map(n=>`<option value="${n}" ${a&&a.prio==n?"selected":""}>${n}${n===1?" · urgente":n===3?" · puede esperar":""}</option>`).join("")}</select></label>
+  <label for="av-e">Costo estimado${a?"":" (si ya lo sabes)"} (USD)<input id="av-e" type="number" min="0" step="1" inputmode="decimal" value="${a&&a.est?a.est:""}"></label>
+  <div class="actions"><button class="btn primary" type="submit">Guardar</button></div><div class="msg" id="av-msg"></div></form>
+  ${a?"":'<div class="note">Sin prioridad o sin costo queda en «Por revisar». Después de guardarlo puedes ubicarlo en el plano.</div>'}`}
+// Editar una obra: lo que cambies aquí reemplaza lo que viene del Sheet solo en esta página (el Sheet no se toca)
+function obraFormHTML(){const raw=rawObra(S.form.id);const o=obraEff(raw);const ed=S.obraEd[o.id];const part=PARTES.includes(o.parte)?PARTES:[o.parte,...PARTES];
+  return`<div><button class="btn link" data-open="${esc(o.id)}">← Volver</button></div><div><div class="eyebrow">Editar obra${o.cxp?" · "+esc(o.cxp):""}</div><h2>${esc(o.nombre)}</h2></div>
+  <form id="fobra"><label for="ob-n">Título<input id="ob-n" type="text" value="${esc(o.nombre)}"></label>
+  <label for="ob-u">Local<select id="ob-u">${unitOptions(o.units[0],true)}</select></label>
+  <label for="ob-u2">Compartida con (opcional, el costo se reparte a partes iguales)<select id="ob-u2"><option value="">— Ninguno —</option>${unitOptions(o.units[1]||"",true)}</select></label>
+  <label for="ob-p">Parte<select id="ob-p">${part.map(x=>`<option ${o.parte===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+  <label for="ob-i">Fecha de inicio<input id="ob-i" type="date" value="${o.ini}"></label>
+  <label for="ob-t">Nota / descripción<textarea id="ob-t" placeholder="Qué se hizo, detalles, observaciones…">${esc(o.nota||"")}</textarea></label>
+  <div class="actions"><button class="btn primary" type="submit">Guardar</button>${ed?`<button class="btn" type="button" data-resetobra="${esc(o.id)}">Volver a los datos del Sheet</button>`:""}</div><div class="msg" id="ob-msg"></div></form>
+  <div class="note">Del Sheet viene: <b>${esc(raw.nombre)}</b> · ${esc(raw.units.join(" + "))}. Los cambios se guardan en Mantenimiento_App; el Control de Finanzas no se modifica. Los pagos siguen a la obra aunque cambies el local.</div>`}
 function progFormHTML(){const f=S.form;const p=f.id?S.progs.find(x=>x.id===f.id):null;const u=p?p.u:f.u;
   return`<div>${backBtn(u)}</div><div><div class="eyebrow">${p?"Editar":"Nuevo"} mantenimiento programado</div><h2>¿Qué hay que hacer cada cierto tiempo?</h2></div>
   <form id="fprog"><label for="pg-d">Tarea<input id="pg-d" type="text" value="${esc(p?p.desc:"")}" placeholder="Ej: Limpieza de canales"></label>
@@ -695,6 +712,7 @@ function progFormHTML(){const f=S.form;const p=f.id?S.progs.find(x=>x.id===f.id)
   <label for="pg-c">Se hace cada<select id="pg-c">${[1,2,3,4,6,12].map(n=>`<option value="${n}" ${(p?p.cada:3)==n?"selected":""}>${meses(n)}</option>`).join("")}</select></label>
   <label for="pg-l">Última vez que se hizo<input id="pg-l" type="date" value="${p?p.ultima:TODAY}" max="${TODAY}"></label>
   <label for="pg-a">Avisarme con cuántos días de anticipación<input id="pg-a" type="number" min="0" max="90" step="1" value="${p?p.avisar:15}"></label>
+  <label for="pg-n">Nota (opcional)<textarea id="pg-n" placeholder="Ej: incluye bajantes del fondo">${esc(p?p.nota||"":"")}</textarea></label>
   <label for="pg-e">Costo estimado cada vez (USD, opcional)<input id="pg-e" type="number" min="0" step="1" inputmode="decimal" value="${p&&p.est?p.est:""}"></label>
   <div class="actions"><button class="btn primary" type="submit">Guardar</button></div><div class="msg" id="pg-msg"></div></form>`}
 
@@ -703,13 +721,16 @@ document.addEventListener("click",async e=>{
   if(d.open)return goItem(d.open);if(d.unit)return unitClick(d.unit);if("home" in d)return home();if(d.list)return openList(d.list);if(d.cx)return setComplex(d.cx);
   if(d.newaviso!=null){S.form={k:"aviso",u:d.newaviso||S.sel||null};S.item=null;return renderPanel(model())}
   if(d.newprog!=null){S.form={k:"prog",u:d.newprog||S.sel||null};S.item=null;return renderPanel(model())}
+  if(d.editobra){S.form={k:"obra",id:d.editobra};return renderPanel(model())}
+  if(d.editaviso){S.form={k:"aviso",id:d.editaviso};return renderPanel(model())}
+  if(d.resetobra){delete S.obraEd[d.resetobra];const o=rawObra(d.resetobra);S.form=null;S.item=o.id;S.sel=null;drawAll();await save(o.id,obraRow(o));return goItem(o.id)}
   if(d.editprog){S.form={k:"prog",id:d.editprog};return renderPanel(model())}
   if(d.delgeo){const[id,i]=d.delgeo.split("|");const L=(S.geom[id]||[]).slice();L.splice(Number(i),1);if(L.length)S.geom[id]=L;else delete S.geom[id];drawAll();return saveGeoOwner(id)}
   if(d.locate){S.item=d.locate;return startDraw(d.locate,d.kind)}
   if(d.dtipo){return startDraw(S.draw.id,d.dtipo)}
   if("finish" in d)return finishDraw();if("undo" in d){S.draw.pts.pop();drawDraft();return renderPanel(model())}if("cancel" in d)return cancelDraw();
   if("simall" in d||"simnone" in d||"simp1" in d){const M=model();for(const x of M.hacer){if("simall" in d)S.simOff.delete(x.id);else if("simnone" in d)S.simOff.add(x.id);else{x.prio==1?S.simOff.delete(x.id):S.simOff.add(x.id)}}return renderPanel(M)}
-  if(d.finishobra){const o=G.obras.find(o=>o.id===d.finishobra);const ff=($("#of-f")||{}).value||TODAY;S.obraEst[o.id]={fin:ff<o.ini?o.ini:ff};drawAll();return save(o.id,obraRow(o))}
+  if(d.finishobra){const o=G.obras.find(o=>o.id===d.finishobra);const ff=($("#of-f")||{}).value||TODAY;S.obraEst[o.id]={fin:ff<obraEff(o).ini?obraEff(o).ini:ff};drawAll();return save(o.id,obraRow(o))}
   if(d.reopen){const o=G.obras.find(o=>o.id===d.reopen);S.obraEst[o.id]={reabierta:true};drawAll();return save(o.id,obraRow(o))}
   if(d.reset){for(const k of Object.keys(cxPoly()).filter(k=>polyUnit(k)===d.reset)){const id=S.cx+":"+k;if(S.perims[id]){delete S.perims[id];await borrar("per:"+id)}}return drawAll()}
   if(d.delaviso){if(!confirm("¿Borrar este aviso?"))return;S.avisos=S.avisos.filter(a=>a.id!==d.delaviso);delete S.geom[d.delaviso];S.item=null;drawAll();return borrar(d.delaviso)}
@@ -729,13 +750,19 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.dataset)return;
 });
 document.addEventListener("toggle",e=>{const t=e.target;if(t.dataset&&t.dataset.det)S.det[t.dataset.det]=t.open},true);
 document.addEventListener("submit",async e=>{
-  if(e.target.id==="fav"){e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe qué reportaron.";return}
-    const a={id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,fecha:$("#av-f").value||TODAY,prio:$("#av-pr").value?Number($("#av-pr").value):null,estado:"abierto",est:$("#av-e").value?Number($("#av-e").value):null,noObras:[]};
-    const ok=await save(a.id,avisoRow(a));if(!ok){msg.textContent="No se pudo guardar el aviso. Revisa la conexión e intenta de nuevo.";return}
-    S.avisos.push(a);S.form=null;goItem(a.id)}
+  if(e.target.id==="fav"){e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe un título.";return}
+    const old=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;
+    const a={...(old||{estado:"abierto",noObras:[]}),id:old?old.id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,nota:$("#av-n").value.trim(),fecha:$("#av-f").value||TODAY,prio:$("#av-pr").value?Number($("#av-pr").value):null,est:$("#av-e").value?Number($("#av-e").value):null};
+    const ok=await save(a.id,avisoRow(a));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
+    S.avisos=S.avisos.filter(x=>x.id!==a.id);S.avisos.push(a);S.form=null;goItem(a.id)}
+  if(e.target.id==="fobra"){e.preventDefault();const msg=$("#ob-msg");const id=S.form.id;const raw=rawObra(id);const n=$("#ob-n").value.trim();if(!n){msg.textContent="El título no puede quedar vacío.";return}
+    const u1=$("#ob-u").value,u2=$("#ob-u2").value;const units=[u1,...(u2&&u2!==u1?[u2]:[])];
+    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim()};
+    const ok=await save(id,obraRow(raw));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
+    S.form=null;S.sel=null;goItem(id)}
   if(e.target.id==="fprog"){e.preventDefault();const msg=$("#pg-msg");const desc=$("#pg-d").value.trim();if(!desc){msg.textContent="Escribe la tarea.";return}
     const old=S.form.id?S.progs.find(p=>p.id===S.form.id):null;
-    const p={id:old?old.id:"pr"+Date.now().toString(36),u:$("#pg-u").value,parte:$("#pg-p").value,desc,cada:Number($("#pg-c").value)||3,ultima:$("#pg-l").value||TODAY,avisar:Math.max(0,Number($("#pg-a").value)||0),est:$("#pg-e").value?Number($("#pg-e").value):null};
+    const p={id:old?old.id:"pr"+Date.now().toString(36),u:$("#pg-u").value,parte:$("#pg-p").value,desc,cada:Number($("#pg-c").value)||3,ultima:$("#pg-l").value||TODAY,avisar:Math.max(0,Number($("#pg-a").value)||0),est:$("#pg-e").value?Number($("#pg-e").value):null,nota:$("#pg-n").value.trim()};
     const ok=await save(p.id,progRow(p));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.progs=S.progs.filter(x=>x.id!==p.id);S.progs.push(p);S.form=null;goItem(p.id)}
 });
