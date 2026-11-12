@@ -239,10 +239,12 @@ const sync=$("#sync");
 // ===================== Estado =====================
 const S={cx:"todos",filter:"todo",mode:"ver",sel:null,item:null,list:null,form:null,draw:null,
   avisos:[],obraEst:{},geom:{},asig:{},perims:{},progs:[],progLog:[],simOff:new Set(),det:{},geoEdit:null,cfg:{}};
+// Años que dura una inversión (para repartir su costo). Se puede cambiar por obra en «Editar».
+const VIDA_DEF=p=>p==="Techo"||p==="Impermeabilización"?15:10;
 // Obras que cuentan como inversión (capex) y no como mantenimiento; se puede cambiar en «Editar»
 const INVERSION_DEF=new Set(["CXP-0002","O-CL2-TECHO","CXP-0001"]);
 const claseOf=id=>(S.obraEd&&S.obraEd[id]&&S.obraEd[id].clase)||(INVERSION_DEF.has(id)?"inversion":"mantenimiento");
-const CFG_DEF={tope_meses:3,estancada_dias:60,aviso_dias:15,p1_dias:7};S.cfg={...CFG_DEF};
+const CFG_DEF={mant_pct:10,recup_meses:36,estancada_dias:60,aviso_dias:15,p1_dias:7};S.cfg={...CFG_DEF};
 const LEGEND=`<span><i style="background:var(--st-rep)"></i>Por revisar</span><span><i style="background:var(--st-p1)"></i>Por hacer · P1</span><span><i style="background:var(--st-p2)"></i>Por hacer · P2-3</span><span><i style="background:var(--st-exe)"></i>En ejecución</span><span><i style="background:var(--st-ok)"></i>Terminada</span>`;
 let G=null; // datos cargados: {units, lines, obras, poly, sinUbicar}
 try{const c=localStorage.getItem("mant_cx");if(c)S.cx=c}catch(e){}
@@ -372,7 +374,7 @@ function toParts(g){const a=g&&g.partes?g.partes:(g&&g.pts?[g]:[]);return a.filt
 function geoStr(id,ed){const a=S.geom[id]||[];if(!a.length&&!ed)return"";if(a.length===1&&!ed)return JSON.stringify(a[0]);return JSON.stringify(ed?{partes:a,ed}:{partes:a})}
 // Cambios hechos en la app a una obra (título, local, parte, inicio, nota). Lo que no se cambió sigue saliendo del Sheet.
 function obraEff(o){const e=S.obraEd&&S.obraEd[o.id];if(!e)return o;const units=e.units&&e.units.length?e.units:o.units;
-  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,ptot:e.ptot!=null&&e.ptot!==""?Number(e.ptot):(o.ptot||null),reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
+  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,ptot:e.ptot!=null&&e.ptot!==""?Number(e.ptot):(o.ptot||null),vida:e.vida?Number(e.vida):null,reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
 const rawObra=id=>G.obras.find(o=>o.id===id);
 const eObra=id=>{const o=rawObra(id);return o?obraEff(o):null};
 const hasGeo=id=>!!(S.geom[id]&&S.geom[id].length);
@@ -390,7 +392,7 @@ const cxOf=u=>(G.ub[u]||{}).cx;
 function obraState(o){const e=S.obraEst[o.id];if(e&&e.reabierta)return{estado:"En ejecución",fin:null};if(e&&e.fin)return{estado:"Terminada",fin:e.fin};return o.fin?{estado:"Terminada",fin:o.fin}:{estado:"En ejecución",fin:null}}
 function model(cxk){cxk=cxk||S.cx;
   const cxUnits=new Set(G.units.filter(u=>cxk==="todos"||u.cx===cxk).map(u=>u.code));
-  const allObs=G.obras.map(o=>({...obraEff(o),...obraState(o),clase:claseOf(o.id)}));
+  const allObs=G.obras.map(o=>({...obraEff(o),...obraState(o),clase:claseOf(o.id)})).map(o=>({...o,vida:o.vida||VIDA_DEF(o.parte)}));
   const obs=allObs.filter(o=>o.units.some(u=>cxUnits.has(u)));
   const asg={};
   for(const l of G.lines){if(!cxUnits.has(l.u))continue;
@@ -421,10 +423,11 @@ const avisoColor=a=>ready(a)?prioColor(a.prio):"var(--st-rep)";
 const obraColor=o=>o.estado==="Terminada"?"var(--st-ok)":"var(--st-exe)";
 const geoKindFor=p=>p==="Canales"?"linea":(p==="Techo"||p==="Impermeabilización")?"area":"punto";
 function unitInvest(code,M){
-  let inv=0,cap=0;for(const o of M.obs){if(!o.units.includes(code))continue;const r=o.reparto&&o.reparto[code]!=null?o.reparto[code]:1/o.units.length;inv+=o.costo*r;if(o.clase==="inversion")cap+=o.costo*r}
+  let inv=0,cap=0,capAnual=0;for(const o of M.obs){if(!o.units.includes(code))continue;const r=o.reparto&&o.reparto[code]!=null?o.reparto[code]:1/o.units.length;inv+=o.costo*r;if(o.clase==="inversion"){cap+=o.costo*r;capAnual+=o.costo*r/o.vida}}
   inv+=(M.menores[code]||[]).reduce((a,l)=>a+l.usd,0);
   const u=G.ub[code];const base=u?(u.canon||u.objetivo||0):0;
-  return{inv,cap,mant:inv-cap,meses:base&&inv?inv/base:null};
+  const mt=mesesAno(),mant=inv-cap,canon=u?u.canon||0:0;const alqAnual=canon*12,mantAnual=mant/mt*12;
+  return{inv,cap,mant,capAnual,canon,alqAnual,mantAnual,queda:alqAnual-mantAnual-capAnual,pct:canon?mant/(canon*mt):null,recup:canon&&cap?cap/canon:null,meses:base&&inv?inv/base:null};
 }
 const unitLabel=u=>u.comun?"Áreas comunes":(u.inq||"Desocupado");
 function visible(kind,o){const f=S.filter;
@@ -626,6 +629,19 @@ function askBlocks(M,unit){const out=[];
       out.push(`<div class="ask"><div>¿La obra <b>${esc(o.nombre)}</b> resuelve el aviso <b>“${esc(a.descripcion)}”</b>?</div><div class="actions"><button class="btn primary" data-link="${esc(a.id)}|${esc(o.id)}">Sí, es la misma</button><button class="btn" data-nolink="${esc(a.id)}|${esc(o.id)}">No</button></div></div>`)}}
   return out.join("")}
 
+// ===================== Rentabilidad por local =====================
+// Alquiler del año − mantenimiento del año − inversiones repartidas en los años que duran. No incluye gastos fijos (vigilancia, cobranza, contabilidad, impuestos).
+function rentCard(u,st){if(!u||u.comun)return`<div class="big"><div class="stat"><b>${usd(st.inv)}</b><span>Gastado 2026</span></div><div class="stat"><b>${usd(st.mant)}</b><span>Mantenimiento</span></div></div>`;
+  if(!st.canon)return`<div class="card"><h3>¿Es rentable este local?</h3><div class="hint2">Está desocupado, no tiene alquiler. Gastado en 2026: ${usd(st.inv)}${st.cap?` (${usd(st.cap)} en inversión)`:""}.${u.objetivo&&st.cap?` Con el canon objetivo de ${usd(u.objetivo)} la inversión se recupera en ${f1(st.cap/u.objetivo)} meses.`:""}</div></div>`;
+  const pc=Math.round((st.pct||0)*100),ok=st.queda>0;
+  return`<div class="card"><h3>¿Es rentable este local? · por año</h3><dl class="kv">
+  <dt>Alquiler (${usd(st.canon)} × 12)</dt><dd>${usd(st.alqAnual)}</dd>
+  <dt>− Mantenimiento <span class="tag ${pc>S.cfg.mant_pct?"warn":"amber"}" style="margin-left:4px">${pc}% del alquiler</span></dt><dd>${usd(st.mantAnual)}</dd>
+  <dt>− Inversión repartida en sus años</dt><dd>${usd(st.capAnual)}</dd>
+  <dt style="color:var(--text);font-weight:600">Te queda</dt><dd style="font-weight:700;color:${ok?"var(--st-ok)":"var(--st-p1)"}">${usd(st.queda)}</dd></dl>
+  ${st.cap?`<div class="hint2">La inversión de este año (${usd(st.cap)}) se paga con ${f1(st.recup)} meses de alquiler.</div>`:""}
+  <div class="hint2">Mantenimiento del año llevado a 12 meses. No incluye vigilancia, cobranza, contabilidad ni impuestos.</div></div>`}
+
 // ===================== Alertas e indicadores =====================
 function budBlock(o){if(!o.ptot)return o.estado!=="Terminada"?'<div class="hint2">Sin presupuesto total. Ponlo con «Editar» para que te avise si se pasa.</div>':"";
   const r=o.costo/o.ptot;const c=r>1?"var(--st-p1)":r>=.8?"var(--st-p2)":"var(--st-ok)";
@@ -635,18 +651,20 @@ function dupGroups(M){const g={};for(const a of M.avisos){const k=a.u+"|"+norm(a
 function alertList(M,unit){const C=S.cfg,out=[];const inU=u=>!unit||u===unit;
   for(const o of M.obs){if(!o.units.some(inU)||!o.ptot)continue;const r=o.costo/o.ptot;
     if(r>1&&(o.estado!=="Terminada"||daysSince(o.fin)<=60))out.push({n:0,open:o.id,t:`Sobrecosto: ${o.nombre}`,m:`${o.units.join(" + ")} · gastado ${usd(o.costo)} de ${usd(o.ptot)} (+${usd(o.costo-o.ptot)})`});
-    else if(r>=.8&&o.estado!=="Terminada")out.push({n:1,open:o.id,t:`Va en ${Math.round(r*100)}% del presupuesto: ${o.nombre}`,m:`${o.units.join(" + ")} · quedan ${usd(o.ptot-o.costo)}`})}
+    else if(r>=.8&&o.estado!=="Terminada")out.push({n:2,open:o.id,t:`Va en ${Math.round(r*100)}% del presupuesto: ${o.nombre}`,m:`${o.units.join(" + ")} · quedan ${usd(o.ptot-o.costo)}`})}
   for(const u of G.units){if(u.comun||!M.cxUnits.has(u.code)||!inU(u.code))continue;const st=unitInvest(u.code,M);
-    if(st.meses!=null&&st.meses>C.tope_meses)out.push({n:0,unit:u.code,t:`${u.code} pasó el tope de inversión`,m:`${usd(st.inv)} invertidos = ${f1(st.meses)} meses de alquiler (tope ${f1(C.tope_meses)})`})}
+    if(st.pct!=null&&st.pct*100>C.mant_pct)out.push({n:3,unit:u.code,t:`${u.code}: mantenimiento en ${Math.round(st.pct*100)}% del alquiler`,m:`${usd(st.mant)} en el año · tope ${C.mant_pct}%`})}
+  for(const o of M.obs){if(o.clase!=="inversion"||!o.units.some(inU)||!o.costo)continue;const can=o.units.reduce((a,c)=>{const x=G.ub[c]||{};return a+(x.canon||x.objetivo||0)},0);const obj=o.units.some(c=>{const x=G.ub[c]||{};return!x.canon&&x.objetivo});const mr=can?o.costo/can:null;
+    if(mr==null||mr>C.recup_meses)out.push({n:8,open:o.id,t:`Inversión que tarda en recuperarse: ${o.nombre}`,m:`${o.units.join(" + ")} · ${usd(o.costo)} · ${mr==null?"local sin alquiler":"se paga en "+f1(mr)+" meses de alquiler"+(obj?" (con canon objetivo)":"")+" · tope "+C.recup_meses}`})}
   for(const o of M.exe){if(!o.units.some(inU))continue;const last=o.lines.reduce((a,l)=>l.f>a?l.f:a,"");
-    if(daysSince(o.ini)>C.estancada_dias&&(!last||daysSince(last)>30))out.push({n:1,open:o.id,t:`Obra estancada: ${o.nombre}`,m:`lleva ${daysSince(o.ini)} días · ${last?"último pago hace "+daysSince(last)+" días":"sin pagos"}`})}
-  for(const a of M.rev){if(!inU(a.u))continue;const d=daysSince(a.fecha);if(d>C.aviso_dias)out.push({n:1,open:a.id,t:`Sin evaluar hace ${d} días: ${a.descripcion}`,m:`${a.u} · falta prioridad o costo`})}
-  for(const x of M.hacer){if(!inU(x.u))continue;if(x.kind==="aviso"&&x.prio==1){const d=daysSince(x.o.fecha);if(d>C.p1_dias)out.push({n:0,open:x.id,t:`Prioridad 1 esperando hace ${d} días: ${x.o.descripcion}`,m:`${x.u} · ${x.est?usd(x.est):"sin costo"}`})}
-    if(x.kind==="prog"&&x.o.dias<0)out.push({n:0,open:x.id,t:`Mantenimiento atrasado ${-x.o.dias} días: ${x.o.desc}`,m:`${x.u} · tocaba el ${fdate(x.o.due)}`})}
-  for(const g of dupGroups(M)){if(!inU(g.items[0].u))continue;out.push({n:1,dup:g.key,t:`Aviso repetido ${g.items.length} veces: ${g.items[0].descripcion}`,m:`${g.items[0].u} · toca aquí para dejar uno solo`})}
+    if(daysSince(o.ini)>C.estancada_dias&&(!last||daysSince(last)>30))out.push({n:4,open:o.id,t:`Obra estancada: ${o.nombre}`,m:`lleva ${daysSince(o.ini)} días · ${last?"último pago hace "+daysSince(last)+" días":"sin pagos"}`})}
+  for(const a of M.rev){if(!inU(a.u))continue;const d=daysSince(a.fecha);if(d>C.aviso_dias)out.push({n:5,open:a.id,t:`Sin evaluar hace ${d} días: ${a.descripcion}`,m:`${a.u} · falta prioridad o costo`})}
+  for(const x of M.hacer){if(!inU(x.u))continue;if(x.kind==="aviso"&&x.prio==1){const d=daysSince(x.o.fecha);if(d>C.p1_dias)out.push({n:1,open:x.id,t:`Prioridad 1 esperando hace ${d} días: ${x.o.descripcion}`,m:`${x.u} · ${x.est?usd(x.est):"sin costo"}`})}
+    if(x.kind==="prog"&&x.o.dias<0)out.push({n:1,open:x.id,t:`Mantenimiento atrasado ${-x.o.dias} días: ${x.o.desc}`,m:`${x.u} · tocaba el ${fdate(x.o.due)}`})}
+  for(const g of dupGroups(M)){if(!inU(g.items[0].u))continue;out.push({n:6,dup:g.key,t:`Aviso repetido ${g.items.length} veces: ${g.items[0].descripcion}`,m:`${g.items[0].u} · toca aquí para dejar uno solo`})}
   return out.sort((a,b)=>a.n-b.n)}
 function alertsBlock(M,unit){const L=alertList(M,unit);if(!L.length)return"";
-  return`<div class="card alerts"><div class="sec-h"><h3><i class="dot" style="background:var(--st-p1)"></i> Alertas · ${L.length}</h3></div><div class="list">${L.map(a=>`<button class="row" ${a.open?`data-open="${esc(a.open)}"`:a.unit?`data-unit="${esc(a.unit)}"`:`data-dupdel="${esc(a.dup)}"`}><i class="dot" style="background:${a.n?"var(--st-p2)":"var(--st-p1)"}"></i><span class="t">${esc(a.t)}</span><span class="v"></span><span class="m">${esc(a.m)}</span></button>`).join("")}</div></div>`}
+  return`<div class="card alerts"><div class="sec-h"><h3><i class="dot" style="background:var(--st-p1)"></i> Alertas · ${L.length}</h3></div><div class="list">${L.map(a=>`<button class="row" ${a.open?`data-open="${esc(a.open)}"`:a.unit?`data-unit="${esc(a.unit)}"`:`data-dupdel="${esc(a.dup)}"`}><i class="dot" style="background:${a.n<=1?"var(--st-p1)":a.n>=8?"var(--muted)":"var(--st-p2)"}"></i><span class="t">${esc(a.t)}</span><span class="v"></span><span class="m">${esc(a.m)}</span></button>`).join("")}</div></div>`}
 const mesesAno=()=>{const d=new Date(TODAY+"T00:00:00"),a=new Date(d.getFullYear(),0,1);return Math.max(0.5,(d-a)/864e5/365*12)};
 const MESES_C=["E","F","M","A","M","J","J","A","S","O","N","D"],MESES_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function indicators(M){const y=TODAY.slice(0,4),cm=+TODAY.slice(5,7);const by=Array(12).fill(0);
@@ -664,7 +682,8 @@ function indicators(M){const y=TODAY.slice(0,4),cm=+TODAY.slice(5,7);const by=Ar
   <div class="hint2">Mantenimiento llevado a 12 meses ÷ m² arrendables (ocupados y desocupados). Las inversiones van aparte. El % compara con el alquiler cobrable en lo que va de año (canon vigente).</div>
   <div class="list">${per.map(p=>`<button class="row" data-cx="${p.c.k}"><span class="code">${esc(p.c.n)}</span><span class="t"></span><span class="v">${p.m2?"$"+fmt(p.v)+"/m² al año":"—"}</span><span class="rbar"><b style="width:${(p.v/pmx*100).toFixed(1)}%"></b></span><span class="m">Mantenimiento ${usd(p.mant)} = <b style="color:var(--text)">${pc(p.pct)} del alquiler</b> · Inversión ${usd(p.cap)}${p.cap&&p.m2?" ($"+fmt(p.vc)+"/m²)":""}${p.cap?" · todo junto "+pc(p.pctT):""} · ${fmt(p.m2)} m²</span></button>`).join("")}</div></details>`}
 function cfgFormHTML(){const C=S.cfg;return`<div><button class="btn link" data-home>← Volver</button></div><div><div class="eyebrow">Ajustes</div><h2>Topes de las alertas</h2></div>
-  <form id="fcfg"><label for="cf-t">Tope de inversión por local (meses de alquiler en el año)<input id="cf-t" type="number" min="0.5" step="0.5" value="${C.tope_meses}"></label>
+  <form id="fcfg"><label for="cf-t">Mantenimiento: avisar si pasa este % del alquiler del local<input id="cf-t" type="number" min="1" step="1" value="${C.mant_pct}"></label>
+  <label for="cf-r">Inversión: avisar si tarda más de estos meses de alquiler en recuperarse<input id="cf-r" type="number" min="1" step="1" value="${C.recup_meses}"></label>
   <label for="cf-e">Obra estancada: más de estos días abierta y sin pagos en los últimos 30<input id="cf-e" type="number" min="7" step="1" value="${C.estancada_dias}"></label>
   <label for="cf-a">Aviso olvidado: días sin evaluar<input id="cf-a" type="number" min="1" step="1" value="${C.aviso_dias}"></label>
   <label for="cf-p">Prioridad 1 sin ejecutar: días<input id="cf-p" type="number" min="1" step="1" value="${C.p1_dias}"></label>
@@ -682,7 +701,7 @@ function renderPanel(M){
   else if(S.item){const o=M.obs.find(o=>o.id===S.item),a=S.avisos.find(a=>a.id===S.item),p=M.progs.find(p=>p.id===S.item);
     if(o){h=`<div><button class="btn link" data-unit="${esc(o.units[0])}">← ${esc(o.units[0])}</button></div>
       <div><div class="eyebrow">Obra · ${esc(o.parte)}${o.cxp?" · "+esc(o.cxp):" · sin partida"}</div><h2>${esc(o.nombre)}</h2></div>
-      <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span><span class="pill">${o.clase==="inversion"?"Inversión":"Mantenimiento"}</span></div>
+      <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span><span class="pill">${o.clase==="inversion"?`Inversión · dura ${o.vida} años · ${usd(o.costo/o.vida)}/año`:"Mantenimiento"}</span></div>
       <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Partida CxP</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
       ${budBlock(o)}${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}<div class="actions"><button class="btn" data-editobra="${esc(o.id)}">✎ Editar (título, local, presupuesto, nota)</button>${o.editada?'<span class="hint2">Editada en la app</span>':""}</div>
       ${o.estado==="Terminada"?`<div class="actions"><button class="btn" data-reopen="${esc(o.id)}">Reabrir</button></div>`:`<div class="card"><h3>¿Ya terminó?</h3><label for="of-f">Fecha en que terminó<input id="of-f" type="date" value="${TODAY}" min="${o.ini}" max="${TODAY}"></label><div class="actions"><button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button></div></div>`}
@@ -713,7 +732,7 @@ function renderPanel(M){
     <div><div class="eyebrow">${esc(u?u.nombre:"")}</div><h2>${esc(c)} · ${esc(u?unitLabel(u):"")}</h2></div>
     ${u&&!u.comun?`<div class="actions">${vence(u)}${u.estado==="Desocupado"?'<span class="pill">Desocupado</span>':""}</div>
     <dl class="kv"><dt>Superficie</dt><dd>${fmt(u.m2)} m²</dd><dt>Canon vigente</dt><dd>${u.canon?usd(u.canon):"—"}</dd><dt>Canon objetivo</dt><dd>${u.objetivo?usd(u.objetivo):"—"}</dd><dt>Vence contrato</dt><dd>${fdate(u.vence)}</dd>${c==="CL4"?"<dt>Incluye</dt><dd>Local 4-1 y 4-2</dd>":""}</dl>`:""}
-    <div class="big"><div class="stat"><b>${usd(st.inv)}</b><span>Gastado 2026${st.cap?` · mant. ${usd(st.mant)} + inversión ${usd(st.cap)}`:""}</span></div><div class="stat"><b>${st.meses!=null?f1(st.meses):"—"}</b><span>meses de alquiler${u&&!u.canon&&u.objetivo?" (canon objetivo)":""}${u&&u.canon?` · mantenimiento = ${Math.round(st.mant/(u.canon*mesesAno())*100)}% del alquiler del año`:""}</span></div></div>
+    ${rentCard(u,st)}
     ${alertsBlock(M,c)}${askBlocks(M,c)}
     <div class="actions"><button class="btn primary" data-newaviso="${esc(c)}">Registrar aviso</button><button class="btn" data-newprog="${esc(c)}">Programar mantenimiento</button>${S.mode==="adj"&&unitBox(c)?`<button class="btn" data-reset="${esc(c)}">Restaurar perímetro</button>`:""}</div>
     ${secRev(rev)}${secHacer(hac,M.obs.filter(o=>o.units.includes(c)&&o.pend>0))}${secExe(exe)}
@@ -730,7 +749,7 @@ function renderPanel(M){
     const pend=M.obs.reduce((a,o)=>a+(o.pend||0),0);const locs=cu.filter(u=>!u.comun),vac=locs.filter(u=>u.estado==="Desocupado").length;
     const sinU=G.sinU.length?`<div class="note">${G.sinU.length} pago(s) de mantenimiento en el Consolidado no tienen Inmueble Ref ni Dueño reconocible y no aparecen en ningún complejo. Revísalos en el Sheet: ${G.sinU.slice(0,4).map(l=>esc(l.banco+" "+fdate(l.f)+" "+usd(l.usd))).join(" · ")}${G.sinU.length>4?" …":""}</div>`:"";
     const locList=todos?COMPLEJOS.map(c=>{const r=rank.filter(x=>x.u.cx===c.k);const v=r.reduce((a,x)=>a+x.inv,0);return`<button class="row" data-cx="${c.k}"><span class="code">${esc(c.n)}</span><span class="t"></span><span class="v">${usd(v)}</span><span class="rbar"><b style="width:${(v/Math.max(1,inv)*100).toFixed(1)}%"></b></span><span class="m">${r.filter(x=>!x.u.comun).length} locales</span></button>`}).join("")
-      :rank.sort((a,b)=>b.inv-a.inv).map(r=>`<button class="row" data-unit="${esc(r.u.code)}"><span class="code">${esc(r.u.code)}</span><span class="t">${esc(unitLabel(r.u))}</span><span class="v">${r.inv?usd(r.inv):"—"}</span><span class="rbar"><b style="width:${(r.inv/max*100).toFixed(1)}%"></b></span>${r.meses!=null?`<span class="m">${f1(r.meses)} meses de alquiler</span>`:""}</button>`).join("");
+      :rank.sort((a,b)=>b.inv-a.inv).map(r=>`<button class="row" data-unit="${esc(r.u.code)}"><span class="code">${esc(r.u.code)}</span><span class="t">${esc(unitLabel(r.u))}</span><span class="v">${r.inv?usd(r.inv):"—"}</span><span class="rbar"><b style="width:${(r.inv/max*100).toFixed(1)}%"></b></span>${r.u.comun?"":`<span class="m">${r.canon?`mant. ${Math.round((r.pct||0)*100)}% del alquiler · te queda ${usd(r.queda)} al año`:"desocupado"}</span>`}</button>`).join("");
     h=`<div><div class="eyebrow">${esc(cxName())} · 2026</div><h2>${locs.length} locales · ${vac} desocupados</h2></div>
     <div class="big"><div class="stat"><b>${usd(inv)}</b><span>Invertido en mantenimiento</span></div><div class="stat"><b>${usd(pend)}</b><span>Saldo por pagar en obras</span></div></div>
     ${alertsBlock(M)}${chips(M)}${FLOW}
@@ -768,6 +787,7 @@ function obraFormHTML(){const raw=rawObra(S.form.id);const o=obraEff(raw);const 
   <label for="ob-u">Local<select id="ob-u">${unitOptions(o.units[0],true)}</select></label>
   <label for="ob-u2">Compartida con (opcional, el costo se reparte a partes iguales)<select id="ob-u2"><option value="">— Ninguno —</option>${unitOptions(o.units[1]||"",true)}</select></label>
   <label for="ob-c">Tipo de gasto<select id="ob-c"><option value="mantenimiento" ${claseOf(o.id)!=="inversion"?"selected":""}>Mantenimiento (recurrente, reparaciones)</option><option value="inversion" ${claseOf(o.id)==="inversion"?"selected":""}>Inversión (recuperación, techo nuevo, remodelación)</option></select></label>
+  <label for="ob-v">Años que dura (solo si es inversión; techo ≈ 15)<input id="ob-v" type="number" min="1" max="50" step="1" value="${(S.obraEd[o.id]&&S.obraEd[o.id].vida)||VIDA_DEF(o.parte)}"></label>
   <label for="ob-p">Parte<select id="ob-p">${part.map(x=>`<option ${o.parte===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
   <label for="ob-b">Presupuesto total de la obra (USD, materiales + mano de obra)<input id="ob-b" type="number" min="0" step="1" inputmode="decimal" value="${o.ptot||""}" placeholder="${o.presupuesto?"Partida CxP: "+o.presupuesto:"Ej: 1500"}"></label>
   <label for="ob-i">Fecha de inicio<input id="ob-i" type="date" value="${o.ini}"></label>
@@ -829,7 +849,7 @@ document.addEventListener("submit",async e=>{const f=e.target;if(f.id==="fgate")
   const btn=f.querySelector('[type=submit]');f.dataset.busy="1";if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent="Guardando…"}
   try{await submitBody(e)}finally{if(document.body.contains(f)){delete f.dataset.busy;if(btn){btn.disabled=false;btn.textContent=btn.dataset.t}}}});
 async function submitBody(e){
-  if(e.target.id==="fcfg"){e.preventDefault();const c={tope_meses:Number($("#cf-t").value)||3,estancada_dias:Number($("#cf-e").value)||60,aviso_dias:Number($("#cf-a").value)||15,p1_dias:Number($("#cf-p").value)||7};
+  if(e.target.id==="fcfg"){e.preventDefault();const c={mant_pct:Number($("#cf-t").value)||10,recup_meses:Number($("#cf-r").value)||36,estancada_dias:Number($("#cf-e").value)||60,aviso_dias:Number($("#cf-a").value)||15,p1_dias:Number($("#cf-p").value)||7};
     const ok=await save("config",{Tipo:"Config","Descripción":"Topes de alertas","Ubicación":JSON.stringify(c)});if(!ok){$("#cf-msg").textContent="No se pudo guardar.";return}S.cfg=c;S.form=null;home()}
   if(e.target.id==="fav"){e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe un título.";return}
     const old=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;
@@ -838,7 +858,7 @@ async function submitBody(e){
     S.avisos=S.avisos.filter(x=>x.id!==a.id);S.avisos.push(a);S.form=null;goItem(a.id)}
   if(e.target.id==="fobra"){e.preventDefault();const msg=$("#ob-msg");const id=S.form.id;const raw=rawObra(id);const n=$("#ob-n").value.trim();if(!n){msg.textContent="El título no puede quedar vacío.";return}
     const u1=$("#ob-u").value,u2=$("#ob-u2").value;const units=[u1,...(u2&&u2!==u1?[u2]:[])];
-    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim(),ptot:$("#ob-b").value?Number($("#ob-b").value):"",clase:$("#ob-c").value};
+    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim(),ptot:$("#ob-b").value?Number($("#ob-b").value):"",clase:$("#ob-c").value,vida:Number($("#ob-v").value)||""};
     const ok=await save(id,obraRow(raw));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.form=null;S.sel=null;goItem(id)}
   if(e.target.id==="fprog"){e.preventDefault();const msg=$("#pg-msg");const desc=$("#pg-d").value.trim();if(!desc){msg.textContent="Escribe la tarea.";return}
