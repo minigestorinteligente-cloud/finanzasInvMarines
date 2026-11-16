@@ -150,6 +150,36 @@ details.layer .list{border-top-color:rgba(255,255,255,.06)}
 .months i{display:block;width:100%;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
 .months i.hi{background:var(--st-p2)}.months i.fut{background:var(--surface)}
 .ghandle{fill:#fff;stroke:var(--accent);cursor:move}
+.crono{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:10px}
+.tl-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.tl{overflow:auto;flex:1;min-height:0;border-top:1px solid var(--border)}
+.tl-in{position:relative}
+.tl-row{display:grid;grid-template-columns:230px 1fr;min-height:32px;border-bottom:1px solid rgba(255,255,255,.05)}
+.tl-lab{position:sticky;left:0;z-index:2;background:var(--surface);padding:4px 8px;display:flex;flex-direction:column;justify-content:center;min-width:0;border-right:1px solid var(--border)}
+.tl-name{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:214px}
+.tl-name:hover{text-decoration:underline}
+.tl-u{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-track{position:relative;background-image:repeating-linear-gradient(to right,rgba(255,255,255,.06) 0 1px,transparent 1px 78px)}
+.tl-head{position:sticky;top:0;z-index:3;background:var(--surface2)}.tl-head .tl-lab{background:var(--surface2)}
+.tl-m{position:absolute;top:0;bottom:0;width:78px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:var(--muted)}
+.tl-m.y{color:var(--text)}
+.tl-g .tl-lab{padding-top:8px}
+.tl-gt{background:none;border:0;padding:0;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c);cursor:default}
+button.tl-gt[data-tlterm]{cursor:pointer}
+.tl-gbar{position:absolute;top:13px;height:6px;border-radius:3px;background:var(--c);opacity:.85}
+.tl-bar{position:absolute;top:8px;height:16px;border-radius:5px;background:var(--c);border:0;cursor:pointer;padding:0}
+.legend.static{position:static;max-width:none}
+.tl-bar.soft{opacity:.6}
+.tl-bar.plan{background:transparent;border:2px dashed var(--c)}
+.tl-bar.late{box-shadow:0 0 0 2px var(--st-p1)}
+.tl-dia{position:absolute;top:9px;width:14px;height:14px;transform:rotate(45deg);background:var(--c);border:2px solid var(--surface);cursor:pointer;padding:0;border-radius:2px}
+.tl-nf{position:absolute;left:6px;top:8px;font-size:11px;color:var(--muted);white-space:nowrap}
+.tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:1;pointer-events:none}
+.tl-cash{min-height:62px;background:rgba(79,142,247,.05)}
+.tl-c{position:absolute;bottom:4px;width:66px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:600}
+.tl-c i{display:block;width:26px;background:var(--accent);border-radius:3px 3px 0 0}
+.tl-key{display:inline-block;width:18px;height:9px;border:2px dashed var(--muted);border-radius:3px}
+.sync button{font-size:11.5px}
 @media(max-width:900px){.wrap{height:auto}.main{grid-template-columns:1fr}.mapbox{height:60vh;min-height:360px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -172,7 +202,7 @@ details.layer .list{border-top-color:rgba(255,255,255,.06)}
   <div class="bar">
     <div class="seg" role="group" aria-label="Complejo" id="cx"></div>
     <div class="seg" role="group" aria-label="Mostrar">
-      <button data-f="todo" aria-pressed="true">Todo</button><button data-f="rev" aria-pressed="false">Por revisar</button><button data-f="pend" aria-pressed="false">Por hacer</button><button data-f="exe" aria-pressed="false">En ejecución</button><button data-f="hist" aria-pressed="false">Historial</button>
+      <button data-f="todo" aria-pressed="true">Todo</button><button data-f="rev" aria-pressed="false">Por revisar</button><button data-f="pend" aria-pressed="false">Por hacer</button><button data-f="exe" aria-pressed="false">En ejecución</button><button data-f="prog" aria-pressed="false">Programados</button><button data-f="crono" aria-pressed="false">Cronograma</button><button data-f="hist" aria-pressed="false">Historial</button>
     </div>
     <div class="seg" role="group" aria-label="Modo"><button data-m="ver" aria-pressed="true">Ver</button><button data-m="adj" aria-pressed="false">Ajustar plano</button></div>
   </div>
@@ -188,6 +218,7 @@ details.layer .list{border-top-color:rgba(255,255,255,.06)}
       <div class="legend" id="legend"></div>
     </div>
     <div class="multi" id="multi" hidden></div>
+    <div class="crono" id="crono" hidden></div>
     <aside class="panel" aria-live="polite"><div class="pbody" id="pbody"></div></aside>
   </div>
 </div>
@@ -238,7 +269,7 @@ const sync=$("#sync");
 
 // ===================== Estado =====================
 const S={cx:"todos",filter:"todo",mode:"ver",sel:null,item:null,list:null,form:null,draw:null,
-  avisos:[],obraEst:{},geom:{},asig:{},perims:{},progs:[],progLog:[],simOff:new Set(),det:{},geoEdit:null,cfg:{}};
+  avisos:[],obraEst:{},geom:{},asig:{},perims:{},progs:[],progLog:[],simOff:new Set(),det:{},geoEdit:null,cfg:{},crono:false,tl:0,tlTerm:false,dirtyAt:0};
 // Años que dura una inversión (para repartir su costo). Se puede cambiar por obra en «Editar».
 const VIDA_DEF=p=>p==="Techo"||p==="Impermeabilización"?15:10;
 // Obras que cuentan como inversión (capex) y no como mantenimiento; se puede cambiar en «Editar»
@@ -276,34 +307,42 @@ async function llamar(params,timeoutMs){
 }
 const api=params=>llamar(params,180000);
 async function save(id,fila){
-  sync.textContent="Guardando…";
+  S.dirtyAt=Date.now();sync.textContent="Guardando…";
   try{const j=await llamar({accion:"guardar",id,fila:JSON.stringify(fila)},60000);
     sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo guardar ("+(j.error||"error")+")";return j.ok}
   catch(e){sync.textContent="No se pudo guardar: "+e.message;return false}
 }
 async function borrar(id){
-  sync.textContent="Guardando…";
+  S.dirtyAt=Date.now();sync.textContent="Guardando…";
   try{const j=await llamar({accion:"borrar",id},60000);sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
   catch(e){sync.textContent="No se pudo borrar: "+e.message}
 }
+// Carga rápida: se muestra al instante la última copia guardada en este navegador y se actualiza en segundo plano.
+let ASSETS=null,PENDING=null;
+const HOJAS="Consolidado,CtasporPagar,TablaArrendamientos,Mantenimiento_App";
+const hora=t=>new Date(t).toLocaleString("es-VE",{dateStyle:"short",timeStyle:"short"});
+function cacheGet(){try{return JSON.parse(localStorage.getItem("mant_cache")||"null")}catch(e){return null}}
+function cachePut(datos){try{localStorage.setItem("mant_cache",JSON.stringify({t:Date.now(),datos}))}catch(e){}}
+function loadData(datos){G=buildModel(datos,ASSETS[0],ASSETS[1],ASSETS[2]);readApp(datos.Mantenimiento_App||[]);for(const k in G.seedAsig)if(!(k in S.asig))S.asig[k]=G.seedAsig[k]}
+function claveMala(){try{localStorage.removeItem("mant_clave");localStorage.removeItem("mant_cache")}catch(e){}CLAVE=null;$("#app").hidden=true;$("#gate").hidden=false;$("#gmsg").textContent="La clave no coincide con la del programa. Intenta de nuevo."}
+function applyFresh(datos,t){if(S.form||S.draw){PENDING={datos,t};sync.innerHTML='Hay datos nuevos · <button class="btn link" id="updNow">Actualizar</button>';return}
+  loadData(datos);PENDING=null;sync.textContent="Datos al "+hora(t);drawAll()}
+async function fetchFresh(){const t0=Date.now();const res=window.__MOCK__?window.__MOCK__:await api({hojas:HOJAS});if(!res.ok){if(res.error==="clave")claveMala();throw new Error(res.error||"error")}cachePut(res.datos);return{datos:res.datos,t:t0}}
+document.addEventListener("click",async e=>{if(!e.target.closest("#updNow"))return;sync.textContent="Actualizando…";
+  try{const f=PENDING&&PENDING.t>S.dirtyAt?PENDING:await fetchFresh();PENDING=null;S.form=null;loadData(f.datos);sync.textContent="Datos al "+hora(f.t);drawAll()}catch(err){sync.innerHTML='No se pudo actualizar · <button class="btn link" id="updNow">Reintentar</button>'}});
 async function boot(){
   if(!CLAVE){$("#gate").hidden=false;return}
-  $("#app").hidden=false;$("#main").innerHTML='<div class="loading" id="ld">Leyendo el Control de Finanzas… (puede tardar unos segundos)</div>';
-  let res,assets;
-  try{
-    [res,assets]=await Promise.all([
-      window.__MOCK__?Promise.resolve(window.__MOCK__):api({hojas:"Consolidado,CtasporPagar,TablaArrendamientos,Mantenimiento_App"}),
-      Promise.all(["poligonos.json","obras_semilla.json","equivalencias.json"].map(f=>fetch(BASE+f).then(r=>{if(!r.ok)throw new Error(f);return r.json()})))
-    ]);
-  }catch(e){$("#ld").textContent="No se pudieron leer los datos ("+e.message+"). Si acabas de actualizar el programa de Apps Script, revisa que implementaste una versión nueva. Luego recarga la página.";return}
-  if(!res.ok){if(res.error==="clave"){try{localStorage.removeItem("mant_clave")}catch(e){}CLAVE=null;$("#app").hidden=true;$("#gate").hidden=false;$("#gmsg").textContent="La clave no coincide con la del programa. Intenta de nuevo.";return}
-    $("#ld").textContent="El Sheet respondió con un error: "+(res.error||"desconocido");return}
-  G=buildModel(res.datos,assets[0],assets[1],assets[2]);
-  readApp(res.datos.Mantenimiento_App||[]);
-  for(const k in G.seedAsig)if(!(k in S.asig))S.asig[k]=G.seedAsig[k];
-  restoreMain();
-  sync.textContent="Datos al "+new Date().toLocaleString("es-VE",{dateStyle:"short",timeStyle:"short"});
-  renderCx();setComplex(S.cx);
+  $("#app").hidden=false;
+  const assetsP=Promise.all(["poligonos.json","obras_semilla.json","equivalencias.json"].map(f=>fetch(BASE+f).then(r=>{if(!r.ok)throw new Error(f);return r.json()})));
+  const freshP=fetchFresh();freshP.catch(()=>{});
+  const c=cacheGet();
+  if(c&&c.datos){try{ASSETS=await assetsP}catch(e){}if(ASSETS){
+    loadData(c.datos);restoreMain();renderCx();setComplex(S.cx);sync.textContent="Datos de "+hora(c.t)+" · actualizando…";
+    freshP.then(f=>{if(S.dirtyAt>f.t){sync.innerHTML='Hay datos nuevos · <button class="btn link" id="updNow">Actualizar</button>';return}applyFresh(f.datos,f.t)})
+      .catch(e=>{if(CLAVE)sync.innerHTML='Sin conexión con el Sheet · datos de '+hora(c.t)+' · <button class="btn link" id="updNow">Reintentar</button>'});return}}
+  $("#main").innerHTML='<div class="loading" id="ld">Leyendo el Control de Finanzas… la primera vez puede tardar. Las siguientes abren al instante.</div>';
+  let f;try{[f,ASSETS]=await Promise.all([freshP,assetsP])}catch(e){if(CLAVE)$("#ld").textContent="No se pudieron leer los datos ("+e.message+"). Revisa la conexión y recarga la página.";return}
+  loadData(f.datos);restoreMain();sync.textContent="Datos al "+hora(f.t);renderCx();setComplex(S.cx);
 }
 $("#fgate").addEventListener("submit",e=>{e.preventDefault();CLAVE=$("#clave").value.trim();try{localStorage.setItem("mant_clave",CLAVE)}catch(err){}$("#gate").hidden=true;boot()});
 
@@ -359,7 +398,7 @@ function readApp(rows){
   S.avisos=[];S.obraEst={};S.obraEd={};S.cfg={...CFG_DEF};S.geom={};S.asig={};S.perims={};S.progs=[];S.progLog=[];
   for(let i=1;i<rows.length;i++){const r=rows[i];const id=g(r,"ID").trim();if(!id)continue;const tipo=norm(g(r,"Tipo"));
     let geo=null;try{const t=g(r,"Ubicación");if(t)geo=JSON.parse(t)}catch(e){}
-    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[],nota:geo&&geo.ed&&geo.ed.nota||""});if(geo)S.geom[id]=toParts(geo)}
+    if(tipo==="aviso"){const ov=g(r,"Obra vinculada");S.avisos.push({id,u:g(r,"Local"),parte:g(r,"Parte"),descripcion:g(r,"Descripción"),fecha:pdate(g(r,"Fecha"))||TODAY,prio:num(g(r,"Prioridad"))||null,estado:norm(g(r,"Estado"))||"abierto",est:num(g(r,"Costo estimado"))||null,obra:ov.startsWith("no:")?null:(ov||null),noObras:ov.startsWith("no:")?ov.slice(3).split(",").filter(Boolean):[],nota:geo&&geo.ed&&geo.ed.nota||"",plan:geo&&geo.ed&&geo.ed.plan||null,dias:geo&&geo.ed&&Number(geo.ed.dias)||null});if(geo)S.geom[id]=toParts(geo)}
     else if(tipo==="obra"){const est=norm(g(r,"Estado"));S.obraEst[id]={fin:est==="reabierta"?null:pdate(g(r,"Fecha terminada")),reabierta:est==="reabierta"};if(geo){S.geom[id]=toParts(geo);if(geo.ed)S.obraEd[id]=geo.ed}}
     else if(tipo==="asignacion"){S.asig[id]=g(r,"Obra vinculada")}
     else if(tipo==="perimetro"){if(geo&&geo.pts)S.perims[id]=geo.pts.map(q=>[q.x,q.y])}
@@ -374,12 +413,12 @@ function toParts(g){const a=g&&g.partes?g.partes:(g&&g.pts?[g]:[]);return a.filt
 function geoStr(id,ed){const a=S.geom[id]||[];if(!a.length&&!ed)return"";if(a.length===1&&!ed)return JSON.stringify(a[0]);return JSON.stringify(ed?{partes:a,ed}:{partes:a})}
 // Cambios hechos en la app a una obra (título, local, parte, inicio, nota). Lo que no se cambió sigue saliendo del Sheet.
 function obraEff(o){const e=S.obraEd&&S.obraEd[o.id];if(!e)return o;const units=e.units&&e.units.length?e.units:o.units;
-  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,ptot:e.ptot!=null&&e.ptot!==""?Number(e.ptot):(o.ptot||null),vida:e.vida?Number(e.vida):null,reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
+  return{...o,nombre:e.nombre||o.nombre,units,parte:e.parte||o.parte,ini:e.ini||o.ini,nota:e.nota!=null&&e.nota!==""?e.nota:o.nota,ptot:e.ptot!=null&&e.ptot!==""?Number(e.ptot):(o.ptot||null),vida:e.vida?Number(e.vida):null,finEst:e.finEst||null,reparto:units.join()===o.units.join()?o.reparto:null,origUnits:o.units,editada:true}}
 const rawObra=id=>G.obras.find(o=>o.id===id);
 const eObra=id=>{const o=rawObra(id);return o?obraEff(o):null};
 const hasGeo=id=>!!(S.geom[id]&&S.geom[id].length);
 function obraRow(o0){const o=obraEff(rawObra(o0.id)||o0);const e=S.obraEst[o.id]||{};return{Tipo:"Obra",Local:o.units.join(" + "),Parte:o.parte,"Descripción":o.nombre,Estado:e.reabierta?"Reabierta":(e.fin?"Terminada":""),"Fecha terminada":e.fin||"","Ubicación":geoStr(o.id,S.obraEd[o.id]||null)}}
-function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":geoStr(a.id,a.nota?{nota:a.nota}:null)}}
+function avisoRow(a){return{Tipo:"Aviso",Local:a.u,Parte:a.parte,"Descripción":a.descripcion,Fecha:a.fecha,Prioridad:a.prio||"",Estado:a.estado,"Costo estimado":a.est||"","Obra vinculada":a.obra||(a.noObras&&a.noObras.length?"no:"+a.noObras.join(","):""),"Ubicación":geoStr(a.id,(a.nota||a.plan||a.dias)?Object.fromEntries(Object.entries({nota:a.nota,plan:a.plan,dias:a.dias}).filter(([k,v])=>v)):null)}}
 // Mantenimiento programado: la frecuencia y el aviso se guardan en la columna Ubicación como {"cada_meses":4,"avisar_dias":15}
 function progRow(p){return{Tipo:"Programado",Local:p.u,Parte:p.parte,"Descripción":p.desc,Fecha:p.ultima,Estado:"activo","Costo estimado":p.est||"","Ubicación":JSON.stringify({cada_meses:p.cada,avisar_dias:p.avisar,nota:p.nota||""})}}
 
@@ -513,7 +552,7 @@ function handleDown(ev,k,i,h){ev.stopPropagation();h.setPointerCapture(ev.pointe
   const mv=e=>{const p=toSvg(e);p0[i]=[Math.round(p.x),Math.round(p.y)];moved=true;S.perims[S.cx+":"+k]=p0;h.setAttribute("cx",p0[i][0]);h.setAttribute("cy",p0[i][1]);drawUnits()};
   const up=()=>{h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);if(moved){save("per:"+S.cx+":"+k,{Tipo:"Perímetro",Local:polyUnit(k),"Ubicación":JSON.stringify({tipo:"area",pts:p0.map(q=>({x:q[0],y:q[1]}))})});drawAll()}};
   h.addEventListener("pointermove",mv);h.addEventListener("pointerup",up)}
-function drawAll(){const M=model();if(S.cx==="todos")renderMulti(M);else if(CX&&CX.imagen){drawUnits();drawGeoms(M);drawBadges(M);drawDraft();drawHandles()}renderPanel(M)}
+function drawAll(){const M=model();if(S.crono)renderCrono(M);else if(S.cx==="todos")renderMulti(M);else if(CX&&CX.imagen){drawUnits();drawGeoms(M);drawBadges(M);drawDraft();drawHandles()}renderPanel(M)}
 
 // ===================== Vista "Todos": los planos juntos =====================
 function miniSVG(k,M){const P=G.poly[k];if(!P||!P.imagen)return"";const z=Math.max(P.ancho,P.alto)/1400;const loc=P.locales||{};
@@ -542,20 +581,72 @@ document.addEventListener("click",e=>{const t=e.target.closest("#multi [data-mi]
   if(t.dataset.mu){const[k,code]=t.dataset.mu.split("|");setComplex(k);return unitClick(code)}
   setComplex(t.dataset.mcx)});
 
+// ===================== Cronograma (línea del tiempo por mes) =====================
+const MW=78; // ancho de cada mes en px
+const MES_N=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const planOf=a=>a.plan||(a.fecha&&a.fecha>TODAY?a.fecha:null);
+const durOf=a=>Math.max(1,a.dias||7);
+function tlWindow(){const t=new Date(TODAY+"T00:00:00");const s=new Date(t.getFullYear(),t.getMonth()-2+S.tl,1);const ms=[];for(let i=0;i<12;i++)ms.push(new Date(s.getFullYear(),s.getMonth()+i,1));return{ms,start:iso(ms[0]),end:iso(new Date(s.getFullYear(),s.getMonth()+12,0))}}
+function tlX(W,dstr){const d=new Date(dstr+"T00:00:00");const i=(d.getFullYear()-W.ms[0].getFullYear())*12+d.getMonth()-W.ms[0].getMonth();const dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();return Math.max(0,Math.min(12,i+(d.getDate()-1)/dim))*MW}
+function progOcc(p,W){const out=[];for(let k=0;k<60;k++){const x=addMonths(p.due,p.cada*k);if(x>W.end)break;if(x>=W.start)out.push(x)}return out}
+function renderCrono(M){const box=$("#crono");if(!box)return;const W=tlWindow();const xT=tlX(W,TODAY);const inW=(a,b)=>b>=W.start&&a<=W.end;
+  const bar=(a,b,c,id,ttl,cls)=>{const x1=tlX(W,a),x2=tlX(W,b);return`<button class="tl-bar ${cls||""}" style="left:${x1}px;width:${Math.max(14,x2-x1)}px;--c:${c}" data-tlo="${esc(id)}" title="${esc(ttl)}"></button>`};
+  const dia=(d,c,id,ttl)=>`<button class="tl-dia" style="left:${tlX(W,d)-7}px;--c:${c}" data-tlo="${esc(id)}" title="${esc(ttl)}"></button>`;
+  const groups=[];
+  // En ejecución
+  groups.push({t:"En ejecución",c:"var(--st-exe)",rows:M.exe.map(o=>{const fe=o.finEst&&o.finEst>TODAY?o.finEst:null;const late=o.finEst&&o.finEst<TODAY;
+    return{id:o.id,t:o.nombre,u:o.units.join(" + "),a:o.ini,b:fe||TODAY,h:(inW(o.ini,TODAY)?bar(o.ini,TODAY,late?"var(--st-p1)":"var(--st-exe)",o.id,o.nombre+" · desde "+fdate(o.ini)):"")+(fe&&inW(TODAY,fe)?bar(TODAY,fe,"var(--st-exe)",o.id,"Fin estimado "+fdate(fe),"plan"):""),m:o.pend?usd(o.pend)+" por pagar":""}})});
+  // Por hacer (avisos listos)
+  const hac=M.hacer.filter(x=>x.kind==="aviso").map(x=>{const a=x.o,p=planOf(a);const b=p?addDays(p,durOf(a)):null;
+    return{id:a.id,t:a.descripcion,u:a.u,a:p,b,h:p?(inW(p,b)?bar(p,b,prioColor(a.prio),a.id,a.descripcion+" · "+fdate(p)+" ("+durOf(a)+" días)",p<TODAY?"late":""):""):'<span class="tl-nf">sin fecha · ábrelo y ponle una</span>',m:(a.est?usd(a.est):"")+" P"+a.prio}}).sort((x,y)=>(x.a||"9")<(y.a||"9")?-1:1);
+  groups.push({t:"Por hacer",c:"var(--st-p1)",rows:hac});
+  // Programados
+  groups.push({t:"Programados",c:"var(--st-p2)",nobar:true,rows:M.progs.map(p=>{const occ=progOcc(p,W);const done=S.progLog.filter(l=>l.prog===p.id&&l.fecha&&inW(l.fecha,l.fecha));if(inW(p.ultima,p.ultima)&&!done.some(l=>l.fecha===p.ultima))done.push({fecha:p.ultima});
+    return{id:p.id,t:p.desc,u:p.u,a:occ[0]||p.due,b:occ[occ.length-1]||p.due,h:done.map(l=>dia(l.fecha,"var(--st-ok)",p.id,"Hecho el "+fdate(l.fecha))).join("")+occ.map(d=>dia(d,d<TODAY?"var(--st-p1)":"var(--st-p2)",p.id,(d<TODAY?"Atrasado · tocaba el ":"Toca el ")+fdate(d))).join(""),m:"cada "+meses(p.cada)+(p.est?" · "+usd(p.est):"")}})});
+  // Por revisar
+  groups.push({t:"Por revisar",c:"var(--st-rep)",rows:M.rev.map(a=>{const p=planOf(a),b=p?addDays(p,durOf(a)):null;return{id:a.id,t:a.descripcion,u:a.u,a:p,b,h:p&&inW(p,b)?bar(p,b,"var(--st-rep)",a.id,a.descripcion+" · "+fdate(p)+" ("+durOf(a)+" días)","soft"):'<span class="tl-nf">falta prioridad o costo</span>',m:""}})});
+  // Terminadas (plegado)
+  const term=M.term.filter(o=>o.fin&&inW(o.ini,o.fin));
+  groups.push({t:"Terminadas",c:"var(--st-ok)",fold:true,rows:term.map(o=>({id:o.id,t:o.nombre,u:o.units.join(" + "),a:o.ini,b:o.fin,h:bar(o.ini,o.fin,"var(--st-ok)",o.id,o.nombre+" · "+fdate(o.ini)+" → "+fdate(o.fin)),m:usd(o.costo)}))});
+  // Caja estimada por mes
+  const caja=Array(12).fill(0),det=Array(12).fill(null).map(()=>[]);const mi=d=>{const x=new Date(d+"T00:00:00");return(x.getFullYear()-W.ms[0].getFullYear())*12+x.getMonth()-W.ms[0].getMonth()};
+  const iT=mi(TODAY);let sinFecha=0;
+  for(const x of M.hacer){if(x.kind!=="aviso"||!x.est)continue;const p=planOf(x.o);if(!p){sinFecha+=x.est;continue}const i=Math.max(iT,mi(p));if(i>=0&&i<12){caja[i]+=x.est;det[i].push(x.o.descripcion+" "+usd(x.est))}}
+  for(const p of M.progs){if(!p.est)continue;for(const d of progOcc(p,W)){const i=Math.max(iT,mi(d));if(i>=0&&i<12&&(d>=TODAY||i===iT)){caja[i]+=p.est;det[i].push(p.desc+" "+usd(p.est))}}}
+  const pend=M.obs.reduce((a,o)=>a+(o.pend||0),0);if(pend&&iT>=0&&iT<12){caja[iT]+=pend;det[iT].push("Saldo CxP "+usd(pend))}
+  const cmx=Math.max(1,...caja);
+  const head=`<div class="tl-row tl-head"><div class="tl-lab"><b>${esc(cxName())}</b></div><div class="tl-track">${W.ms.map((m,i)=>`<div class="tl-m${m.getMonth()===0?" y":""}" style="left:${i*MW}px">${MES_N[m.getMonth()]}${m.getMonth()===0||i===0?" "+String(m.getFullYear()).slice(2):""}</div>`).join("")}</div></div>`;
+  let body="";
+  for(const g of groups){const open=!g.fold||S.tlTerm;const rr=g.nobar?[]:g.rows.filter(r=>r.a&&r.b);const ga=rr.length?rr.reduce((m,r)=>r.a<m?r.a:m,"9999"):null,gb=rr.length?rr.reduce((m,r)=>r.b>m?r.b:m,"0000"):null;
+    body+=`<div class="tl-row tl-g"><div class="tl-lab"><button class="tl-gt" ${g.fold?"data-tlterm":""} style="--c:${g.c}">${g.fold?(open?"▾ ":"▸ "):""}${g.t} · ${g.rows.length}</button></div><div class="tl-track">${ga&&inW(ga,gb)?`<div class="tl-gbar" style="left:${tlX(W,ga)}px;width:${Math.max(6,tlX(W,gb)-tlX(W,ga))}px;--c:${g.c}"></div>`:""}</div></div>`;
+    if(!open)continue;
+    if(!g.rows.length)body+=`<div class="tl-row"><div class="tl-lab"><span class="hint2">Nada</span></div><div class="tl-track"></div></div>`;
+    for(const r of g.rows)body+=`<div class="tl-row"><div class="tl-lab"><button class="tl-name" data-tlo="${esc(r.id)}" title="${esc(r.t)}">${esc(r.t)}</button><span class="tl-u">${esc(r.u)}${r.m?" · "+esc(r.m):""}</span></div><div class="tl-track">${r.h}</div></div>`}
+  const cajaRow=`<div class="tl-row tl-cash"><div class="tl-lab"><b>Caja estimada</b><span class="tl-u">por hacer + programados + saldo CxP${sinFecha?` · sin fecha: ${usd(sinFecha)}`:""}</span></div><div class="tl-track">${caja.map((v,i)=>v?`<div class="tl-c" style="left:${i*MW+6}px" title="${esc(det[i].join("\n"))}"><i style="height:${Math.max(3,v/cmx*34)}px"></i><span>${usd(v).replace(",00","")}</span></div>`:"").join("")}</div></div>`;
+  box.innerHTML=`<div class="tl-top"><div class="seg"><button data-tl="-3" aria-label="Meses anteriores">◀</button><button data-tl="0">Hoy</button><button data-tl="3" aria-label="Meses siguientes">▶</button></div>
+    <div class="legend static" style="padding:5px 9px"><span><i style="background:var(--st-exe)"></i>En ejecución</span><span><i style="background:var(--st-p1)"></i>P1</span><span><i style="background:var(--st-p2)"></i>P2-3 / programado</span><span><i style="background:var(--st-rep)"></i>Por revisar</span><span><i style="background:var(--st-ok)"></i>Hecho</span><span><b class="tl-key"></b>estimado</span></div></div>
+    <div class="tl"><div class="tl-in" style="width:${230+12*MW}px">${head}${body}${cajaRow}<div class="tl-today" style="left:${230+xT}px" title="Hoy"></div></div></div>
+    <div class="hint2" style="padding:6px 2px">Las barras de «Por hacer» van desde la fecha estimada de ejecución por la duración estimada (7 días si no la pones). Toca un nombre o una barra para verlo y editar fechas.</div>`}
+document.addEventListener("click",e=>{const t=e.target.closest("#crono [data-tlo],#crono [data-tl],#crono [data-tlterm]");if(!t)return;
+  if(t.dataset.tlo){S.item=t.dataset.tlo;S.sel=null;S.list=null;S.form=null;return renderPanel(model())}
+  if(t.dataset.tl!=null){const v=Number(t.dataset.tl);S.tl=v?S.tl+v:0;return renderCrono(model())}
+  if("tlterm" in t.dataset){S.tlTerm=!S.tlTerm;return renderCrono(model())}});
+
 // ===================== Navegación =====================
 const CX_TABS=[{k:"todos",n:"Todos"},...COMPLEJOS];
 function renderCx(){$("#cx").innerHTML=CX_TABS.map(c=>`<button data-cx="${c.k}" aria-pressed="${c.k===S.cx}">${c.n}</button>`).join("");
   $("#cx").querySelectorAll("button").forEach(b=>b.onclick=()=>setComplex(b.dataset.cx))}
 function setComplex(k){if(!CX_TABS.find(c=>c.k===k))k="todos";S.cx=k;S.sel=null;S.item=null;S.list=null;S.form=null;if(S.draw)cancelDraw(true);try{localStorage.setItem("mant_cx",k)}catch(e){}
   $("#cx").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.cx===k));
-  const todos=k==="todos";$("#multi").hidden=!todos;
-  CX=todos?{}:(G.poly[k]||{});const hasMap=!!CX.imagen;$("#mapbox").hidden=!hasMap;$("#main").classList.toggle("nomap",!hasMap&&!todos);
+  const todos=k==="todos";
+  CX=todos?{}:(G.poly[k]||{});const hasMap=!!CX.imagen;applyLayout();
   if(hasMap){const img=$("#planimg");img.setAttribute("href",CX.imagen.startsWith("planos/")?BASE+CX.imagen:CX.imagen);img.setAttribute("width",CX.ancho);img.setAttribute("height",CX.alto);img.classList.toggle("lineart",k==="limoncito");
     FULL={x:0,y:0,w:CX.ancho,h:CX.alto};VB={...FULL};setVB()}else FULL=null;
   drawAll()}
-function unitClick(c){if(S.draw)return;if(S.cx==="todos"||cxOf(c)!==S.cx){const k=cxOf(c);if(k)setComplex(k)}S.sel=c;S.item=null;S.list=null;S.form=null;if(FULL&&unitBox(c))zoomTo(c);drawAll()}
+function applyLayout(){const todos=S.cx==="todos",hasMap=!!(CX&&CX.imagen);$("#crono").hidden=!S.crono;$("#multi").hidden=S.crono||!todos;$("#mapbox").hidden=S.crono||!hasMap;$("#main").classList.toggle("nomap",!S.crono&&!hasMap&&!todos)}
+function unitClick(c){if(S.crono){S.crono=false;setFilter("todo");applyLayout()}if(S.draw)return;if(S.cx==="todos"||cxOf(c)!==S.cx){const k=cxOf(c);if(k)setComplex(k)}S.sel=c;S.item=null;S.list=null;S.form=null;if(FULL&&unitBox(c))zoomTo(c);drawAll()}
 function unitOfItem(id){const o=eObra(id);if(o)return o.units[0];const a=S.avisos.find(a=>a.id===id);if(a)return a.u;const p=S.progs.find(p=>p.id===id);return p?p.u:null}
-function goItem(id){const u=unitOfItem(id);const k=u&&cxOf(u);if(k&&(S.cx==="todos"||S.cx!==k))setComplex(k);openItem(id)}
+function goItem(id){if(S.crono){S.item=id;S.sel=null;S.list=null;S.form=null;return drawAll()}const u=unitOfItem(id);const k=u&&cxOf(u);if(k&&(S.cx==="todos"||S.cx!==k))setComplex(k);openItem(id)}
 function openItem(id){if(S.geoEdit&&S.geoEdit.id!==id)S.geoEdit=null;S.item=id;S.list=null;S.form=null;const u=unitOfItem(id);if(u&&S.sel!==u){S.sel=u;if(FULL&&unitBox(u))zoomTo(u)}drawAll()}
 function home(){S.geoEdit=null;S.sel=null;S.item=null;S.list=null;S.form=null;if(FULL){VB={...FULL};setVB()}drawAll()}
 function setFilter(f){S.filter=f;document.querySelectorAll("[data-f]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f))}
@@ -565,7 +656,7 @@ function startDraw(id,tipo){S.draw={id,tipo,pts:[]};$("#app").classList.add("dra
   h.textContent=tipo==="punto"?"Toca el plano donde está el trabajo.":tipo==="linea"?"Toca a lo largo de la canal, punto por punto. Luego «Guardar ubicación».":"Toca las esquinas del área. Luego «Guardar ubicación».";renderPanel(model())}
 async function saveGeoOwner(id){const o=G.obras.find(o=>o.id===id);if(o)return save(o.id,obraRow(o));const a=S.avisos.find(a=>a.id===id);if(a)return save(a.id,avisoRow(a))}
 // Bloque de ubicaciones en la ficha: lista + agregar punto / línea / área
-function geoBlock(id,parte){if(!CX.imagen)return"";const L=S.geom[id]||[];const nom={punto:"Punto",linea:"Línea",area:"Área"};
+function geoBlock(id,parte){if(!CX.imagen||S.crono)return"";const L=S.geom[id]||[];const nom={punto:"Punto",linea:"Línea",area:"Área"};
   return`<div class="card"><h3>Dónde se trabajó · ${L.length}</h3>${L.length?`<div class="list">${L.map((g,i)=>`<div class="row static"><i class="dot" style="background:var(--accent)"></i><span class="t">${i+1}. ${nom[g.tipo]||"Punto"}</span><span class="v">${S.geoEdit&&S.geoEdit.id===id&&S.geoEdit.i===i?`<button class="btn primary" data-geodone>Listo</button>`:`<button class="btn link" data-movegeo="${esc(id)}|${i}">Mover</button> · <button class="btn link" data-delgeo="${esc(id)}|${i}" style="color:var(--muted);font-weight:500">Quitar</button>`}</span></div>`).join("")}</div>`:'<div class="hint2">Aún no está ubicado en el plano.</div>'}
   <div class="hint2">Puedes marcar varias zonas de la misma obra (ej: varias partes del techo).</div>
   <div class="actions"><button class="btn" data-locate="${esc(id)}" data-kind="punto">+ Punto</button><button class="btn" data-locate="${esc(id)}" data-kind="linea">+ Línea</button><button class="btn" data-locate="${esc(id)}" data-kind="area">+ Área</button></div></div>`}
@@ -582,14 +673,14 @@ const sortAvisos=arr=>arr.slice().sort((a,b)=>((a.prio||9)-(b.prio||9))||((a.fec
 const det=(k,open)=>S.det[k]!=null?S.det[k]:open;
 
 function rowRev(a){const falta=[!a.prio&&"prioridad",!a.est&&"costo"].filter(Boolean).join(" y ");
-  return`<button class="row" data-open="${esc(a.id)}"><span class="prio" style="background:${prioColor(a.prio)}">${a.prio?"P"+a.prio:"?"}</span><span class="t">${esc(a.descripcion)}</span><span class="v"><span class="tag">falta ${falta}</span></span><span class="m">${esc(a.u)} · ${esc(a.parte)} · avisado ${hace(a.fecha)}</span></button>`}
+  return`<button class="row" data-open="${esc(a.id)}"><span class="prio" style="background:${prioColor(a.prio)}">${a.prio?"P"+a.prio:"?"}</span><span class="t">${esc(a.descripcion)}</span><span class="v"><span class="tag">falta ${falta}</span></span><span class="m">${esc(a.u)} · ${esc(a.parte)} · ${planOf(a)?"para el "+fdate(planOf(a)):"avisado "+hace(a.fecha)}</span></button>`}
 function secRev(rev,empty){if(!rev.length)return empty?'<div class="note">Nada por revisar. Todos los avisos tienen prioridad y costo.</div>':"";
   return`<div class="card alert"><div class="sec-h"><h3><i class="dot" style="background:var(--st-rep)"></i> Por revisar o presupuestar · ${rev.length}</h3></div>
   <div class="hint2">Ponles prioridad y costo estimado para que pasen a «Por hacer».</div><div class="list">${rev.map(rowRev).join("")}</div></div>`}
 
 function rowHacer(x){const on=!S.simOff.has(x.id);let t,m,tag="";
   if(x.kind==="prog"){const p=x.o;t=p.desc;tag=p.dias<0?`<span class="tag warn">atrasado ${-p.dias} días</span>`:`<span class="tag amber">${p.dias===0?"toca hoy":"toca en "+p.dias+" días"}</span>`;m=`${esc(p.u)} · ${esc(p.parte)} · programado cada ${meses(p.cada)}`}
-  else{const a=x.o;t=a.descripcion;m=`${esc(a.u)} · ${esc(a.parte)} · avisado ${hace(a.fecha)}`}
+  else{const a=x.o;t=a.descripcion;m=`${esc(a.u)} · ${esc(a.parte)} · ${planOf(a)?"para el "+fdate(planOf(a)):"avisado "+hace(a.fecha)}`}
   return`<div class="hrow${on?"":" off"}"><input type="checkbox" data-sim="${esc(x.id)}" ${on?"checked":""} aria-label="Incluir en el cálculo de caja"><span class="prio" style="background:${prioColor(x.prio)}">P${x.prio}</span><button class="t" data-open="${esc(x.id)}">${esc(t)}${tag}</button><span class="v">${x.est?usd(x.est):'<span class="sinc">sin costo</span>'}</span><span class="m">${m}</span></div>`}
 function secHacer(hacer,exe,empty){
   const sel=hacer.filter(x=>!S.simOff.has(x.id));const tot=hacer.reduce((a,x)=>a+(x.est||0),0);const st=sel.reduce((a,x)=>a+(x.est||0),0);
@@ -609,7 +700,7 @@ function secExe(exe,empty){if(!exe.length)return empty?'<div class="note">Nada e
   return`<div class="card"><div class="sec-h"><h3><i class="dot" style="background:var(--st-exe)"></i> En ejecución · ${exe.length}</h3><span class="tot">${comp?usd(comp)+" por pagar":""}</span></div><div class="list">${exe.map(rowExe).join("")}</div></div>`}
 
 function rowProg(p){const toca=p.dias<=p.avisar;return`<button class="row" data-open="${esc(p.id)}"><i class="dot" style="background:${p.dias<0?"var(--st-p1)":toca?"var(--st-p2)":"var(--st-ok)"}"></i><span class="t">${esc(p.desc)}</span><span class="v vsm">${p.dias<0?"atrasado":fdate(p.due)}</span><span class="m">${esc(p.u)} · cada ${meses(p.cada)} · última vez ${fdate(p.ultima)}</span></button>`}
-function secProgs(progs,u){return`<details class="layer" data-det="progs" ${det("progs",false)?"open":""}><summary>Mantenimientos programados · ${progs.length}</summary>
+function secProgs(progs,u,open){return`<details class="layer" data-det="progs" ${open||det("progs",false)?"open":""}><summary>Mantenimientos programados · ${progs.length}</summary>
   <div class="hint2">Tareas que se repiten (limpieza de canales, áreas verdes…). Aparecen solas en «Por hacer» como prioridad 1 unos días antes de que toquen.</div>
   <div class="list">${progs.map(rowProg).join("")||'<div class="note">Aún no hay ninguno.</div>'}</div><div class="actions" style="margin-top:8px"><button class="btn" data-newprog="${esc(u||"")}">+ Programar mantenimiento</button></div></details>`}
 
@@ -648,23 +739,21 @@ function budBlock(o){if(!o.ptot)return o.estado!=="Terminada"?'<div class="hint2
   return`<div class="bud"><div class="ln"><span>Gastado vs presupuesto</span><b>${usd(o.costo)} de ${usd(o.ptot)} · ${Math.round(r*100)}%</b></div><div class="bar"><b style="width:${Math.min(100,r*100).toFixed(1)}%;background:${c}"></b></div>${r>1?`<div class="warnline" style="color:var(--st-p1)">Sobrecosto de ${usd(o.costo-o.ptot)}</div>`:""}</div>`}
 function dupGroups(M){const g={};for(const a of M.avisos){const k=a.u+"|"+norm(a.descripcion);(g[k]=g[k]||[]).push(a)}
   return Object.entries(g).filter(([k,v])=>v.length>1).map(([key,items])=>({key,items:items.sort((a,b)=>a.id<b.id?-1:1)}))}
-function alertList(M,unit){const C=S.cfg,out=[];const inU=u=>!unit||u===unit;
-  for(const o of M.obs){if(!o.units.some(inU)||!o.ptot)continue;const r=o.costo/o.ptot;
-    if(r>1&&(o.estado!=="Terminada"||daysSince(o.fin)<=60))out.push({n:0,open:o.id,t:`Sobrecosto: ${o.nombre}`,m:`${o.units.join(" + ")} · gastado ${usd(o.costo)} de ${usd(o.ptot)} (+${usd(o.costo-o.ptot)})`});
-    else if(r>=.8&&o.estado!=="Terminada")out.push({n:2,open:o.id,t:`Va en ${Math.round(r*100)}% del presupuesto: ${o.nombre}`,m:`${o.units.join(" + ")} · quedan ${usd(o.ptot-o.costo)}`})}
-  for(const u of G.units){if(u.comun||!M.cxUnits.has(u.code)||!inU(u.code))continue;const st=unitInvest(u.code,M);
-    if(st.pct!=null&&st.pct*100>C.mant_pct)out.push({n:3,unit:u.code,t:`${u.code}: mantenimiento en ${Math.round(st.pct*100)}% del alquiler`,m:`${usd(st.mant)} en el año · tope ${C.mant_pct}%`})}
-  for(const o of M.obs){if(o.clase!=="inversion"||!o.units.some(inU)||!o.costo)continue;const can=o.units.reduce((a,c)=>{const x=G.ub[c]||{};return a+(x.canon||x.objetivo||0)},0);const obj=o.units.some(c=>{const x=G.ub[c]||{};return!x.canon&&x.objetivo});const mr=can?o.costo/can:null;
-    if(mr==null||mr>C.recup_meses)out.push({n:8,open:o.id,t:`Inversión que tarda en recuperarse: ${o.nombre}`,m:`${o.units.join(" + ")} · ${usd(o.costo)} · ${mr==null?"local sin alquiler":"se paga en "+f1(mr)+" meses de alquiler"+(obj?" (con canon objetivo)":"")+" · tope "+C.recup_meses}`})}
-  for(const o of M.exe){if(!o.units.some(inU))continue;const last=o.lines.reduce((a,l)=>l.f>a?l.f:a,"");
-    if(daysSince(o.ini)>C.estancada_dias&&(!last||daysSince(last)>30))out.push({n:4,open:o.id,t:`Obra estancada: ${o.nombre}`,m:`lleva ${daysSince(o.ini)} días · ${last?"último pago hace "+daysSince(last)+" días":"sin pagos"}`})}
-  for(const a of M.rev){if(!inU(a.u))continue;const d=daysSince(a.fecha);if(d>C.aviso_dias)out.push({n:5,open:a.id,t:`Sin evaluar hace ${d} días: ${a.descripcion}`,m:`${a.u} · falta prioridad o costo`})}
-  for(const x of M.hacer){if(!inU(x.u))continue;if(x.kind==="aviso"&&x.prio==1){const d=daysSince(x.o.fecha);if(d>C.p1_dias)out.push({n:1,open:x.id,t:`Prioridad 1 esperando hace ${d} días: ${x.o.descripcion}`,m:`${x.u} · ${x.est?usd(x.est):"sin costo"}`})}
-    if(x.kind==="prog"&&x.o.dias<0)out.push({n:1,open:x.id,t:`Mantenimiento atrasado ${-x.o.dias} días: ${x.o.desc}`,m:`${x.u} · tocaba el ${fdate(x.o.due)}`})}
-  for(const g of dupGroups(M)){if(!inU(g.items[0].u))continue;out.push({n:6,dup:g.key,t:`Aviso repetido ${g.items.length} veces: ${g.items[0].descripcion}`,m:`${g.items[0].u} · toca aquí para dejar uno solo`})}
+// Alertas = tiempo o prioridad (lo que ayuda a decidir qué ejecutar primero). Costos y rentabilidad van en las fichas, no aquí.
+function alertList(M,unit){const C=S.cfg,out=[],seen=new Set();const inU=u=>!unit||u===unit;
+  for(const x of M.hacer){if(!inU(x.u))continue;
+    if(x.kind==="prog"&&x.o.dias<0){out.push({n:0,open:x.id,t:`Mantenimiento atrasado ${-x.o.dias} días: ${x.o.desc}`,m:`${x.u} · tocaba el ${fdate(x.o.due)}`});seen.add(x.id)}
+    if(x.kind==="aviso"&&x.prio==1){const p=planOf(x.o);if(p&&p>TODAY)continue;const d=daysSince(p||x.o.fecha);if(d>C.p1_dias){out.push({n:0,open:x.id,t:`Prioridad 1 esperando hace ${d} días: ${x.o.descripcion}`,m:`${x.u}${p?" · estaba para el "+fdate(p):""}`});seen.add(x.id)}}}
+  for(const a of M.avisos){if(!inU(a.u)||seen.has(a.id))continue;const p=a.plan;if(p&&p<TODAY)out.push({n:1,open:a.id,t:`Se pasó la fecha estimada: ${a.descripcion}`,m:`${a.u} · era el ${fdate(p)} (hace ${daysSince(p)} días)`})}
+  for(const o of M.exe){if(!o.units.some(inU))continue;
+    if(o.finEst&&o.finEst<TODAY){out.push({n:1,open:o.id,t:`Obra pasada de su fin estimado: ${o.nombre}`,m:`${o.units.join(" + ")} · debía terminar el ${fdate(o.finEst)}`});continue}
+    const last=o.lines.reduce((a,l)=>l.f>a?l.f:a,"");
+    if(daysSince(o.ini)>C.estancada_dias&&(!last||daysSince(last)>30))out.push({n:2,open:o.id,t:`Obra estancada: ${o.nombre}`,m:`lleva ${daysSince(o.ini)} días · ${last?"último pago hace "+daysSince(last)+" días":"sin pagos"}`})}
+  for(const a of M.rev){if(!inU(a.u))continue;const d=daysSince(a.fecha);if(d>C.aviso_dias)out.push({n:3,open:a.id,t:`Sin evaluar hace ${d} días: ${a.descripcion}`,m:`${a.u} · falta prioridad o costo`})}
+  for(const g of dupGroups(M)){if(!inU(g.items[0].u))continue;out.push({n:4,dup:g.key,t:`Aviso repetido ${g.items.length} veces: ${g.items[0].descripcion}`,m:`${g.items[0].u} · toca aquí para dejar uno solo`})}
   return out.sort((a,b)=>a.n-b.n)}
 function alertsBlock(M,unit){const L=alertList(M,unit);if(!L.length)return"";
-  return`<div class="card alerts"><div class="sec-h"><h3><i class="dot" style="background:var(--st-p1)"></i> Alertas · ${L.length}</h3></div><div class="list">${L.map(a=>`<button class="row" ${a.open?`data-open="${esc(a.open)}"`:a.unit?`data-unit="${esc(a.unit)}"`:`data-dupdel="${esc(a.dup)}"`}><i class="dot" style="background:${a.n<=1?"var(--st-p1)":a.n>=8?"var(--muted)":"var(--st-p2)"}"></i><span class="t">${esc(a.t)}</span><span class="v"></span><span class="m">${esc(a.m)}</span></button>`).join("")}</div></div>`}
+  return`<div class="card alerts"><div class="sec-h"><h3><i class="dot" style="background:var(--st-p1)"></i> Alertas · ${L.length}</h3></div><div class="list">${L.map(a=>`<button class="row" ${a.open?`data-open="${esc(a.open)}"`:a.unit?`data-unit="${esc(a.unit)}"`:`data-dupdel="${esc(a.dup)}"`}><i class="dot" style="background:${a.n===0?"var(--st-p1)":a.n>=4?"var(--muted)":"var(--st-p2)"}"></i><span class="t">${esc(a.t)}</span><span class="v"></span><span class="m">${esc(a.m)}</span></button>`).join("")}</div></div>`}
 const mesesAno=()=>{const d=new Date(TODAY+"T00:00:00"),a=new Date(d.getFullYear(),0,1);return Math.max(0.5,(d-a)/864e5/365*12)};
 const MESES_C=["E","F","M","A","M","J","J","A","S","O","N","D"],MESES_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function indicators(M){const y=TODAY.slice(0,4),cm=+TODAY.slice(5,7);const by=Array(12).fill(0);
@@ -682,8 +771,7 @@ function indicators(M){const y=TODAY.slice(0,4),cm=+TODAY.slice(5,7);const by=Ar
   <div class="hint2">Mantenimiento llevado a 12 meses ÷ m² arrendables (ocupados y desocupados). Las inversiones van aparte. El % compara con el alquiler cobrable en lo que va de año (canon vigente).</div>
   <div class="list">${per.map(p=>`<button class="row" data-cx="${p.c.k}"><span class="code">${esc(p.c.n)}</span><span class="t"></span><span class="v">${p.m2?"$"+fmt(p.v)+"/m² al año":"—"}</span><span class="rbar"><b style="width:${(p.v/pmx*100).toFixed(1)}%"></b></span><span class="m">Mantenimiento ${usd(p.mant)} = <b style="color:var(--text)">${pc(p.pct)} del alquiler</b> · Inversión ${usd(p.cap)}${p.cap&&p.m2?" ($"+fmt(p.vc)+"/m²)":""}${p.cap?" · todo junto "+pc(p.pctT):""} · ${fmt(p.m2)} m²</span></button>`).join("")}</div></details>`}
 function cfgFormHTML(){const C=S.cfg;return`<div><button class="btn link" data-home>← Volver</button></div><div><div class="eyebrow">Ajustes</div><h2>Topes de las alertas</h2></div>
-  <form id="fcfg"><label for="cf-t">Mantenimiento: avisar si pasa este % del alquiler del local<input id="cf-t" type="number" min="1" step="1" value="${C.mant_pct}"></label>
-  <label for="cf-r">Inversión: avisar si tarda más de estos meses de alquiler en recuperarse<input id="cf-r" type="number" min="1" step="1" value="${C.recup_meses}"></label>
+  <form id="fcfg"><label for="cf-t">Marcar en la ficha si el mantenimiento pasa este % del alquiler<input id="cf-t" type="number" min="1" step="1" value="${C.mant_pct}"></label>
   <label for="cf-e">Obra estancada: más de estos días abierta y sin pagos en los últimos 30<input id="cf-e" type="number" min="7" step="1" value="${C.estancada_dias}"></label>
   <label for="cf-a">Aviso olvidado: días sin evaluar<input id="cf-a" type="number" min="1" step="1" value="${C.aviso_dias}"></label>
   <label for="cf-p">Prioridad 1 sin ejecutar: días<input id="cf-p" type="number" min="1" step="1" value="${C.p1_dias}"></label>
@@ -702,7 +790,7 @@ function renderPanel(M){
     if(o){h=`<div><button class="btn link" data-unit="${esc(o.units[0])}">← ${esc(o.units[0])}</button></div>
       <div><div class="eyebrow">Obra · ${esc(o.parte)}${o.cxp?" · "+esc(o.cxp):" · sin partida"}</div><h2>${esc(o.nombre)}</h2></div>
       <div class="actions"><span class="pill"><i style="background:${obraColor(o)}"></i>${o.estado}${o.fin?" · "+fdate(o.fin):""}</span><span class="pill">${o.clase==="inversion"?`Inversión · dura ${o.vida} años · ${usd(o.costo/o.vida)}/año`:"Mantenimiento"}</span></div>
-      <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Partida CxP</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
+      <dl class="kv"><dt>Local</dt><dd>${esc(o.units.join(" + "))}</dd><dt>Inicio</dt><dd>${fdate(o.ini)}</dd>${o.fin?`<dt>Terminó</dt><dd>${fdate(o.fin)}</dd><dt>Duró</dt><dd>${dur(o.ini,o.fin)} días</dd>`:`<dt>Lleva</dt><dd>${daysSince(o.ini)} días</dd>${o.finEst?`<dt>Fin estimado</dt><dd>${fdate(o.finEst)}</dd>`:""}`}<dt>Ejecuta</dt><dd>${esc(o.quien||"—")}</dd>${o.presupuesto?`<dt>Partida CxP</dt><dd>${usd(o.presupuesto)}</dd>`:""}<dt>Pagado (banco)</dt><dd>${usd(o.costo)}</dd>${o.pend?`<dt>Saldo por pagar</dt><dd>${usd(o.pend)}</dd>`:""}</dl>
       ${budBlock(o)}${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}<div class="actions"><button class="btn" data-editobra="${esc(o.id)}">✎ Editar (título, local, presupuesto, nota)</button>${o.editada?'<span class="hint2">Editada en la app</span>':""}</div>
       ${o.estado==="Terminada"?`<div class="actions"><button class="btn" data-reopen="${esc(o.id)}">Reabrir</button></div>`:`<div class="card"><h3>¿Ya terminó?</h3><label for="of-f">Fecha en que terminó<input id="of-f" type="date" value="${TODAY}" min="${o.ini}" max="${TODAY}"></label><div class="actions"><button class="btn primary" data-finishobra="${esc(o.id)}">Marcar terminada</button></div></div>`}
       ${geoBlock(o.id,o.parte)}
@@ -710,7 +798,7 @@ function renderPanel(M){
     else if(a){const lst=ready(a);h=`<div><button class="btn link" data-unit="${esc(a.u)}">← ${esc(a.u)}</button></div>
       <div><div class="eyebrow">Aviso · ${esc(a.parte)}</div><h2>${esc(a.descripcion)}</h2></div>${a.nota?`<div class="note">${esc(a.nota)}</div>`:""}
       <div class="actions"><span class="pill"><i style="background:${avisoColor(a)}"></i>${lst?"Por hacer · prioridad "+a.prio:"Por revisar"}</span></div>
-      <dl class="kv"><dt>Local</dt><dd>${esc(a.u)}</dd><dt>Fecha del aviso</dt><dd>${fdate(a.fecha)}</dd><dt>Antigüedad</dt><dd>${daysSince(a.fecha)} días</dd></dl>
+      <dl class="kv"><dt>Local</dt><dd>${esc(a.u)}</dd><dt>Avisaron</dt><dd>${fdate(a.fecha)}${daysSince(a.fecha)>0?" · hace "+daysSince(a.fecha)+" días":""}</dd><dt>Ejecución estimada</dt><dd>${planOf(a)?fdate(planOf(a))+" · "+durOf(a)+" días":"sin fecha"}</dd></dl>
       <div class="card"><h3>Evaluar</h3>${lst?"":'<div class="hint2">Con prioridad y costo estimado pasa a «Por hacer» y entra en el cálculo de caja.</div>'}
       <label for="ap">Prioridad<select id="ap" data-prioset="${esc(a.id)}"><option value="">Sin definir</option>${[1,2,3].map(p=>`<option value="${p}" ${a.prio==p?"selected":""}>${p}${p===1?" · urgente":p===3?" · puede esperar":""}</option>`).join("")}</select></label>
       <label for="ae">Costo estimado (USD)<input id="ae" type="number" min="0" step="1" inputmode="decimal" data-estset="${esc(a.id)}" value="${a.est||""}" placeholder="Ej: 350"></label></div>
@@ -741,8 +829,8 @@ function renderPanel(M){
     ${men.length?`<details class="layer"><summary>Gastos menores · ${usd(men.reduce((a,l)=>a+l.usd,0))}</summary><div class="list">${men.map(l=>lineRow(l,M,[c])).join("")}</div></details>`:""}
     ${M.excl.filter(l=>l.u===c).length?`<details class="layer"><summary>Pagos excluidos · ${M.excl.filter(l=>l.u===c).length}</summary><div class="hint2">No cuentan como mantenimiento. Cambia el selector para devolverlos.</div><div class="list">${M.excl.filter(l=>l.u===c).map(l=>lineRow(l,M,[c])).join("")}</div></details>`:""}
     ${secHist(M,c)}`}
-  else if(S.list){const k=S.list;const T={rev:"Por revisar o presupuestar",pend:"Por hacer",exe:"En ejecución",hist:"Historial"};
-    const body=k==="rev"?secRev(M.rev,true):k==="pend"?secHacer(M.hacer,M.obs.filter(o=>o.pend>0),true):k==="exe"?secExe(M.exe,true):secHist(M,null,true);
+  else if(S.list){const k=S.list;const T={rev:"Por revisar o presupuestar",pend:"Por hacer",exe:"En ejecución",prog:"Mantenimientos programados",hist:"Historial"};
+    const body=k==="prog"?secProgs(M.progs,null,true):k==="rev"?secRev(M.rev,true):k==="pend"?secHacer(M.hacer,M.obs.filter(o=>o.pend>0),true):k==="exe"?secExe(M.exe,true):secHist(M,null,true);
     h=`<div><button class="btn link" data-home>← Resumen</button></div><div><div class="eyebrow">${esc(cxName())}</div><h2>${T[k]}</h2></div>${k!=="hist"?askBlocks(M,null):""}${body}`}
   else{const todos=S.cx==="todos";const cu=G.units.filter(u=>M.cxUnits.has(u.code));
     const rank=cu.map(u=>({u,...unitInvest(u.code,M)}));const inv=rank.reduce((a,r)=>a+r.inv,0);const max=Math.max(1,...rank.map(r=>r.inv));
@@ -775,7 +863,9 @@ function formHTML(){const a=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;co
   <label for="av-u">Local<select id="av-u">${unitOptions(u,!!a)}</select></label>
   <label for="av-p">Parte<select id="av-p">${PARTES.map(p=>`<option ${a&&a.parte===p?"selected":""}>${p}</option>`).join("")}</select></label>
   <label for="av-n">Nota / descripción (opcional)<textarea id="av-n" placeholder="Detalles, quién avisó, medidas…">${esc(a?a.nota||"":"")}</textarea></label>
-  <label for="av-f">Fecha del aviso<input id="av-f" type="date" value="${a?a.fecha:TODAY}"></label>
+  <label for="av-f">Fecha en que avisaron<input id="av-f" type="date" value="${a?(a.fecha>TODAY&&!a.plan?TODAY:a.fecha):TODAY}" max="${TODAY}"></label>
+  <label for="av-pl">Fecha estimada de ejecución (opcional)<input id="av-pl" type="date" value="${a?(a.plan||(a.fecha>TODAY?a.fecha:"")):""}"></label>
+  <label for="av-du">Duración estimada en días (opcional)<input id="av-du" type="number" min="1" step="1" value="${a&&a.dias?a.dias:""}" placeholder="7"></label>
   <label for="av-pr">Prioridad${a?"":" (si ya la sabes)"}<select id="av-pr"><option value="">Sin definir</option>${[1,2,3].map(n=>`<option value="${n}" ${a&&a.prio==n?"selected":""}>${n}${n===1?" · urgente":n===3?" · puede esperar":""}</option>`).join("")}</select></label>
   <label for="av-e">Costo estimado${a?"":" (si ya lo sabes)"} (USD)<input id="av-e" type="number" min="0" step="1" inputmode="decimal" value="${a&&a.est?a.est:""}"></label>
   <div class="actions"><button class="btn primary" type="submit">Guardar</button></div><div class="msg" id="av-msg"></div></form>
@@ -791,6 +881,7 @@ function obraFormHTML(){const raw=rawObra(S.form.id);const o=obraEff(raw);const 
   <label for="ob-p">Parte<select id="ob-p">${part.map(x=>`<option ${o.parte===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
   <label for="ob-b">Presupuesto total de la obra (USD, materiales + mano de obra)<input id="ob-b" type="number" min="0" step="1" inputmode="decimal" value="${o.ptot||""}" placeholder="${o.presupuesto?"Partida CxP: "+o.presupuesto:"Ej: 1500"}"></label>
   <label for="ob-i">Fecha de inicio<input id="ob-i" type="date" value="${o.ini}"></label>
+  <label for="ob-fe">Fin estimado (opcional, para el cronograma)<input id="ob-fe" type="date" value="${o.finEst||""}"></label>
   <label for="ob-t">Nota / descripción<textarea id="ob-t" placeholder="Qué se hizo, detalles, observaciones…">${esc(o.nota||"")}</textarea></label>
   <div class="actions"><button class="btn primary" type="submit">Guardar</button>${ed?`<button class="btn" type="button" data-resetobra="${esc(o.id)}">Volver a los datos del Sheet</button>`:""}</div><div class="msg" id="ob-msg"></div></form>
   <div class="note">Del Sheet viene: <b>${esc(raw.nombre)}</b> · ${esc(raw.units.join(" + "))}. Los cambios se guardan en Mantenimiento_App; el Control de Finanzas no se modifica. Los pagos siguen a la obra aunque cambies el local.</div>`}
@@ -849,16 +940,16 @@ document.addEventListener("submit",async e=>{const f=e.target;if(f.id==="fgate")
   const btn=f.querySelector('[type=submit]');f.dataset.busy="1";if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent="Guardando…"}
   try{await submitBody(e)}finally{if(document.body.contains(f)){delete f.dataset.busy;if(btn){btn.disabled=false;btn.textContent=btn.dataset.t}}}});
 async function submitBody(e){
-  if(e.target.id==="fcfg"){e.preventDefault();const c={mant_pct:Number($("#cf-t").value)||10,recup_meses:Number($("#cf-r").value)||36,estancada_dias:Number($("#cf-e").value)||60,aviso_dias:Number($("#cf-a").value)||15,p1_dias:Number($("#cf-p").value)||7};
+  if(e.target.id==="fcfg"){e.preventDefault();const c={mant_pct:Number($("#cf-t").value)||10,recup_meses:S.cfg.recup_meses||36,estancada_dias:Number($("#cf-e").value)||60,aviso_dias:Number($("#cf-a").value)||15,p1_dias:Number($("#cf-p").value)||7};
     const ok=await save("config",{Tipo:"Config","Descripción":"Topes de alertas","Ubicación":JSON.stringify(c)});if(!ok){$("#cf-msg").textContent="No se pudo guardar.";return}S.cfg=c;S.form=null;home()}
   if(e.target.id==="fav"){e.preventDefault();const msg=$("#av-msg");const desc=$("#av-d").value.trim();if(!desc){msg.textContent="Escribe un título.";return}
     const old=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;
-    const a={...(old||{estado:"abierto",noObras:[]}),id:old?old.id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,nota:$("#av-n").value.trim(),fecha:$("#av-f").value||TODAY,prio:$("#av-pr").value?Number($("#av-pr").value):null,est:$("#av-e").value?Number($("#av-e").value):null};
+    const a={...(old||{estado:"abierto",noObras:[]}),id:old?old.id:"av"+Date.now().toString(36),u:$("#av-u").value,parte:$("#av-p").value,descripcion:desc,nota:$("#av-n").value.trim(),fecha:$("#av-f").value||TODAY,plan:$("#av-pl").value||null,dias:Number($("#av-du").value)||null,prio:$("#av-pr").value?Number($("#av-pr").value):null,est:$("#av-e").value?Number($("#av-e").value):null};
     const ok=await save(a.id,avisoRow(a));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.avisos=S.avisos.filter(x=>x.id!==a.id);S.avisos.push(a);S.form=null;goItem(a.id)}
   if(e.target.id==="fobra"){e.preventDefault();const msg=$("#ob-msg");const id=S.form.id;const raw=rawObra(id);const n=$("#ob-n").value.trim();if(!n){msg.textContent="El título no puede quedar vacío.";return}
     const u1=$("#ob-u").value,u2=$("#ob-u2").value;const units=[u1,...(u2&&u2!==u1?[u2]:[])];
-    S.obraEd[id]={nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim(),ptot:$("#ob-b").value?Number($("#ob-b").value):"",clase:$("#ob-c").value,vida:Number($("#ob-v").value)||""};
+    S.obraEd[id]={finEst:$("#ob-fe").value||"",nombre:n,units,parte:$("#ob-p").value,ini:$("#ob-i").value||raw.ini,nota:$("#ob-t").value.trim(),ptot:$("#ob-b").value?Number($("#ob-b").value):"",clase:$("#ob-c").value,vida:Number($("#ob-v").value)||""};
     const ok=await save(id,obraRow(raw));if(!ok){msg.textContent="No se pudo guardar. Revisa la conexión e intenta de nuevo.";return}
     S.form=null;S.sel=null;goItem(id)}
   if(e.target.id==="fprog"){e.preventDefault();const msg=$("#pg-msg");const desc=$("#pg-d").value.trim();if(!desc){msg.textContent="Escribe la tarea.";return}
@@ -868,7 +959,7 @@ async function submitBody(e){
     S.progs=S.progs.filter(x=>x.id!==p.id);S.progs.push(p);S.form=null;goItem(p.id)}
 
 }
-document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f;if(f==="todo"){setFilter("todo");return home()}openList(f)});
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f;S.crono=f==="crono";if(G)applyLayout();if(f==="todo"||f==="crono"){setFilter(f);return home()}openList(f)});
 document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 $("#legend").innerHTML=LEGEND;
 MAIN_HTML=$("#main").innerHTML;
