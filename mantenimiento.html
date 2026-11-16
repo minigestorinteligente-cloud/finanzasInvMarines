@@ -180,6 +180,7 @@ button.tl-gt[data-tlterm]{cursor:pointer}
 .tl-c i{display:block;width:26px;background:var(--accent);border-radius:3px 3px 0 0}
 .tl-key{display:inline-block;width:18px;height:9px;border:2px dashed var(--muted);border-radius:3px}
 .sync button{font-size:11.5px}
+.errbar{position:sticky;top:0;z-index:50;background:#5c1d1d;color:#fff;border-bottom:2px solid var(--st-p1);padding:10px 16px;font-size:13.5px;font-weight:500;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 @media(max-width:900px){.wrap{height:auto}.main{grid-template-columns:1fr}.mapbox{height:60vh;min-height:360px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -294,6 +295,7 @@ function jsonp(params,timeoutMs){return new Promise((resolve,reject)=>{
   function cleanup(){clearTimeout(t);try{delete window[cb]}catch(e){window[cb]=undefined}sc.remove()}
   window[cb]=d=>{if(done)return;done=true;cleanup();resolve(d)};
   sc.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error("sin respuesta del Sheet"))};
+  sc.onload=()=>setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error("el programa de Google respondió con un error"))},100);
   sc.src=API+"?"+new URLSearchParams({clave:CLAVE,callback:cb,...params});document.head.appendChild(sc);
 })}
 // Conexión: primero fetch SIN cookies (evita el problema de varias cuentas de Google en el navegador); si falla, JSONP
@@ -311,16 +313,20 @@ async function llamar(params,timeoutMs){
   }
 }
 const api=params=>llamar(params,180000);
+// Si un guardado falla, queda una franja roja fija arriba hasta que se cierre (nunca falla en silencio)
+function errGuardar(msg){sync.textContent="";let b=$("#errbar");if(!b){b=document.createElement("div");b.id="errbar";b.className="errbar";document.body.prepend(b)}
+  b.innerHTML=`⚠ ${esc(msg)} — este cambio NO quedó en el Sheet. Revisa la conexión (Apps Script) y vuelve a intentarlo. <button class="btn" id="errx">Cerrar</button>`;b.hidden=false}
+document.addEventListener("click",e=>{if(e.target.id==="errx")$("#errbar").hidden=true});
 async function save(id,fila){
   S.dirtyAt=Date.now();sync.textContent="Guardando…";
   try{const j=await llamar({accion:"guardar",id,fila:JSON.stringify(fila)},60000);
-    sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo guardar ("+(j.error||"error")+")";return j.ok}
-  catch(e){sync.textContent="No se pudo guardar: "+e.message;return false}
+    if(j.ok){sync.textContent="Guardado en el Sheet";return true}errGuardar("No se pudo guardar ("+(j.error||"error")+")");return false}
+  catch(e){errGuardar("No se pudo guardar: "+e.message);return false}
 }
 async function borrar(id){
   S.dirtyAt=Date.now();sync.textContent="Guardando…";
-  try{const j=await llamar({accion:"borrar",id},60000);sync.textContent=j.ok?"Guardado en el Sheet":"No se pudo borrar"}
-  catch(e){sync.textContent="No se pudo borrar: "+e.message}
+  try{const j=await llamar({accion:"borrar",id},60000);if(j.ok)sync.textContent="Guardado en el Sheet";else errGuardar("No se pudo borrar ("+(j.error||"error")+")")}
+  catch(e){errGuardar("No se pudo borrar: "+e.message)}
 }
 // Carga rápida: se muestra al instante la última copia guardada en este navegador y se actualiza en segundo plano.
 let ASSETS=null,PENDING=null;
@@ -909,7 +915,7 @@ const backBtn=u=>u?`<button class="btn link" data-unit="${esc(u)}">← Volver</b
 function formHTML(){const a=S.form.id?S.avisos.find(x=>x.id===S.form.id):null;const u=a?a.u:S.form.u;
   return`<div>${a?`<button class="btn link" data-open="${esc(a.id)}">← Volver</button>`:backBtn(u)}</div><div><div class="eyebrow">${a?"Editar aviso":"Nuevo aviso"}</div><h2>${a?"Corrige lo que necesites":"¿Qué reportaron?"}</h2></div>
   <form id="fav"><label for="av-d">Título<input id="av-d" type="text" value="${esc(a?a.descripcion:"")}" placeholder="Ej: Gotera en el baño del fondo"></label>
-  <label for="av-u">Local<select id="av-u">${unitOptions(u,!!a)}</select></label>
+  <label for="av-u">Local<select id="av-u" required>${u?"":'<option value="">— Elige el local o área común —</option>'}${unitOptions(u||"__",true)}</select></label>
   <label for="av-p">Parte<select id="av-p">${PARTES.map(p=>`<option ${a&&a.parte===p?"selected":""}>${p}</option>`).join("")}</select></label>
   <label for="av-n">Nota / descripción (opcional)<textarea id="av-n" placeholder="Detalles, quién avisó, medidas…">${esc(a?a.nota||"":"")}</textarea></label>
   <label for="av-f">Fecha en que avisaron<input id="av-f" type="date" value="${a?(a.fecha>TODAY&&!a.plan?TODAY:a.fecha):TODAY}" max="${TODAY}"></label>
@@ -937,7 +943,7 @@ function obraFormHTML(){const raw=rawObra(S.form.id);const o=obraEff(raw);const 
 function progFormHTML(){const f=S.form;const p=f.id?S.progs.find(x=>x.id===f.id):null;const u=p?p.u:f.u;
   return`<div>${backBtn(u)}</div><div><div class="eyebrow">${p?"Editar":"Nuevo"} mantenimiento programado</div><h2>¿Qué hay que hacer cada cierto tiempo?</h2></div>
   <form id="fprog"><label for="pg-d">Tarea<input id="pg-d" type="text" value="${esc(p?p.desc:"")}" placeholder="Ej: Limpieza de canales"></label>
-  <label for="pg-u">Dónde<select id="pg-u">${unitOptions(u)}</select></label>
+  <label for="pg-u">Dónde<select id="pg-u" required>${u?"":'<option value="">— Elige el local o área común —</option>'}${unitOptions(u||"__",true)}</select></label>
   <label for="pg-p">Parte<select id="pg-p">${PARTES.map(x=>`<option ${p&&p.parte===x?"selected":""}>${x}</option>`).join("")}</select></label>
   <label for="pg-c">Se hace cada<select id="pg-c">${[1,2,3,4,6,12].map(n=>`<option value="${n}" ${(p?p.cada:3)==n?"selected":""}>${meses(n)}</option>`).join("")}</select></label>
   <label for="pg-l">Última vez que se hizo<input id="pg-l" type="date" value="${p?p.ultima:TODAY}" max="${TODAY}"></label>
